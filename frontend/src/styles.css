@@ -20,7 +20,8 @@
   --modal: #17221e;
   --modal-shadow: rgba(0, 0, 0, 0.5);
   --track: #25332e;
-  --key: #33423b;
+  --key: #626d66;
+  --key-absent: #33423b;
   --error: #ff8c82;
   --correct: #27845f;
   --present: #d4aa2d;
@@ -49,6 +50,7 @@
   --modal-shadow: rgba(17, 24, 22, 0.28);
   --track: #eee8dc;
   --key: #ddd6ca;
+  --key-absent: #626d66;
   --error: #a8322d;
 }
 
@@ -238,6 +240,11 @@ h1 {
   background: var(--absent);
   border-color: var(--absent);
   color: #fff;
+}
+
+.key.absent {
+  background: var(--key-absent);
+  border-color: var(--key-absent);
 }
 
 .keyboard {
