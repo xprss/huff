@@ -1,0 +1,50 @@
+# Huff Parole
+
+Wordle italiano con React, TypeScript e backend Java Quarkus.
+
+## Sviluppo locale
+
+Backend:
+
+```bash
+cd backend
+mvn quarkus:dev
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Il frontend usa il proxy Vite verso Quarkus su `localhost:8080`.
+
+## Configurazione
+
+Copia `.env.example` in `.env` per il deploy Docker. L'autenticazione e' disattivata di default:
+
+```bash
+AUTH_ENABLED=false
+```
+
+Per abilitare Google OAuth:
+
+```bash
+AUTH_ENABLED=true
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+APP_BASE_URL=https://tuo-dominio.example
+COOKIE_SECURE=true
+```
+
+Le parole sono in `backend/src/main/resources/words/it-words.json` e devono essere tutte di 6 lettere.
+
+## Deploy
+
+```bash
+scripts/redeploy-huff.sh
+```
+
+Lo script costruisce l'immagine Docker, rimpiazza il container esistente e monta `DATA_DIR` su `/data` per persistere SQLite.
