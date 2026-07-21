@@ -450,6 +450,12 @@ h1 {
     height: 38px;
   }
 
+  .icon-link {
+    width: auto;
+    min-width: 38px;
+    padding: 0 10px;
+  }
+
   .board {
     gap: 6px;
   }

@@ -46,5 +46,6 @@ export interface MeDto {
     authenticated: boolean;
   };
   loginUrl: string | null;
+  logoutUrl: string | null;
   authEnabled: boolean;
 }

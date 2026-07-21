@@ -1,4 +1,4 @@
-# Huff Parole
+# Huff
 
 Wordle italiano con React, TypeScript e backend Java Quarkus.
 
@@ -35,9 +35,26 @@ Per abilitare Google OAuth:
 AUTH_ENABLED=true
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-APP_BASE_URL=https://tuo-dominio.example
 COOKIE_SECURE=true
 ```
+
+Nel client OAuth Google usa tipo applicazione `Web application`.
+
+Origini JavaScript autorizzate:
+
+```text
+https://huff.ottonovembre.it
+https://www.huff.ottonovembre.it
+```
+
+URI di reindirizzamento autorizzati:
+
+```text
+https://huff.ottonovembre.it/auth/callback
+https://www.huff.ottonovembre.it/auth/callback
+```
+
+Il login parte da `/api/login`; il logout locale dell'app passa da `/api/logout`.
 
 Le parole sono in `backend/src/main/resources/words/it-words.json` e devono essere tutte di 6 lettere.
 

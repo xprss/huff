@@ -11,6 +11,20 @@ import static org.hamcrest.Matchers.notNullValue;
 @QuarkusTest
 class GameResourceTest {
     @Test
+    void exposesCurrentAnonymousUserWhenAuthIsDisabled() {
+        given()
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .header("Set-Cookie", notNullValue())
+            .body("loggedIn", equalTo(true))
+            .body("authEnabled", equalTo(false))
+            .body("user.displayName", equalTo("Giocatore"))
+            .body("loginUrl", equalTo(null))
+            .body("logoutUrl", equalTo(null));
+    }
+
+    @Test
     void createsAnonymousDailyGameAndPersistsSessionCookie() {
         given()
             .when().get("/api/game/today")

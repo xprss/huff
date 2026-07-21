@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BarChart3, Delete, LogIn, Moon, RotateCw, Sun } from "lucide-react";
+import { BarChart3, Delete, LogIn, LogOut, Moon, RotateCw, Sun } from "lucide-react";
 import { api } from "./api";
 import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
 import "./styles.css";
@@ -25,15 +25,18 @@ function App() {
     try {
       const meResponse = await api.me();
       setMe(meResponse);
+      const globalStatsResponse = await api.globalStats();
+      setGlobalStats(globalStatsResponse);
       if (meResponse.loggedIn) {
-        const [gameResponse, statsResponse, globalStatsResponse] = await Promise.all([
+        const [gameResponse, statsResponse] = await Promise.all([
           api.today(),
-          api.stats(),
-          api.globalStats()
+          api.stats()
         ]);
         setGame(gameResponse);
         setStats(statsResponse);
-        setGlobalStats(globalStatsResponse);
+      } else {
+        setGame(null);
+        setStats(null);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Errore imprevisto");
@@ -128,6 +131,11 @@ function App() {
               <a className="icon-link" href={me.loginUrl ?? "/q/oidc/login"} title="Accedi con Google">
                 <LogIn size={20} />
                 <span>Google</span>
+              </a>
+            ) : null}
+            {me?.authEnabled && me.loggedIn ? (
+              <a className="icon-button" href={me.logoutUrl ?? "/api/logout"} title="Esci">
+                <LogOut size={20} />
               </a>
             ) : null}
             <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
