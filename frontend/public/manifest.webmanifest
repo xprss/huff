@@ -1,0 +1,20 @@
+{
+  "name": "Huff",
+  "short_name": "Huff",
+  "description": "Wordle italiano da sei lettere.",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111816",
+  "theme_color": "#111816",
+  "icons": [
+    {
+      "src": "/icons/huff-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

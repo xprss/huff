@@ -25,6 +25,12 @@
   --correct: #27845f;
   --present: #d4aa2d;
   --absent: #626d66;
+  --viewport-padding: 22px;
+  --surface-gap: 12px;
+  --keyboard-gap: 6px;
+  --key-row-height: clamp(38px, 6.2dvh, 48px);
+  --header-reserve: 68px;
+  --status-reserve: 24px;
 }
 
 :root[data-theme="light"] {
@@ -50,11 +56,23 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
   background: var(--page);
+}
+
+#root {
+  height: 100%;
+  overflow: hidden;
 }
 
 button,
@@ -63,10 +81,12 @@ a {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   display: grid;
   place-items: center;
-  padding: 22px;
+  overflow: hidden;
+  padding: var(--viewport-padding);
   background:
     linear-gradient(120deg, rgba(37, 132, 95, 0.18), transparent 28%),
     linear-gradient(300deg, rgba(201, 67, 61, 0.16), transparent 30%),
@@ -75,11 +95,13 @@ a {
 
 .game-surface {
   width: min(100%, 520px);
-  min-height: min(760px, calc(100vh - 44px));
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 14px;
+  gap: var(--surface-gap);
+  overflow: hidden;
 }
 
 .topbar {
@@ -146,6 +168,7 @@ h1 {
 }
 
 .status-line {
+  height: 24px;
   min-height: 24px;
   margin: 0;
   color: var(--muted);
@@ -158,7 +181,11 @@ h1 {
 }
 
 .board {
-  width: min(100%, 420px);
+  --board-space: calc(
+    100dvh - (var(--viewport-padding) * 2) - var(--header-reserve) - var(--status-reserve) -
+      (var(--key-row-height) * 3) - (var(--keyboard-gap) * 2) - (var(--surface-gap) * 4)
+  );
+  width: min(100%, clamp(190px, var(--board-space), 420px));
   aspect-ratio: 6 / 6;
   display: grid;
   grid-template-rows: repeat(6, 1fr);
@@ -216,16 +243,17 @@ h1 {
 .keyboard {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--keyboard-gap);
   width: 100%;
+  flex: 0 0 auto;
 }
 
 .key-row {
   display: flex;
   justify-content: center;
-  gap: 6px;
-  height: 48px;
-  flex: 0 0 48px;
+  gap: var(--keyboard-gap);
+  height: var(--key-row-height);
+  flex: 0 0 var(--key-row-height);
 }
 
 .key {
@@ -369,17 +397,35 @@ h1 {
 }
 
 @media (max-width: 460px) {
+  :root {
+    --viewport-padding: 10px;
+    --surface-gap: 8px;
+    --keyboard-gap: 4px;
+    --header-reserve: 58px;
+    --status-reserve: 20px;
+  }
+
   .app-shell {
-    padding: 14px;
+    padding: var(--viewport-padding);
   }
 
   .game-surface {
-    min-height: calc(100vh - 28px);
-    gap: 14px;
+    gap: var(--surface-gap);
   }
 
   h1 {
-    font-size: 2.25rem;
+    font-size: 2rem;
+  }
+
+  .date {
+    margin-top: 6px;
+    font-size: 0.75rem;
+  }
+
+  .icon-button,
+  .icon-link {
+    width: 38px;
+    height: 38px;
   }
 
   .board {
@@ -391,9 +437,7 @@ h1 {
   }
 
   .key-row {
-    gap: 4px;
-    height: 44px;
-    flex-basis: 44px;
+    gap: var(--keyboard-gap);
   }
 
   .key {
