@@ -1,7 +1,8 @@
 :root {
   color: var(--text);
   background: var(--page);
-  font-family: Monaco, "Lucida Console", "Courier New", monospace;
+  font-family:
+    "Avenir Next", Avenir, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -29,7 +30,7 @@
   --surface-gap: 12px;
   --keyboard-gap: 6px;
   --key-row-height: clamp(38px, 6.2dvh, 48px);
-  --header-reserve: 68px;
+  --header-reserve: 100px;
   --status-reserve: 24px;
 }
 
@@ -107,18 +108,27 @@ a {
 
 .topbar {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.title-row {
+  width: 100%;
+  display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: 16px;
 }
 
 .date {
-  margin: 8px 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0;
   text-transform: capitalize;
+  text-align: right;
+  white-space: nowrap;
 }
 
 h1,
@@ -129,13 +139,16 @@ h2 {
 }
 
 h1 {
-  font-size: 2.8rem;
+  font-size: 2.45rem;
+  font-weight: 850;
   color: var(--text);
 }
 
 .actions {
+  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
@@ -421,7 +434,7 @@ h1 {
     --viewport-padding: 10px;
     --surface-gap: 8px;
     --keyboard-gap: 4px;
-    --header-reserve: 58px;
+    --header-reserve: 88px;
     --status-reserve: 20px;
   }
 
@@ -434,11 +447,10 @@ h1 {
   }
 
   h1 {
-    font-size: 2rem;
+    font-size: 1.75rem;
   }
 
   .date {
-    margin-top: 6px;
     font-size: 0.75rem;
   }
 

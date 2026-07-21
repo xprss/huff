@@ -122,7 +122,7 @@ function App() {
     <main className="app-shell">
       <section className="game-surface" aria-busy={loading}>
         <header className="topbar">
-          <div>
+          <div className="title-row">
             <h1>Wordolino</h1>
             <p className="date">{puzzleDate}</p>
           </div>
@@ -249,7 +249,6 @@ function formatPuzzleDate(value: string | undefined) {
     return value;
   }
   return new Intl.DateTimeFormat("it-IT", {
-    weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric"
