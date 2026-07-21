@@ -76,10 +76,10 @@ a {
 .game-surface {
   width: min(100%, 520px);
   min-height: min(760px, calc(100vh - 44px));
-  display: grid;
-  grid-template-rows: auto auto minmax(24px, auto) 1fr auto;
-  align-content: center;
-  gap: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
 }
 
 .topbar {
@@ -90,12 +90,12 @@ a {
 }
 
 .date {
-  margin: 0 0 2px;
+  margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0;
-  text-transform: uppercase;
+  text-transform: capitalize;
 }
 
 h1,
@@ -145,26 +145,6 @@ h1 {
   border-color: var(--hover-border);
 }
 
-.flag-strip {
-  height: 8px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.flag-strip span:nth-child(1) {
-  background: #23845f;
-}
-
-.flag-strip span:nth-child(2) {
-  background: var(--surface);
-}
-
-.flag-strip span:nth-child(3) {
-  background: #c9433d;
-}
-
 .status-line {
   min-height: 24px;
   margin: 0;
@@ -184,6 +164,7 @@ h1 {
   grid-template-rows: repeat(6, 1fr);
   gap: 8px;
   justify-self: center;
+  align-self: center;
 }
 
 .board-row {
@@ -233,7 +214,8 @@ h1 {
 }
 
 .keyboard {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 6px;
   width: 100%;
 }
@@ -242,10 +224,12 @@ h1 {
   display: flex;
   justify-content: center;
   gap: 6px;
+  height: 48px;
+  flex: 0 0 48px;
 }
 
 .key {
-  height: 48px;
+  height: 100%;
   min-width: 0;
   flex: 1 1 0;
   max-width: 42px;
@@ -408,10 +392,11 @@ h1 {
 
   .key-row {
     gap: 4px;
+    height: 44px;
+    flex-basis: 44px;
   }
 
   .key {
-    height: 44px;
     font-size: 0.82rem;
   }
 

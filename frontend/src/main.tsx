@@ -105,14 +105,15 @@ function App() {
 
   const rows = buildRows(game, currentGuess);
   const canPlay = Boolean(game && game.status === "IN_PROGRESS");
+  const puzzleDate = formatPuzzleDate(game?.puzzleDate);
 
   return (
     <main className="app-shell">
       <section className="game-surface" aria-busy={loading}>
         <header className="topbar">
           <div>
-            <p className="date">{game?.puzzleDate ?? "Huff Parole"}</p>
-            <h1>Parole</h1>
+            <h1>Huff</h1>
+            <p className="date">{puzzleDate}</p>
           </div>
           <div className="actions">
             {me?.authEnabled && !me.loggedIn ? (
@@ -137,12 +138,6 @@ function App() {
             </button>
           </div>
         </header>
-
-        <div className="flag-strip" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
 
         {loading ? <p className="status-line">Caricamento...</p> : null}
         {!loading && me?.authEnabled && !me.loggedIn ? (
@@ -227,6 +222,22 @@ function buildRows(game: GameDto | null, currentGuess: string) {
     rows.push(Array.from({ length: wordLength }, () => ({ letter: "" })));
   }
   return rows;
+}
+
+function formatPuzzleDate(value: string | undefined) {
+  if (!value) {
+    return "Oggi";
+  }
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) {
+    return value;
+  }
+  return new Intl.DateTimeFormat("it-IT", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  }).format(new Date(year, month - 1, day));
 }
 
 function StatsModal({
