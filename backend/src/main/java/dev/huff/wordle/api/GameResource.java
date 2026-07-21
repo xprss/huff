@@ -63,16 +63,8 @@ public class GameResource {
 
     @GET
     @Path("/stats/global")
-    public Response globalStats(@CookieParam("huff_session") String sessionId) {
-        ResolvedUser resolvedUser = userService.resolve(sessionId);
-        if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
-        }
-        Response.ResponseBuilder response = Response.ok(dailyGameService.globalStats());
-        if (resolvedUser.setCookieHeader() != null) {
-            response.header("Set-Cookie", resolvedUser.setCookieHeader());
-        }
-        return response.build();
+    public Response globalStats() {
+        return Response.ok(dailyGameService.globalStats()).build();
     }
 
     private Response unauthorized(String loginUrl) {

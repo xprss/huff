@@ -8,18 +8,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(
     name = "games",
-    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "puzzle_date"}),
-    indexes = {
-        @Index(name = "idx_games_user_date", columnList = "user_id,puzzle_date"),
-        @Index(name = "idx_games_user_status", columnList = "user_id,status")
-    }
+    uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "puzzle_date"})
 )
 public class GameEntity extends PanacheEntityBase {
     @Id
