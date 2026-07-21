@@ -242,17 +242,22 @@ function buildRows(game: GameDto | null, currentGuess: string) {
 
 function formatPuzzleDate(value: string | undefined) {
   if (!value) {
-    return "Oggi";
+    return formatItalianDate(new Date());
   }
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) {
     return value;
   }
+  return formatItalianDate(new Date(year, month - 1, day));
+}
+
+function formatItalianDate(date: Date) {
   return new Intl.DateTimeFormat("it-IT", {
+    weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric"
-  }).format(new Date(year, month - 1, day));
+  }).format(date);
 }
 
 function StatsModal({
