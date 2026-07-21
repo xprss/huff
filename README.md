@@ -89,6 +89,12 @@ scripts/db-huff.sh backup
 scripts/db-huff.sh dump data/huff-wordle.sql
 ```
 
+Per azzerare il database live, spostando prima i file correnti in `data/backups/reset-<timestamp>/` e poi ridistribuendo l'app:
+
+```bash
+scripts/reset-db-huff.sh
+```
+
 Se hai `sqlite3` installato puoi aprire anche una shell interattiva:
 
 ```bash
