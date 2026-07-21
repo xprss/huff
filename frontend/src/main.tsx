@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BarChart3, Delete, LogIn, RotateCw } from "lucide-react";
+import { BarChart3, Delete, LogIn, Moon, RotateCw, Sun } from "lucide-react";
 import { api } from "./api";
 import type { GameDto, GuessResult, MeDto, StatsDto, TileState } from "./types";
 import "./styles.css";
@@ -16,6 +16,7 @@ function App() {
   const [message, setMessage] = React.useState("");
   const [showStats, setShowStats] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
+  const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -38,6 +39,11 @@ function App() {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  React.useEffect(() => {
+    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
+    localStorage.setItem("darkMode", String(darkMode));
+  }, [darkMode]);
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -117,6 +123,14 @@ function App() {
             ) : null}
             <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
               <BarChart3 size={21} />
+            </button>
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => setDarkMode((value) => !value)}
+              title={darkMode ? "Tema chiaro" : "Tema scuro"}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             <button className="icon-button" type="button" onClick={() => void load()} title="Ricarica">
               <RotateCw size={20} />
