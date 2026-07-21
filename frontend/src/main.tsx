@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BarChart3, Delete, LogIn, Moon, RotateCw, Sun } from "lucide-react";
 import { api } from "./api";
-import type { GameDto, GuessResult, MeDto, StatsDto, TileState } from "./types";
+import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
 import "./styles.css";
 
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
@@ -12,6 +12,7 @@ function App() {
   const [me, setMe] = React.useState<MeDto | null>(null);
   const [game, setGame] = React.useState<GameDto | null>(null);
   const [stats, setStats] = React.useState<StatsDto | null>(null);
+  const [globalStats, setGlobalStats] = React.useState<GlobalStatsDto | null>(null);
   const [currentGuess, setCurrentGuess] = React.useState("");
   const [message, setMessage] = React.useState("");
   const [showStats, setShowStats] = React.useState(false);
@@ -25,9 +26,14 @@ function App() {
       const meResponse = await api.me();
       setMe(meResponse);
       if (meResponse.loggedIn) {
-        const [gameResponse, statsResponse] = await Promise.all([api.today(), api.stats()]);
+        const [gameResponse, statsResponse, globalStatsResponse] = await Promise.all([
+          api.today(),
+          api.stats(),
+          api.globalStats()
+        ]);
         setGame(gameResponse);
         setStats(statsResponse);
+        setGlobalStats(globalStatsResponse);
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Errore imprevisto");
@@ -80,7 +86,9 @@ function App() {
       const updated = await api.guess(currentGuess);
       setGame(updated);
       setCurrentGuess("");
-      setStats(await api.stats());
+      const [statsResponse, globalStatsResponse] = await Promise.all([api.stats(), api.globalStats()]);
+      setStats(statsResponse);
+      setGlobalStats(globalStatsResponse);
       if (updated.status === "WON" || updated.status === "LOST") {
         setShowStats(true);
       }
@@ -196,7 +204,7 @@ function App() {
       </section>
 
       {showStats ? (
-        <StatsModal game={game} stats={stats} onClose={() => setShowStats(false)} />
+        <StatsModal game={game} stats={stats} globalStats={globalStats} onClose={() => setShowStats(false)} />
       ) : null}
     </main>
   );
@@ -243,15 +251,17 @@ function formatPuzzleDate(value: string | undefined) {
 function StatsModal({
   game,
   stats,
+  globalStats,
   onClose
 }: {
   game: GameDto | null;
   stats: StatsDto | null;
+  globalStats: GlobalStatsDto | null;
   onClose: () => void;
 }) {
-  const distribution = stats?.guessDistribution ?? {};
-  const maxDistribution = Math.max(1, ...Object.values(distribution));
   const winRate = stats && stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+  const globalWinRate =
+    globalStats && globalStats.completed > 0 ? Math.round((globalStats.won / globalStats.completed) * 100) : 0;
 
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -263,6 +273,7 @@ function StatsModal({
           </button>
         </header>
 
+        <h3>Personali</h3>
         <div className="stat-grid">
           <Metric label="Giocate" value={stats?.played ?? 0} />
           <Metric label="Vinte" value={stats?.won ?? 0} />
@@ -270,23 +281,46 @@ function StatsModal({
           <Metric label="Serie" value={stats?.currentStreak ?? 0} />
         </div>
 
-        <div className="distribution">
-          {[1, 2, 3, 4, 5, 6].map((attempt) => {
-            const value = Number(distribution[String(attempt)] ?? distribution[attempt] ?? 0);
-            return (
-              <div className="distribution-row" key={attempt}>
-                <span>{attempt}</span>
-                <div>
-                  <b style={{ width: `${Math.max(8, (value / maxDistribution) * 100)}%` }}>{value}</b>
-                </div>
-              </div>
-            );
-          })}
+        <Distribution distribution={stats?.guessDistribution ?? {}} />
+
+        <h3>Globali</h3>
+        <div className="stat-grid global">
+          <Metric label="Giocatori" value={globalStats?.players ?? 0} />
+          <Metric label="Iniziate" value={globalStats?.gamesStarted ?? 0} />
+          <Metric label="Concluse" value={globalStats?.completed ?? 0} />
+          <Metric label="Vittorie" value={`${globalWinRate}%`} />
         </div>
+
+        <div className="stat-grid compact">
+          <Metric label="Vinte" value={globalStats?.won ?? 0} />
+          <Metric label="Perse" value={globalStats?.lost ?? 0} />
+        </div>
+
+        <Distribution distribution={globalStats?.guessDistribution ?? {}} />
 
         {game?.status === "WON" ? <p className="result won">Risolta.</p> : null}
         {game?.status === "LOST" ? <p className="result lost">Soluzione: {game.solution?.toUpperCase()}</p> : null}
       </section>
+    </div>
+  );
+}
+
+function Distribution({ distribution }: { distribution: Record<string, number> }) {
+  const maxDistribution = Math.max(1, ...Object.values(distribution));
+
+  return (
+    <div className="distribution">
+      {[1, 2, 3, 4, 5, 6].map((attempt) => {
+        const value = Number(distribution[String(attempt)] ?? 0);
+        return (
+          <div className="distribution-row" key={attempt}>
+            <span>{attempt}</span>
+            <div>
+              <b style={{ width: `${Math.max(8, (value / maxDistribution) * 100)}%` }}>{value}</b>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

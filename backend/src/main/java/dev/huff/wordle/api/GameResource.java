@@ -61,6 +61,20 @@ public class GameResource {
         return response.build();
     }
 
+    @GET
+    @Path("/stats/global")
+    public Response globalStats(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized(resolvedUser.loginUrl());
+        }
+        Response.ResponseBuilder response = Response.ok(dailyGameService.globalStats());
+        if (resolvedUser.setCookieHeader() != null) {
+            response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        }
+        return response.build();
+    }
+
     private Response unauthorized(String loginUrl) {
         return Response.status(Response.Status.UNAUTHORIZED)
             .entity(new ErrorDto("auth_required", "Accesso Google richiesto.", loginUrl))

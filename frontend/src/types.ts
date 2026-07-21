@@ -29,6 +29,15 @@ export interface StatsDto {
   guessDistribution: Record<string, number>;
 }
 
+export interface GlobalStatsDto {
+  players: number;
+  gamesStarted: number;
+  completed: number;
+  won: number;
+  lost: number;
+  guessDistribution: Record<string, number>;
+}
+
 export interface MeDto {
   loggedIn: boolean;
   user: null | {

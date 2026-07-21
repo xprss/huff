@@ -1,4 +1,4 @@
-import type { GameDto, MeDto, StatsDto } from "./types";
+import type { GameDto, GlobalStatsDto, MeDto, StatsDto } from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -25,5 +25,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ guess })
     }),
-  stats: () => request<StatsDto>("/api/stats")
+  stats: () => request<StatsDto>("/api/stats"),
+  globalStats: () => request<GlobalStatsDto>("/api/stats/global")
 };

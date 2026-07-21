@@ -122,6 +122,32 @@ public class DailyGameService {
         return new StatsDto(records.size(), won, records.size() - won, currentStreak, maxStreak, distribution);
     }
 
+    public GlobalStatsDto globalStats() {
+        List<GameRecord> completedRecords = gameRepository.findCompleted();
+        int won = 0;
+        Map<Integer, Integer> distribution = new LinkedHashMap<>();
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            distribution.put(attempt, 0);
+        }
+
+        for (GameRecord record : completedRecords) {
+            if (record.status() == GameStatus.WON) {
+                won++;
+                int attempts = readGuesses(record).size();
+                distribution.put(attempts, distribution.getOrDefault(attempts, 0) + 1);
+            }
+        }
+
+        return new GlobalStatsDto(
+            gameRepository.countPlayers(),
+            gameRepository.countGamesStarted(),
+            completedRecords.size(),
+            won,
+            completedRecords.size() - won,
+            distribution
+        );
+    }
+
     public GuessResult score(String guess, String solution) {
         List<TileResult> tiles = new ArrayList<>();
         Map<Character, Integer> remaining = new HashMap<>();

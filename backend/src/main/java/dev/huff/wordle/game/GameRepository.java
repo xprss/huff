@@ -102,6 +102,46 @@ public class GameRepository {
         }
     }
 
+    public List<GameRecord> findCompleted() {
+        try (Connection connection = database.connection();
+             PreparedStatement statement = connection.prepareStatement("""
+                 SELECT id, user_id, puzzle_date, solution, guesses_json, status, created_at, updated_at, completed_at
+                 FROM games
+                 WHERE status IN ('WON', 'LOST')
+                 ORDER BY puzzle_date ASC
+                 """)) {
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<GameRecord> records = new ArrayList<>();
+                while (resultSet.next()) {
+                    records.add(map(resultSet));
+                }
+                return records;
+            }
+        } catch (Exception error) {
+            throw new IllegalStateException("Cannot load completed games", error);
+        }
+    }
+
+    public int countPlayers() {
+        try (Connection connection = database.connection();
+             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(DISTINCT user_id) AS total FROM games");
+             ResultSet resultSet = statement.executeQuery()) {
+            return resultSet.next() ? resultSet.getInt("total") : 0;
+        } catch (Exception error) {
+            throw new IllegalStateException("Cannot count players", error);
+        }
+    }
+
+    public int countGamesStarted() {
+        try (Connection connection = database.connection();
+             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) AS total FROM games");
+             ResultSet resultSet = statement.executeQuery()) {
+            return resultSet.next() ? resultSet.getInt("total") : 0;
+        } catch (Exception error) {
+            throw new IllegalStateException("Cannot count games", error);
+        }
+    }
+
     private void bind(GameRecord record, PreparedStatement statement) throws Exception {
         statement.setString(1, record.id());
         statement.setString(2, record.userId());

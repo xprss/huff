@@ -300,6 +300,8 @@ h1 {
 
 .modal {
   width: min(100%, 430px);
+  max-height: min(92dvh, 680px);
+  overflow-y: auto;
   border-radius: 8px;
   background: var(--modal);
   color: var(--text);
@@ -319,6 +321,14 @@ h1 {
   font-size: 1.35rem;
 }
 
+.modal h3 {
+  margin: 18px 0 10px;
+  font-size: 0.82rem;
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
 .close-button {
   width: 34px;
   height: 34px;
@@ -334,6 +344,11 @@ h1 {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+}
+
+.stat-grid.compact {
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 8px;
 }
 
 .metric {
