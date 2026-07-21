@@ -56,3 +56,24 @@ scripts/logs-huff.sh
 ```
 
 Usa `TAIL_LINES=500 scripts/logs-huff.sh` per cambiare quante righe iniziali mostrare prima del follow.
+
+## Database
+
+Il database SQLite live e' in `data/huff-wordle.sqlite`, montato nel container come `/data/huff-wordle.sqlite`.
+
+Comandi utili:
+
+```bash
+scripts/db-huff.sh path
+scripts/db-huff.sh tables
+scripts/db-huff.sh schema
+scripts/db-huff.sh query "SELECT * FROM users;"
+scripts/db-huff.sh backup
+scripts/db-huff.sh dump data/huff-wordle.sql
+```
+
+Se hai `sqlite3` installato puoi aprire anche una shell interattiva:
+
+```bash
+scripts/db-huff.sh shell
+```
