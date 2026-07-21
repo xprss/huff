@@ -59,7 +59,7 @@ Usa `TAIL_LINES=500 scripts/logs-huff.sh` per cambiare quante righe iniziali mos
 
 ## Database
 
-Il database SQLite live e' in `data/huff-wordle.sqlite`, montato nel container come `/data/huff-wordle.sqlite`.
+Il backend usa Hibernate ORM/Panache su SQLite. Il database live e' in `data/huff-wordle.sqlite`, montato nel container come `/data/huff-wordle.sqlite`.
 
 Comandi utili:
 

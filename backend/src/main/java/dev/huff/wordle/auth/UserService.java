@@ -1,15 +1,13 @@
 package dev.huff.wordle.auth;
 
-import dev.huff.wordle.persistence.Database;
+import dev.huff.wordle.persistence.UserEntity;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.NotAuthorizedException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -25,11 +23,9 @@ public class UserService {
     boolean cookieSecure;
 
     @Inject
-    Database database;
-
-    @Inject
     SecurityIdentity securityIdentity;
 
+    @Transactional
     public ResolvedUser resolve(String anonymousSessionId) {
         if (authEnabled) {
             if (securityIdentity == null || securityIdentity.isAnonymous()) {
@@ -79,38 +75,25 @@ public class UserService {
     }
 
     private String findUserIdByGoogleSubject(String subject) {
-        try (Connection connection = database.connection();
-             PreparedStatement statement = connection.prepareStatement("SELECT id FROM users WHERE google_subject = ?")) {
-            statement.setString(1, subject);
-            try (ResultSet resultSet = statement.executeQuery()) {
-                return resultSet.next() ? resultSet.getString("id") : null;
-            }
-        } catch (Exception error) {
-            throw new IllegalStateException("Cannot load Google user", error);
-        }
+        return UserEntity.<UserEntity>find("googleSubject", subject)
+            .firstResultOptional()
+            .map(user -> user.id)
+            .orElse(null);
     }
 
     private AppUser upsertUser(String userId, String googleSubject, String email, String displayName, boolean authenticated) {
         String now = Instant.now().toString();
-        try (Connection connection = database.connection();
-             PreparedStatement statement = connection.prepareStatement("""
-                 INSERT INTO users (id, google_subject, email, display_name, created_at)
-                 VALUES (?, ?, ?, ?, ?)
-                 ON CONFLICT(id) DO UPDATE SET
-                   google_subject = excluded.google_subject,
-                   email = excluded.email,
-                   display_name = excluded.display_name
-                 """)) {
-            statement.setString(1, userId);
-            statement.setString(2, googleSubject);
-            statement.setString(3, email);
-            statement.setString(4, displayName);
-            statement.setString(5, now);
-            statement.executeUpdate();
-            return new AppUser(userId, email, displayName, authenticated);
-        } catch (Exception error) {
-            throw new IllegalStateException("Cannot save user", error);
+        UserEntity user = UserEntity.findById(userId);
+        if (user == null) {
+            user = new UserEntity();
+            user.id = userId;
+            user.createdAt = now;
+            user.persist();
         }
+        user.googleSubject = googleSubject;
+        user.email = email;
+        user.displayName = displayName;
+        return user.toAppUser(authenticated);
     }
 
     private String sessionCookie(String sessionId) {
