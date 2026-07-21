@@ -1,4 +1,4 @@
-const CACHE_NAME = "huff-shell-v2";
+const CACHE_NAME = "wordolino-shell-v1";
 const APP_SHELL = ["/", "/manifest.json", "/icons/huff-icon.svg"];
 
 self.addEventListener("install", (event) => {

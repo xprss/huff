@@ -1,6 +1,6 @@
 {
-  "name": "Huff",
-  "short_name": "Huff",
+  "name": "Wordolino",
+  "short_name": "Wordolino",
   "description": "Wordle italiano da sei lettere.",
   "lang": "it",
   "start_url": "/",

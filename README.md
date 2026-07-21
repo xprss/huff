@@ -1,4 +1,4 @@
-# Huff
+# Wordolino
 
 Wordle italiano con React, TypeScript e backend Java Quarkus.
 

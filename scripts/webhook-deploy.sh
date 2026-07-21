@@ -13,5 +13,5 @@ git fetch "${REMOTE_NAME}" "${BRANCH}"
 git checkout "${BRANCH}"
 git pull --ff-only "${REMOTE_NAME}" "${BRANCH}"
 
-echo "Redeploying Huff Wordle container"
+echo "Redeploying Wordolino container"
 "${PROJECT_ROOT}/scripts/redeploy-huff.sh"

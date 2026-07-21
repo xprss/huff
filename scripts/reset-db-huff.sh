@@ -37,6 +37,5 @@ else
   rmdir "${RESET_DIR}" 2>/dev/null || true
 fi
 
-echo "Starting Huff with a fresh database"
+echo "Starting Wordolino with a fresh database"
 "${SCRIPT_DIR}/redeploy-huff.sh"
-

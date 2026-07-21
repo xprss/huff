@@ -123,7 +123,7 @@ function App() {
       <section className="game-surface" aria-busy={loading}>
         <header className="topbar">
           <div>
-            <h1>Huff</h1>
+            <h1>Wordolino</h1>
             <p className="date">{puzzleDate}</p>
           </div>
           <div className="actions">
