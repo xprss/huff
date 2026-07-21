@@ -48,3 +48,11 @@ scripts/redeploy-huff.sh
 ```
 
 Lo script costruisce l'immagine Docker, rimpiazza il container esistente e monta `DATA_DIR` su `/data` per persistere SQLite.
+
+## Log Quarkus
+
+```bash
+scripts/logs-huff.sh
+```
+
+Usa `TAIL_LINES=500 scripts/logs-huff.sh` per cambiare quante righe iniziali mostrare prima del follow.
