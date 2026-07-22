@@ -1,12 +1,24 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BarChart3, Delete, LogIn, LogOut, Moon, RotateCw, Sun } from "lucide-react";
+import { BarChart3, Delete, Heart, LogOut, Moon, RotateCw, Sun } from "lucide-react";
 import { api } from "./api";
 import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
 import "./styles.css";
 
+const APP_NAME = "Hexaquot";
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 const STATE_RANK: Record<TileState, number> = { ABSENT: 1, PRESENT: 2, CORRECT: 3 };
+type BoardColumn = {
+  feedback: Array<TileState | undefined>;
+};
+const LOGIN_DECOR_STATES = ["correct", "present", "absent"] as const;
+type LoginDecorState = (typeof LOGIN_DECOR_STATES)[number];
+type LoginDecorTile = {
+  letter: string;
+  state: LoginDecorState;
+  style: React.CSSProperties;
+};
+const LOGIN_DECOR_TILES = buildLoginDecorTiles(APP_NAME);
 
 function App() {
   const [me, setMe] = React.useState<MeDto | null>(null);
@@ -18,6 +30,7 @@ function App() {
   const [showStats, setShowStats] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
+  const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -114,33 +127,54 @@ function App() {
     return states;
   }, [game]);
 
-  const rows = buildRows(game, currentGuess);
+  const columns = buildColumns(game);
   const canPlay = Boolean(game && game.status === "IN_PROGRESS");
+  const wordLength = game?.wordLength ?? 6;
   const puzzleDate = formatPuzzleDate(game?.puzzleDate);
+  const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
+  const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
+  const statusText = message;
+  const lastGuess = game?.guesses[game.guesses.length - 1];
+  const completedSolution =
+    game?.status === "WON" || game?.status === "LOST"
+      ? game.solution ?? lastGuess?.word ?? null
+      : null;
+  const terminalValue = completedSolution ?? currentGuess;
+  const terminalResult = completedSolution ? (game?.status === "WON" ? "won" : "lost") : null;
+
+  React.useEffect(() => {
+    if (!completedSolution) return;
+
+    setNextChallengeCountdown(formatNextChallengeCountdown());
+    const timer = window.setInterval(() => {
+      setNextChallengeCountdown(formatNextChallengeCountdown());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [completedSolution]);
 
   return (
     <main className="app-shell">
       <section className="game-surface" aria-busy={loading}>
         <header className="topbar">
           <div className="title-row">
-            <h1>Wordolino</h1>
+            <div className="title-mark">
+              <h1>{APP_NAME}</h1>
+              <span className="byline">by xprss</span>
+            </div>
             <p className="date">{puzzleDate}</p>
           </div>
           <div className="actions">
-            {me?.authEnabled && !me.loggedIn ? (
-              <a className="icon-link" href={me.loginUrl ?? "/q/oidc/login"} title="Accedi con Google">
-                <LogIn size={20} />
-                <span>Google</span>
-              </a>
-            ) : null}
             {me?.authEnabled && me.loggedIn ? (
               <a className="icon-button" href={me.logoutUrl ?? "/api/logout"} title="Esci">
                 <LogOut size={20} />
               </a>
             ) : null}
-            <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
-              <BarChart3 size={21} />
-            </button>
+            {canUseGameActions ? (
+              <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
+                <BarChart3 size={21} />
+              </button>
+            ) : null}
             <button
               className="icon-button"
               type="button"
@@ -149,95 +183,229 @@ function App() {
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button className="icon-button" type="button" onClick={() => void load()} title="Ricarica">
-              <RotateCw size={20} />
-            </button>
+            {canUseGameActions ? (
+              <button className="icon-button" type="button" onClick={() => void load()} title="Ricarica">
+                <RotateCw size={20} />
+              </button>
+            ) : null}
           </div>
         </header>
 
-        {loading ? <p className="status-line">Caricamento...</p> : null}
-        {!loading && me?.authEnabled && !me.loggedIn ? (
-          <p className="status-line">Accedi per giocare.</p>
-        ) : null}
-        {message ? <p className="status-line error">{message}</p> : null}
+        <p className={`status-line ${message ? "error" : ""}`}>{statusText}</p>
 
-        <div className="board" aria-label="Griglia tentativi">
-          {rows.map((row, rowIndex) => (
-            <div className="board-row" key={rowIndex}>
-              {row.map((tile, tileIndex) => (
-                <div
-                  className={`tile ${tile.state ? tile.state.toLowerCase() : ""} ${tile.letter ? "filled" : ""}`}
-                  key={tileIndex}
-                >
-                  {tile.letter}
+        {showLoginScreen ? (
+          <LoginScreen loginUrl={me?.loginUrl ?? "/api/login"} />
+        ) : loading ? (
+          <div className="play-area">
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <>
+            <div className="play-area">
+              <div className="board" aria-label="Griglia tentativi">
+                <TerminalInput
+                  value={terminalValue}
+                  wordLength={wordLength}
+                  canPlay={canPlay}
+                  result={terminalResult}
+                />
+                <div className="feedback-board">
+                  {columns.map((column, columnIndex) => (
+                    <div className="board-column" key={columnIndex}>
+                      <div className="feedback-stack" aria-hidden="true">
+                        {column.feedback.map((state, attemptIndex) => (
+                          <span
+                            className={`feedback-marker ${
+                              state === "CORRECT" || state === "PRESENT" || state === "ABSENT"
+                                ? state.toLowerCase()
+                                : "empty"
+                            }`}
+                            key={attemptIndex}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {completedSolution ? (
+                  <p className="next-challenge" aria-live="polite">
+                    Prossima sfida tra <time>{nextChallengeCountdown}</time>
+                  </p>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="keyboard" aria-label="Tastiera">
+              {KEY_ROWS.map((row, index) => (
+                <div className="key-row" key={row}>
+                  {index === 2 ? (
+                    <button className="key wide" type="button" disabled={!canPlay} onClick={() => void submitGuess()}>
+                      Invio
+                    </button>
+                  ) : null}
+                  {row.split("").map((letter) => {
+                    const keyState = keyStates.get(letter);
+                    const keyClass = keyState === "CORRECT" || keyState === "PRESENT" ? keyState.toLowerCase() : "";
+
+                    return (
+                      <button
+                        className={`key ${keyClass}`}
+                        key={letter}
+                        type="button"
+                        disabled={!canPlay}
+                        onClick={() => addLetter(letter)}
+                      >
+                        {letter}
+                      </button>
+                    );
+                  })}
+                  {index === 2 ? (
+                    <button
+                      className="key wide"
+                      type="button"
+                      disabled={!canPlay}
+                      onClick={() => setCurrentGuess((value) => value.slice(0, -1))}
+                      title="Cancella"
+                    >
+                      <Delete size={19} />
+                    </button>
+                  ) : null}
                 </div>
               ))}
             </div>
-          ))}
-        </div>
-
-        <div className="keyboard" aria-label="Tastiera">
-          {KEY_ROWS.map((row, index) => (
-            <div className="key-row" key={row}>
-              {index === 2 ? (
-                <button className="key wide" type="button" disabled={!canPlay} onClick={() => void submitGuess()}>
-                  Invio
-                </button>
-              ) : null}
-              {row.split("").map((letter) => (
-                <button
-                  className={`key ${keyStates.get(letter)?.toLowerCase() ?? ""}`}
-                  key={letter}
-                  type="button"
-                  disabled={!canPlay}
-                  onClick={() => addLetter(letter)}
-                >
-                  {letter}
-                </button>
-              ))}
-              {index === 2 ? (
-                <button
-                  className="key wide"
-                  type="button"
-                  disabled={!canPlay}
-                  onClick={() => setCurrentGuess((value) => value.slice(0, -1))}
-                  title="Cancella"
-                >
-                  <Delete size={19} />
-                </button>
-              ) : null}
-            </div>
-          ))}
-        </div>
+          </>
+        )}
       </section>
 
       {showStats ? (
         <StatsModal game={game} stats={stats} globalStats={globalStats} onClose={() => setShowStats(false)} />
       ) : null}
+
+      <footer className="app-footer">
+        <span>Sviluppato con</span>
+        <Heart className="footer-heart" aria-hidden="true" />
+        <span>da xprss</span>
+      </footer>
     </main>
   );
 }
 
-function buildRows(game: GameDto | null, currentGuess: string) {
+function LoadingSpinner() {
+  return (
+    <div className="loading-spinner" role="status" aria-label="Caricamento">
+      <span />
+    </div>
+  );
+}
+
+function TerminalInput({
+  value,
+  wordLength,
+  canPlay,
+  result
+}: {
+  value: string;
+  wordLength: number;
+  canPlay: boolean;
+  result: "won" | "lost" | null;
+}) {
+  const displayValue = value.toUpperCase();
+  const cursorIndex = Math.min(displayValue.length, wordLength);
+
+  return (
+    <div className={`terminal-input ${result ?? ""}`} aria-label={`Input utente: ${displayValue}`}>
+      {Array.from({ length: wordLength }, (_, index) => (
+        <span className={`terminal-cell ${canPlay && index === cursorIndex ? "cursor" : ""}`} key={index}>
+          <span>{displayValue[index] ?? ""}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function LoginScreen({ loginUrl }: { loginUrl: string }) {
+  return (
+    <section className="login-screen" aria-labelledby="login-title">
+      <div className="login-decor" aria-hidden="true">
+        {LOGIN_DECOR_TILES.map((tile, index) => (
+          <span className={`login-decor-tile ${tile.state}`} key={`${tile.letter}-${index}`} style={tile.style}>
+            {tile.letter}
+          </span>
+        ))}
+      </div>
+      <div className="login-copy">
+        <h2 id="login-title">{APP_NAME}</h2>
+        <p>Accedi per giocare la partita del giorno.</p>
+      </div>
+      <a className="login-button" href={loginUrl}>
+        <GoogleLogo />
+        <span>Accedi con Google</span>
+      </a>
+    </section>
+  );
+}
+
+function buildLoginDecorTiles(name: string): LoginDecorTile[] {
+  const letters = name.toUpperCase().split("");
+  const columns = Math.min(4, letters.length);
+  const rows = Math.ceil(letters.length / columns);
+  const xGap = 18;
+  const yGap = 28;
+  const yStart = 50 - ((rows - 1) * yGap) / 2;
+  const rotations = [-10, 7, -6, 11, -8, 9, -11, 6];
+
+  return letters.map((letter, index) => {
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+    const rowLength = Math.min(columns, letters.length - row * columns);
+    const xStart = 50 - ((rowLength - 1) * xGap) / 2;
+    const x = xStart + column * xGap;
+    const y = yStart + row * yGap;
+    const rotation = rotations[index % rotations.length];
+
+    return {
+      letter,
+      state: LOGIN_DECOR_STATES[index % LOGIN_DECOR_STATES.length],
+      style: {
+        "--tile-x": `${x.toFixed(1)}%`,
+        "--tile-y": `${y.toFixed(1)}%`,
+        "--tile-rotation": `${rotation}deg`
+      } as React.CSSProperties
+    };
+  });
+}
+
+function GoogleLogo() {
+  return (
+    <svg className="google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        fill="#4285f4"
+        d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.29h6.47a5.53 5.53 0 0 1-2.4 3.63v2.96h3.89c2.27-2.09 3.53-5.17 3.53-8.61Z"
+      />
+      <path
+        fill="#34a853"
+        d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.89-2.96c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.28v3.05A12 12 0 0 0 12 24Z"
+      />
+      <path
+        fill="#fbbc05"
+        d="M5.29 14.33a7.21 7.21 0 0 1 0-4.66V6.62H1.28a12.01 12.01 0 0 0 0 10.76l4.01-3.05Z"
+      />
+      <path
+        fill="#ea4335"
+        d="M12 4.72c1.76 0 3.34.6 4.59 1.79l3.44-3.44C17.95 1.13 15.23 0 12 0A12 12 0 0 0 1.28 6.62l4.01 3.05C6.23 6.83 8.88 4.72 12 4.72Z"
+      />
+    </svg>
+  );
+}
+
+function buildColumns(game: GameDto | null): BoardColumn[] {
   const wordLength = game?.wordLength ?? 6;
   const maxAttempts = game?.maxAttempts ?? 6;
   const submitted = game?.guesses ?? [];
-  const rows: Array<Array<{ letter: string; state?: TileState }>> = submitted.map((guess) =>
-    guess.tiles.map((tile) => ({ letter: tile.letter.toUpperCase(), state: tile.state }))
-  );
 
-  if (rows.length < maxAttempts && game?.status !== "WON" && game?.status !== "LOST") {
-    rows.push(
-      Array.from({ length: wordLength }, (_, index) => ({
-        letter: currentGuess[index] ?? ""
-      }))
-    );
-  }
-
-  while (rows.length < maxAttempts) {
-    rows.push(Array.from({ length: wordLength }, () => ({ letter: "" })));
-  }
-  return rows;
+  return Array.from({ length: wordLength }, (_, columnIndex) => ({
+    feedback: Array.from({ length: maxAttempts }, (_, attemptIndex) => submitted[attemptIndex]?.tiles[columnIndex]?.state)
+  }));
 }
 
 function formatPuzzleDate(value: string | undefined) {
@@ -258,6 +426,26 @@ function formatItalianDate(date: Date) {
     month: "long",
     year: "numeric"
   }).format(date);
+}
+
+function formatNextChallengeCountdown() {
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setHours(24, 0, 0, 0);
+  const totalSeconds = Math.max(0, Math.ceil((nextMidnight.getTime() - now.getTime()) / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${formatTimeUnit(hours, "ora", "ore")}, ${formatTimeUnit(minutes, "minuto", "minuti")} e ${formatTimeUnit(
+    seconds,
+    "secondo",
+    "secondi"
+  )}`;
+}
+
+function formatTimeUnit(value: number, singular: string, plural: string) {
+  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 function StatsModal({
@@ -354,6 +542,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js");
+    void navigator.serviceWorker.register("/sw.js").then((registration) => registration.update());
   });
 }

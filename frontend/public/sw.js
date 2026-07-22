@@ -1,4 +1,4 @@
-const CACHE_NAME = "wordolino-shell-v1";
+const CACHE_NAME = "indovena-shell-v1";
 const APP_SHELL = ["/", "/manifest.json", "/icons/huff-icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -24,24 +24,30 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match("/")));
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok && url.origin === self.location.origin) {
+            const responseCopy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put("/", responseCopy));
+          }
+          return response;
+        })
+        .catch(() => caches.match("/"))
+    );
     return;
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) {
-        return cached;
-      }
-
-      return fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response.ok && url.origin === self.location.origin) {
           const responseCopy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, responseCopy));
         }
 
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(request))
   );
 });

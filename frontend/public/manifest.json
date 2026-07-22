@@ -1,7 +1,7 @@
 {
-  "name": "Wordolino",
-  "short_name": "Wordolino",
-  "description": "Wordle italiano da sei lettere.",
+  "name": "Indovena",
+  "short_name": "Indovena",
+  "description": "Gioco italiano da sei lettere.",
   "lang": "it",
   "start_url": "/",
   "scope": "/",
