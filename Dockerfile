@@ -22,10 +22,13 @@ WORKDIR /app
 
 ENV PORT=8080
 ENV AUTH_ENABLED=false
-ENV DB_PATH=/data/huff-wordle.sqlite
+ENV POSTGRES_HOST=huff-postgres
+ENV POSTGRES_PORT=5432
+ENV POSTGRES_DB=huff_wordle
+ENV POSTGRES_USER=huff
+ENV POSTGRES_PASSWORD=huff
 ENV GAME_TIMEZONE=Europe/Rome
 
-RUN mkdir -p /data
 COPY --from=backend-build /workspace/backend/target/quarkus-app /app
 
 EXPOSE 8080

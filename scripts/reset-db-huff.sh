@@ -4,15 +4,19 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+ENV_FILE="${ENV_FILE:-${PROJECT_ROOT}/.env}"
+
+if [[ -f "${ENV_FILE}" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  . "${ENV_FILE}"
+  set +a
+fi
 
 CONTAINER_NAME="${CONTAINER_NAME:-huff-wordle}"
 DATA_DIR="${DATA_DIR:-${PROJECT_ROOT}/data}"
-DB_FILE="${DB_FILE:-${DATA_DIR}/huff-wordle.sqlite}"
-BACKUP_DIR="${BACKUP_DIR:-${DATA_DIR}/backups}"
-STAMP="$(date -u +%Y%m%d%H%M%S)"
-RESET_DIR="${BACKUP_DIR}/reset-${STAMP}"
-
-mkdir -p "${RESET_DIR}"
+POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-huff-postgres}"
+POSTGRES_DATA_DIR="${POSTGRES_DATA_DIR:-${DATA_DIR}/postgres}"
 
 echo "Stopping ${CONTAINER_NAME} before resetting the database"
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
@@ -21,21 +25,22 @@ else
   echo "Container not found: ${CONTAINER_NAME}"
 fi
 
-found_db=false
-for suffix in "" "-wal" "-shm"; do
-  file="${DB_FILE}${suffix}"
-  if [[ -e "${file}" ]]; then
-    found_db=true
-    mv "${file}" "${RESET_DIR}/$(basename "${file}")"
-  fi
-done
-
-if [[ "${found_db}" == true ]]; then
-  echo "Previous database files moved to ${RESET_DIR}"
+echo "Stopping ${POSTGRES_CONTAINER_NAME} before deleting PostgreSQL data"
+if docker ps -a --format '{{.Names}}' | grep -Fxq "${POSTGRES_CONTAINER_NAME}"; then
+  docker rm -f "${POSTGRES_CONTAINER_NAME}"
 else
-  echo "No database files found at ${DB_FILE}; continuing with a fresh deploy"
-  rmdir "${RESET_DIR}" 2>/dev/null || true
+  echo "Container not found: ${POSTGRES_CONTAINER_NAME}"
 fi
 
-echo "Starting Wordolino with a fresh database"
+if [[ -d "${POSTGRES_DATA_DIR}" ]]; then
+  echo "Deleting PostgreSQL data directory: ${POSTGRES_DATA_DIR}"
+  rm -rf "${POSTGRES_DATA_DIR}"
+else
+  echo "PostgreSQL data directory not found: ${POSTGRES_DATA_DIR}"
+fi
+
+echo "Deleting old SQLite database files, if present"
+rm -f "${DATA_DIR}/huff-wordle.sqlite" "${DATA_DIR}/huff-wordle.sqlite-wal" "${DATA_DIR}/huff-wordle.sqlite-shm"
+
+echo "Starting Indovena with a fresh database"
 "${SCRIPT_DIR}/redeploy-huff.sh"

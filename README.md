@@ -1,4 +1,4 @@
-# Wordolino
+# Indovena
 
 Wordle italiano con React, TypeScript e backend Java Quarkus.
 
@@ -64,7 +64,7 @@ Le parole sono in `backend/src/main/resources/words/it-words.json` e devono esse
 scripts/redeploy-huff.sh
 ```
 
-Lo script costruisce l'immagine Docker, rimpiazza il container esistente e monta `DATA_DIR` su `/data` per persistere SQLite.
+Lo script costruisce l'immagine Docker, crea la rete Docker se manca, avvia PostgreSQL con dati persistenti in `POSTGRES_DATA_DIR` e rimpiazza il container applicativo.
 
 ## Log Quarkus
 
@@ -76,7 +76,7 @@ Usa `TAIL_LINES=500 scripts/logs-huff.sh` per cambiare quante righe iniziali mos
 
 ## Database
 
-Il backend usa Hibernate ORM/Panache su SQLite. Il database live e' in `data/huff-wordle.sqlite`, montato nel container come `/data/huff-wordle.sqlite`.
+Il backend usa Hibernate ORM/Panache su PostgreSQL. Il database live gira nel container `POSTGRES_CONTAINER_NAME` e persiste i dati in `POSTGRES_DATA_DIR`.
 
 Comandi utili:
 
@@ -89,13 +89,13 @@ scripts/db-huff.sh backup
 scripts/db-huff.sh dump data/huff-wordle.sql
 ```
 
-Per azzerare il database live, spostando prima i file correnti in `data/backups/reset-<timestamp>/` e poi ridistribuendo l'app:
+Per azzerare il database live, eliminando la directory dati PostgreSQL e gli eventuali vecchi file SQLite residui, poi ridistribuendo l'app:
 
 ```bash
 scripts/reset-db-huff.sh
 ```
 
-Se hai `sqlite3` installato puoi aprire anche una shell interattiva:
+Puoi aprire anche una shell `psql` interattiva:
 
 ```bash
 scripts/db-huff.sh shell
