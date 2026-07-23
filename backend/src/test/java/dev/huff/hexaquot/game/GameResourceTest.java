@@ -1,4 +1,4 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ class GameResourceTest {
             .then()
             .statusCode(200)
             .header("Set-Cookie", notNullValue())
-            .body("wordLength", equalTo(6))
+            .body("answerLength", equalTo(6))
             .body("maxAttempts", equalTo(6))
             .body("status", equalTo("IN_PROGRESS"));
     }

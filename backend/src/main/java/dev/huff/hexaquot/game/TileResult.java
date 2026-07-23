@@ -1,4 +1,4 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 public record TileResult(
     String letter,

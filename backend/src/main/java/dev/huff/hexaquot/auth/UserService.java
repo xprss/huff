@@ -1,6 +1,6 @@
-package dev.huff.wordle.auth;
+package dev.huff.hexaquot.auth;
 
-import dev.huff.wordle.persistence.UserEntity;
+import dev.huff.hexaquot.persistence.UserEntity;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

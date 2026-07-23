@@ -1,8 +1,8 @@
 # Indovena
 
-Wordle italiano con React, TypeScript e backend Java Quarkus.
+Daily Italian word puzzle built with React, TypeScript, and a Java Quarkus backend.
 
-## Sviluppo locale
+## Local Development
 
 Backend:
 
@@ -19,17 +19,17 @@ npm install
 npm run dev
 ```
 
-Il frontend usa il proxy Vite verso Quarkus su `localhost:8080`.
+The frontend uses the Vite proxy to reach Quarkus on `localhost:8080`.
 
-## Configurazione
+## Configuration
 
-Copia `.env.example` in `.env` per il deploy Docker. L'autenticazione e' disattivata di default:
+Copy `.env.example` to `.env` for Docker deployments. Authentication is disabled by default:
 
 ```bash
 AUTH_ENABLED=false
 ```
 
-Per abilitare Google OAuth:
+To enable Google OAuth:
 
 ```bash
 AUTH_ENABLED=true
@@ -38,25 +38,25 @@ GOOGLE_CLIENT_SECRET=...
 COOKIE_SECURE=true
 ```
 
-Nel client OAuth Google usa tipo applicazione `Web application`.
+In the Google OAuth client, use the `Web application` application type.
 
-Origini JavaScript autorizzate:
+Authorized JavaScript origins:
 
 ```text
 https://huff.ottonovembre.it
 https://www.huff.ottonovembre.it
 ```
 
-URI di reindirizzamento autorizzati:
+Authorized redirect URIs:
 
 ```text
 https://huff.ottonovembre.it/auth/callback
 https://www.huff.ottonovembre.it/auth/callback
 ```
 
-Il login parte da `/api/login`; il logout locale dell'app passa da `/api/logout`.
+Login starts at `/api/login`; local logout uses `/api/logout`.
 
-Le parole sono in `backend/src/main/resources/words/it-words.json` e devono essere tutte di 6 lettere.
+The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 
 ## Deploy
 
@@ -64,21 +64,21 @@ Le parole sono in `backend/src/main/resources/words/it-words.json` e devono esse
 scripts/redeploy-huff.sh
 ```
 
-Lo script costruisce l'immagine Docker, crea la rete Docker se manca, avvia PostgreSQL con dati persistenti in `POSTGRES_DATA_DIR` e rimpiazza il container applicativo.
+The script builds the Docker image, creates the Docker network if needed, starts PostgreSQL with persistent data in `POSTGRES_DATA_DIR`, and replaces the application container.
 
-## Log Quarkus
+## Quarkus Logs
 
 ```bash
 scripts/logs-huff.sh
 ```
 
-Usa `TAIL_LINES=500 scripts/logs-huff.sh` per cambiare quante righe iniziali mostrare prima del follow.
+Use `TAIL_LINES=500 scripts/logs-huff.sh` to change how many existing log lines are shown before following new output.
 
 ## Database
 
-Il backend usa Hibernate ORM/Panache su PostgreSQL. Il database live gira nel container `POSTGRES_CONTAINER_NAME` e persiste i dati in `POSTGRES_DATA_DIR`.
+The backend uses Hibernate ORM/Panache with PostgreSQL. The live database runs in the `POSTGRES_CONTAINER_NAME` container and persists data in `POSTGRES_DATA_DIR`.
 
-Comandi utili:
+Useful commands:
 
 ```bash
 scripts/db-huff.sh path
@@ -86,16 +86,16 @@ scripts/db-huff.sh tables
 scripts/db-huff.sh schema
 scripts/db-huff.sh query "SELECT * FROM users;"
 scripts/db-huff.sh backup
-scripts/db-huff.sh dump data/huff-wordle.sql
+scripts/db-huff.sh dump data/huff-hexaquot.sql
 ```
 
-Per azzerare il database live, eliminando la directory dati PostgreSQL e gli eventuali vecchi file SQLite residui, poi ridistribuendo l'app:
+To reset the live database, delete the PostgreSQL data directory and any old residual SQLite files, then redeploy the app:
 
 ```bash
 scripts/reset-db-huff.sh
 ```
 
-Puoi aprire anche una shell `psql` interattiva:
+You can also open an interactive `psql` shell:
 
 ```bash
 scripts/db-huff.sh shell

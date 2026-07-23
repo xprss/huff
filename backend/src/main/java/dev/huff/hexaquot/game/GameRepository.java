@@ -1,6 +1,6 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
-import dev.huff.wordle.persistence.GameEntity;
+import dev.huff.hexaquot.persistence.GameEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 

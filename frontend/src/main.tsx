@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BarChart3, Delete, Heart, LogOut, Moon, RotateCw, Share2, Sun } from "lucide-react";
 import { api } from "./api";
+import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
 import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
 import "./styles.css";
 
@@ -33,6 +34,7 @@ function App() {
   const [loading, setLoading] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
+  const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -65,7 +67,6 @@ function App() {
   }, [load]);
 
   React.useEffect(() => {
-    document.documentElement.dataset.theme = darkMode ? "dark" : "light";
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
 
@@ -133,13 +134,13 @@ function App() {
     if (keyStates.get(letter.toUpperCase()) === "ABSENT") return;
     setMessage("");
     setCurrentGuess((value) =>
-      value.length >= game.wordLength ? value : value + letter.toUpperCase()
+      value.length >= game.answerLength ? value : value + letter.toUpperCase()
     );
   }
 
   async function submitGuess() {
     if (!game || game.status !== "IN_PROGRESS") return;
-    if (currentGuess.length !== game.wordLength) {
+    if (currentGuess.length !== game.answerLength) {
       setMessage("Servono 6 lettere.");
       return;
     }
@@ -196,7 +197,7 @@ function App() {
 
   const columns = buildColumns(game);
   const canPlay = Boolean(game && game.status === "IN_PROGRESS");
-  const wordLength = game?.wordLength ?? 6;
+  const answerLength = game?.answerLength ?? 6;
   const puzzleDate = formatPuzzleDate(game?.puzzleDate);
   const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
@@ -221,151 +222,153 @@ function App() {
   }, [completedSolution]);
 
   return (
-    <main className="app-shell">
-      <section className="game-surface" aria-busy={loading}>
-        <header className="topbar">
-          <div className="title-row">
-            <div className="title-mark">
-              <h1>{APP_NAME}</h1>
-              <span className="byline">by xprss</span>
+    <AppThemeProvider conditions={themeConditions}>
+      <main className="app-shell">
+        <section className="game-surface" aria-busy={loading}>
+          <header className="topbar">
+            <div className="title-row">
+              <div className="title-mark">
+                <h1>{APP_NAME}</h1>
+                <span className="byline">by xprss</span>
+              </div>
+              <p className="date">{puzzleDate}</p>
             </div>
-            <p className="date">{puzzleDate}</p>
-          </div>
-          <div className="actions">
-            {me?.authEnabled && me.loggedIn ? (
-              <a className="icon-button" href={me.logoutUrl ?? "/api/logout"} title="Esci">
-                <LogOut size={20} />
-              </a>
-            ) : null}
-            {canUseGameActions ? (
-              <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
-                <BarChart3 size={21} />
+            <div className="actions">
+              {me?.authEnabled && me.loggedIn ? (
+                <a className="icon-button" href={me.logoutUrl ?? "/api/logout"} title="Esci">
+                  <LogOut size={20} />
+                </a>
+              ) : null}
+              {canUseGameActions ? (
+                <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
+                  <BarChart3 size={21} />
+                </button>
+              ) : null}
+              <button
+                className="icon-button"
+                type="button"
+                onClick={() => setDarkMode((value) => !value)}
+                title={darkMode ? "Tema chiaro" : "Tema scuro"}
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
               </button>
-            ) : null}
-            <button
-              className="icon-button"
-              type="button"
-              onClick={() => setDarkMode((value) => !value)}
-              title={darkMode ? "Tema chiaro" : "Tema scuro"}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            {canUseGameActions ? (
-              <button className="icon-button" type="button" onClick={() => void load()} title="Ricarica">
-                <RotateCw size={20} />
-              </button>
-            ) : null}
-          </div>
-        </header>
-
-        <p className={`status-line ${message ? "error" : ""}`}>{statusText}</p>
-
-        {showLoginScreen ? (
-          <LoginScreen loginUrl={me?.loginUrl ?? "/api/login"} />
-        ) : loading ? (
-          <div className="play-area">
-            <LoadingSpinner />
-          </div>
-        ) : (
-          <>
+              {canUseGameActions ? (
+                <button className="icon-button" type="button" onClick={() => void load()} title="Ricarica">
+                  <RotateCw size={20} />
+                </button>
+              ) : null}
+            </div>
+          </header>
+  
+          <p className={`status-line ${message ? "error" : ""}`}>{statusText}</p>
+  
+          {showLoginScreen ? (
+            <LoginScreen loginUrl={me?.loginUrl ?? "/api/login"} />
+          ) : loading ? (
             <div className="play-area">
-              <div className="game-board-wrap">
-                {completedSolution ? (
-                  <button className="share-button" type="button" onClick={() => void shareResult()}>
-                    <Share2 size={18} />
-                    <span>Condividi risultato</span>
-                  </button>
-                ) : null}
-                <div className="board" aria-label="Griglia tentativi">
-                  <TerminalInput
-                    value={terminalValue}
-                    wordLength={wordLength}
-                    canPlay={canPlay}
-                    result={terminalResult}
-                  />
-                  <div className="feedback-board">
-                    {columns.map((column, columnIndex) => (
-                      <div className="board-column" key={columnIndex}>
-                        <div className="feedback-stack" aria-hidden="true">
-                          {column.feedback.map((state, attemptIndex) => (
-                            <span
-                              className={`feedback-marker ${
-                                state === "CORRECT" || state === "PRESENT" || state === "ABSENT"
-                                  ? state.toLowerCase()
-                                  : "empty"
-                              }`}
-                              key={attemptIndex}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <>
+              <div className="play-area">
+                <div className="game-board-wrap">
                   {completedSolution ? (
-                    <p className="next-challenge" aria-live="polite">
-                      Prossima sfida tra <time>{nextChallengeCountdown}</time>
-                    </p>
+                    <button className="share-button" type="button" onClick={() => void shareResult()}>
+                      <Share2 size={18} />
+                      <span>Condividi risultato</span>
+                    </button>
                   ) : null}
+                  <div className="board" aria-label="Griglia tentativi">
+                    <TerminalInput
+                      value={terminalValue}
+                      answerLength={answerLength}
+                      canPlay={canPlay}
+                      result={terminalResult}
+                    />
+                    <div className="feedback-board">
+                      {columns.map((column, columnIndex) => (
+                        <div className="board-column" key={columnIndex}>
+                          <div className="feedback-stack" aria-hidden="true">
+                            {column.feedback.map((state, attemptIndex) => (
+                              <span
+                                className={`feedback-marker ${
+                                  state === "CORRECT" || state === "PRESENT" || state === "ABSENT"
+                                    ? state.toLowerCase()
+                                    : "empty"
+                                }`}
+                                key={attemptIndex}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {completedSolution ? (
+                      <p className="next-challenge" aria-live="polite">
+                        Prossima sfida tra <time>{nextChallengeCountdown}</time>
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div className="keyboard" aria-label="Tastiera">
-              {KEY_ROWS.map((row, index) => (
-                <div className="key-row" key={row}>
-                  {index === 2 ? (
-                    <button className="key wide" type="button" disabled={!canPlay} onClick={() => void submitGuess()}>
-                      Invio
-                    </button>
-                  ) : null}
-                  {row.split("").map((letter) => {
-                    const keyState = keyStates.get(letter);
-                    const keyClass =
-                      keyState === "CORRECT" || keyState === "PRESENT" || keyState === "ABSENT"
-                        ? keyState.toLowerCase()
-                        : "";
-                    const isAbsent = keyState === "ABSENT";
-
-                    return (
-                      <button
-                        className={`key ${keyClass}`}
-                        key={letter}
-                        type="button"
-                        disabled={!canPlay || isAbsent}
-                        onClick={() => addLetter(letter)}
-                      >
-                        {letter}
+  
+              <div className="keyboard" aria-label="Tastiera">
+                {KEY_ROWS.map((row, index) => (
+                  <div className="key-row" key={row}>
+                    {index === 2 ? (
+                      <button className="key wide" type="button" disabled={!canPlay} onClick={() => void submitGuess()}>
+                        Invio
                       </button>
-                    );
-                  })}
-                  {index === 2 ? (
-                    <button
-                      className="key wide"
-                      type="button"
-                      disabled={!canPlay}
-                      onClick={() => setCurrentGuess((value) => value.slice(0, -1))}
-                      title="Cancella"
-                    >
-                      <Delete size={19} />
-                    </button>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
-
-      {showStats ? (
-        <StatsModal game={game} stats={stats} globalStats={globalStats} onClose={() => setShowStats(false)} />
-      ) : null}
-
-      <footer className="app-footer">
-        <span>Sviluppato con</span>
-        <Heart className="footer-heart" aria-hidden="true" />
-        <span>da xprss</span>
-      </footer>
-    </main>
+                    ) : null}
+                    {row.split("").map((letter) => {
+                      const keyState = keyStates.get(letter);
+                      const keyClass =
+                        keyState === "CORRECT" || keyState === "PRESENT" || keyState === "ABSENT"
+                          ? keyState.toLowerCase()
+                          : "";
+                      const isAbsent = keyState === "ABSENT";
+  
+                      return (
+                        <button
+                          className={`key ${keyClass}`}
+                          key={letter}
+                          type="button"
+                          disabled={!canPlay || isAbsent}
+                          onClick={() => addLetter(letter)}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                    {index === 2 ? (
+                      <button
+                        className="key wide"
+                        type="button"
+                        disabled={!canPlay}
+                        onClick={() => setCurrentGuess((value) => value.slice(0, -1))}
+                        title="Cancella"
+                      >
+                        <Delete size={19} />
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+  
+        {showStats ? (
+          <StatsModal game={game} stats={stats} globalStats={globalStats} onClose={() => setShowStats(false)} />
+        ) : null}
+  
+        <footer className="app-footer">
+          <span>Sviluppato con</span>
+          <Heart className="footer-heart" aria-hidden="true" />
+          <span>da xprss</span>
+        </footer>
+      </main>
+    </AppThemeProvider>
   );
 }
 
@@ -379,21 +382,21 @@ function LoadingSpinner() {
 
 function TerminalInput({
   value,
-  wordLength,
+  answerLength,
   canPlay,
   result
 }: {
   value: string;
-  wordLength: number;
+  answerLength: number;
   canPlay: boolean;
   result: "won" | "lost" | null;
 }) {
   const displayValue = value.toUpperCase();
-  const cursorIndex = Math.min(displayValue.length, wordLength);
+  const cursorIndex = Math.min(displayValue.length, answerLength);
 
   return (
     <div className={`terminal-input ${result ?? ""}`} aria-label={`Input utente: ${displayValue}`}>
-      {Array.from({ length: wordLength }, (_, index) => (
+      {Array.from({ length: answerLength }, (_, index) => (
         <span
           className={`terminal-cell ${displayValue[index] ? "filled" : ""} ${
             canPlay && index === cursorIndex ? "cursor" : ""
@@ -460,22 +463,24 @@ function buildLoginDecorTiles(name: string): LoginDecorTile[] {
 }
 
 function GoogleLogo() {
+  const theme = useAppTheme();
+
   return (
     <svg className="google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path
-        fill="#4285f4"
+        fill={theme.colors.googleBlue}
         d="M23.49 12.27c0-.79-.07-1.54-.2-2.27H12v4.29h6.47a5.53 5.53 0 0 1-2.4 3.63v2.96h3.89c2.27-2.09 3.53-5.17 3.53-8.61Z"
       />
       <path
-        fill="#34a853"
+        fill={theme.colors.googleGreen}
         d="M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.89-2.96c-1.08.72-2.45 1.15-4.06 1.15-3.12 0-5.77-2.11-6.71-4.95H1.28v3.05A12 12 0 0 0 12 24Z"
       />
       <path
-        fill="#fbbc05"
+        fill={theme.colors.googleYellow}
         d="M5.29 14.33a7.21 7.21 0 0 1 0-4.66V6.62H1.28a12.01 12.01 0 0 0 0 10.76l4.01-3.05Z"
       />
       <path
-        fill="#ea4335"
+        fill={theme.colors.googleRed}
         d="M12 4.72c1.76 0 3.34.6 4.59 1.79l3.44-3.44C17.95 1.13 15.23 0 12 0A12 12 0 0 0 1.28 6.62l4.01 3.05C6.23 6.83 8.88 4.72 12 4.72Z"
       />
     </svg>
@@ -483,11 +488,11 @@ function GoogleLogo() {
 }
 
 function buildColumns(game: GameDto | null): BoardColumn[] {
-  const wordLength = game?.wordLength ?? 6;
+  const answerLength = game?.answerLength ?? 6;
   const maxAttempts = game?.maxAttempts ?? 6;
   const submitted = game?.guesses ?? [];
 
-  return Array.from({ length: wordLength }, (_, columnIndex) => ({
+  return Array.from({ length: answerLength }, (_, columnIndex) => ({
     feedback: Array.from({ length: maxAttempts }, (_, attemptIndex) => submitted[attemptIndex]?.tiles[columnIndex]?.state)
   }));
 }
@@ -629,6 +634,8 @@ function Metric({ label, value }: { label: string; value: number | string }) {
     </div>
   );
 }
+
+applyThemeToDocument(baseAppTheme);
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

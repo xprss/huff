@@ -14,7 +14,7 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-huff-postgres}"
-POSTGRES_DB="${POSTGRES_DB:-huff_wordle}"
+POSTGRES_DB="${POSTGRES_DB:-huff_hexaquot}"
 POSTGRES_USER="${POSTGRES_USER:-huff}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-huff}"
 OUTPUT_FILE="${1:-${PLAYER_STATS_JSON_FILE:-${PROJECT_ROOT}/data/player-stats.json}}"

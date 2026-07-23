@@ -1,4 +1,4 @@
-package dev.huff.wordle.api;
+package dev.huff.hexaquot.api;
 
 import io.quarkus.security.Authenticated;
 import jakarta.ws.rs.GET;

@@ -1,7 +1,7 @@
-package dev.huff.wordle.persistence;
+package dev.huff.hexaquot.persistence;
 
-import dev.huff.wordle.game.GameRecord;
-import dev.huff.wordle.game.GameStatus;
+import dev.huff.hexaquot.game.GameRecord;
+import dev.huff.hexaquot.game.GameStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

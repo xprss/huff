@@ -1,4 +1,4 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 import java.util.List;
 

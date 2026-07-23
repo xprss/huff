@@ -15,7 +15,7 @@ fi
 
 DATA_DIR="${DATA_DIR:-${PROJECT_ROOT}/data}"
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-huff-postgres}"
-POSTGRES_DB="${POSTGRES_DB:-huff_wordle}"
+POSTGRES_DB="${POSTGRES_DB:-huff_hexaquot}"
 POSTGRES_USER="${POSTGRES_USER:-huff}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-huff}"
 POSTGRES_PORT="${POSTGRES_PORT:-5432}"
@@ -119,7 +119,7 @@ case "${command}" in
     output="${1:-}"
     if [[ -z "${output}" ]]; then
       stamp="$(date -u +%Y%m%d%H%M%S)"
-      output="${DATA_DIR}/backups/huff-wordle-${stamp}.sql"
+      output="${DATA_DIR}/backups/huff-hexaquot-${stamp}.sql"
     fi
     mkdir -p "$(dirname "$(realpath -m "${output}")")"
     pg_dump_exec > "${output}"

@@ -15,7 +15,7 @@ export interface GameDto {
   puzzleDate: string;
   status: GameStatus;
   maxAttempts: number;
-  wordLength: number;
+  answerLength: number;
   guesses: GuessResult[];
   solution: string | null;
 }

@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>dev.huff</groupId>
-  <artifactId>italian-wordle</artifactId>
+  <artifactId>italian-hexaquot</artifactId>
   <version>1.0.0-SNAPSHOT</version>
 
   <properties>

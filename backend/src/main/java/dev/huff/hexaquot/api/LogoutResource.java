@@ -1,4 +1,4 @@
-package dev.huff.wordle.api;
+package dev.huff.hexaquot.api;
 
 import io.quarkus.oidc.OidcSession;
 import io.quarkus.security.Authenticated;

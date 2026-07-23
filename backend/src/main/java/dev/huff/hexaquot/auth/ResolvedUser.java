@@ -1,4 +1,4 @@
-package dev.huff.wordle.auth;
+package dev.huff.hexaquot.auth;
 
 public record ResolvedUser(
     AppUser user,

@@ -1,8 +1,8 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.huff.wordle.auth.AppUser;
+import dev.huff.hexaquot.auth.AppUser;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;

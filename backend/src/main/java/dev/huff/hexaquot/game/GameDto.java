@@ -1,4 +1,4 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ public record GameDto(
     String puzzleDate,
     GameStatus status,
     int maxAttempts,
-    int wordLength,
+    int answerLength,
     List<GuessResult> guesses,
     String solution
 ) {

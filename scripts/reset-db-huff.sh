@@ -13,7 +13,7 @@ if [[ -f "${ENV_FILE}" ]]; then
   set +a
 fi
 
-CONTAINER_NAME="${CONTAINER_NAME:-huff-wordle}"
+CONTAINER_NAME="${CONTAINER_NAME:-huff-hexaquot}"
 DATA_DIR="${DATA_DIR:-${PROJECT_ROOT}/data}"
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-huff-postgres}"
 POSTGRES_DATA_DIR="${POSTGRES_DATA_DIR:-${DATA_DIR}/postgres}"
@@ -40,7 +40,7 @@ else
 fi
 
 echo "Deleting old SQLite database files, if present"
-rm -f "${DATA_DIR}/huff-wordle.sqlite" "${DATA_DIR}/huff-wordle.sqlite-wal" "${DATA_DIR}/huff-wordle.sqlite-shm"
+rm -f "${DATA_DIR}/huff-hexaquot.sqlite" "${DATA_DIR}/huff-hexaquot.sqlite-wal" "${DATA_DIR}/huff-hexaquot.sqlite-shm"
 
 echo "Starting Indovena with a fresh database"
 "${SCRIPT_DIR}/redeploy-huff.sh"

@@ -1,4 +1,4 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

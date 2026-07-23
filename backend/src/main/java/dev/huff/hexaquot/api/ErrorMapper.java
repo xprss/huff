@@ -1,4 +1,4 @@
-package dev.huff.wordle.api;
+package dev.huff.hexaquot.api;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;

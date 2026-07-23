@@ -1,4 +1,4 @@
-package dev.huff.wordle.game;
+package dev.huff.hexaquot.game;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -12,7 +12,7 @@ class DailyGameServiceTest {
     DailyGameService dailyGameService;
 
     @Test
-    void scoresDuplicateLettersWithWordleRules() {
+    void scoresDuplicateLettersWithPuzzleRules() {
         GuessResult result = dailyGameService.score("albero", "ancora");
 
         assertEquals(TileState.CORRECT, result.tiles().get(0).state());

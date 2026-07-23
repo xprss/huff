@@ -1,9 +1,9 @@
-package dev.huff.wordle.api;
+package dev.huff.hexaquot.api;
 
-import dev.huff.wordle.auth.ResolvedUser;
-import dev.huff.wordle.auth.UserService;
-import dev.huff.wordle.game.DailyGameService;
-import dev.huff.wordle.game.GuessRequest;
+import dev.huff.hexaquot.auth.ResolvedUser;
+import dev.huff.hexaquot.auth.UserService;
+import dev.huff.hexaquot.game.DailyGameService;
+import dev.huff.hexaquot.game.GuessRequest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;

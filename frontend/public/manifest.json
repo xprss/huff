@@ -7,8 +7,6 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#111816",
-  "theme_color": "#111816",
   "icons": [
     {
       "src": "/icons/huff-icon.svg",

@@ -1,6 +1,6 @@
-package dev.huff.wordle.persistence;
+package dev.huff.hexaquot.persistence;
 
-import dev.huff.wordle.auth.AppUser;
+import dev.huff.hexaquot.auth.AppUser;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
