@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BarChart3, Delete, Heart, LogOut, Moon, RotateCw, Sun } from "lucide-react";
+import { BarChart3, Delete, Heart, LogOut, Moon, RotateCw, Share2, Sun } from "lucide-react";
 import { api } from "./api";
 import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
 import "./styles.css";
@@ -8,6 +8,7 @@ import "./styles.css";
 const APP_NAME = "Hexaquot";
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 const STATE_RANK: Record<TileState, number> = { ABSENT: 1, PRESENT: 2, CORRECT: 3 };
+const SHARE_EMOJI: Record<TileState, string> = { CORRECT: "🟩", PRESENT: "🟨", ABSENT: "⬛" };
 type BoardColumn = {
   feedback: Array<TileState | undefined>;
 };
@@ -129,6 +130,7 @@ function App() {
 
   function addLetter(letter: string) {
     if (!game || game.status !== "IN_PROGRESS") return;
+    if (keyStates.get(letter.toUpperCase()) === "ABSENT") return;
     setMessage("");
     setCurrentGuess((value) =>
       value.length >= game.wordLength ? value : value + letter.toUpperCase()
@@ -154,6 +156,27 @@ function App() {
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Tentativo non valido");
+    }
+  }
+
+  async function shareResult() {
+    if (!game || (game.status !== "WON" && game.status !== "LOST")) return;
+
+    if (!navigator.share) {
+      setMessage("Condivisione non disponibile su questo dispositivo.");
+      return;
+    }
+
+    try {
+      setMessage("");
+      await navigator.share({
+        title: APP_NAME,
+        text: buildShareText(game),
+        url: window.location.origin
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setMessage("Impossibile aprire la condivisione.");
     }
   }
 
@@ -246,36 +269,44 @@ function App() {
         ) : (
           <>
             <div className="play-area">
-              <div className="board" aria-label="Griglia tentativi">
-                <TerminalInput
-                  value={terminalValue}
-                  wordLength={wordLength}
-                  canPlay={canPlay}
-                  result={terminalResult}
-                />
-                <div className="feedback-board">
-                  {columns.map((column, columnIndex) => (
-                    <div className="board-column" key={columnIndex}>
-                      <div className="feedback-stack" aria-hidden="true">
-                        {column.feedback.map((state, attemptIndex) => (
-                          <span
-                            className={`feedback-marker ${
-                              state === "CORRECT" || state === "PRESENT" || state === "ABSENT"
-                                ? state.toLowerCase()
-                                : "empty"
-                            }`}
-                            key={attemptIndex}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="game-board-wrap">
                 {completedSolution ? (
-                  <p className="next-challenge" aria-live="polite">
-                    Prossima sfida tra <time>{nextChallengeCountdown}</time>
-                  </p>
+                  <button className="share-button" type="button" onClick={() => void shareResult()}>
+                    <Share2 size={18} />
+                    <span>Condividi risultato</span>
+                  </button>
                 ) : null}
+                <div className="board" aria-label="Griglia tentativi">
+                  <TerminalInput
+                    value={terminalValue}
+                    wordLength={wordLength}
+                    canPlay={canPlay}
+                    result={terminalResult}
+                  />
+                  <div className="feedback-board">
+                    {columns.map((column, columnIndex) => (
+                      <div className="board-column" key={columnIndex}>
+                        <div className="feedback-stack" aria-hidden="true">
+                          {column.feedback.map((state, attemptIndex) => (
+                            <span
+                              className={`feedback-marker ${
+                                state === "CORRECT" || state === "PRESENT" || state === "ABSENT"
+                                  ? state.toLowerCase()
+                                  : "empty"
+                              }`}
+                              key={attemptIndex}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {completedSolution ? (
+                    <p className="next-challenge" aria-live="polite">
+                      Prossima sfida tra <time>{nextChallengeCountdown}</time>
+                    </p>
+                  ) : null}
+                </div>
               </div>
             </div>
 
@@ -289,14 +320,18 @@ function App() {
                   ) : null}
                   {row.split("").map((letter) => {
                     const keyState = keyStates.get(letter);
-                    const keyClass = keyState === "CORRECT" || keyState === "PRESENT" ? keyState.toLowerCase() : "";
+                    const keyClass =
+                      keyState === "CORRECT" || keyState === "PRESENT" || keyState === "ABSENT"
+                        ? keyState.toLowerCase()
+                        : "";
+                    const isAbsent = keyState === "ABSENT";
 
                     return (
                       <button
                         className={`key ${keyClass}`}
                         key={letter}
                         type="button"
-                        disabled={!canPlay}
+                        disabled={!canPlay || isAbsent}
                         onClick={() => addLetter(letter)}
                       >
                         {letter}
@@ -359,7 +394,12 @@ function TerminalInput({
   return (
     <div className={`terminal-input ${result ?? ""}`} aria-label={`Input utente: ${displayValue}`}>
       {Array.from({ length: wordLength }, (_, index) => (
-        <span className={`terminal-cell ${canPlay && index === cursorIndex ? "cursor" : ""}`} key={index}>
+        <span
+          className={`terminal-cell ${displayValue[index] ? "filled" : ""} ${
+            canPlay && index === cursorIndex ? "cursor" : ""
+          }`}
+          key={index}
+        >
           <span>{displayValue[index] ?? ""}</span>
         </span>
       ))}
@@ -450,6 +490,18 @@ function buildColumns(game: GameDto | null): BoardColumn[] {
   return Array.from({ length: wordLength }, (_, columnIndex) => ({
     feedback: Array.from({ length: maxAttempts }, (_, attemptIndex) => submitted[attemptIndex]?.tiles[columnIndex]?.state)
   }));
+}
+
+function buildShareText(game: GameDto) {
+  const result = game.status === "WON" ? String(game.guesses.length) : "X";
+  const attempts = game.guesses
+    .map((guess) => guess.tiles.map((tile) => SHARE_EMOJI[tile.state]).join(""))
+    .join("\n");
+
+  return `${APP_NAME} - ${formatPuzzleDate(game.puzzleDate)}
+Risultato: ${result}/${game.maxAttempts}
+
+${attempts}`;
 }
 
 function formatPuzzleDate(value: string | undefined) {

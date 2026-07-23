@@ -167,6 +167,7 @@ button {
   flex-direction: column;
   align-items: flex-start;
   width: max-content;
+  overflow: visible;
 }
 
 .byline {
@@ -200,6 +201,18 @@ h1 {
   font-size: 2.45rem;
   font-weight: 850;
   color: var(--text);
+}
+
+.title-mark h1 {
+  display: inline-block;
+  margin: -10px -18px -8px;
+  padding: 10px 18px 8px;
+  color: #e3ffe5;
+  line-height: 1.08;
+  text-shadow:
+    0 0 5px rgba(200, 250, 204, 0.78),
+    0 0 14px rgba(72, 214, 124, 0.52),
+    0 0 26px rgba(72, 214, 124, 0.26);
 }
 
 .actions {
@@ -387,8 +400,41 @@ h1 {
   }
 }
 
-.board {
+.game-board-wrap {
   width: min(100%, 430px);
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+
+.share-button {
+  min-height: 42px;
+  border: var(--control-border-width) solid rgba(39, 132, 95, 0.72);
+  border-radius: var(--control-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 14px;
+  background: var(--correct);
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1;
+  box-shadow: 0 0 18px rgba(39, 132, 95, 0.24);
+}
+
+.share-button:hover {
+  border-color: var(--hover-border);
+}
+
+.share-button svg {
+  flex: 0 0 auto;
+}
+
+.board {
+  width: 100%;
   display: grid;
   grid-template-rows: auto auto auto;
   gap: 16px;
@@ -457,6 +503,14 @@ h1 {
   display: inline-block;
 }
 
+.terminal-cell.filled span {
+  color: #e3ffe5;
+  text-shadow:
+    0 0 5px rgba(200, 250, 204, 0.78),
+    0 0 14px rgba(72, 214, 124, 0.52),
+    0 0 26px rgba(72, 214, 124, 0.26);
+}
+
 .terminal-cell.cursor::after {
   content: "";
   position: absolute;
@@ -493,8 +547,24 @@ h1 {
   border-bottom-color: rgba(39, 132, 95, 0.86);
 }
 
+.terminal-input.won .terminal-cell.filled span {
+  color: #edffee;
+  text-shadow:
+    0 0 6px rgba(212, 255, 216, 0.82),
+    0 0 16px rgba(39, 185, 101, 0.58),
+    0 0 30px rgba(39, 185, 101, 0.28);
+}
+
 .terminal-input.lost .terminal-cell {
   border-bottom-color: rgba(255, 140, 130, 0.78);
+}
+
+.terminal-input.lost .terminal-cell.filled span {
+  color: #fff0ee;
+  text-shadow:
+    0 0 6px rgba(255, 213, 209, 0.8),
+    0 0 16px rgba(255, 116, 103, 0.5),
+    0 0 28px rgba(255, 116, 103, 0.24);
 }
 
 .feedback-board {
@@ -517,6 +587,16 @@ h1 {
   background: var(--present);
   border-color: var(--present);
   color: #111816;
+}
+
+.key.absent {
+  background: var(--absent);
+  border-color: var(--absent);
+  color: #fff;
+}
+
+.key.absent:disabled {
+  opacity: 0.45;
 }
 
 .feedback-stack {
