@@ -66,6 +66,8 @@
 html {
   height: 100%;
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -76,12 +78,15 @@ body {
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
   background: var(--page);
 }
 
 #root {
   height: 100%;
   overflow: hidden;
+  touch-action: none;
 }
 
 button,
