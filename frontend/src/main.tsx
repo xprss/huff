@@ -1,26 +1,31 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BarChart3, Delete, Heart, LogOut, Moon, RotateCw, Share2, Sun } from "lucide-react";
+import confetti from "canvas-confetti";
+import { BarChart3, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Sun, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
 import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
+import { APP_VERSION } from "./version";
 import "./styles.css";
 
-const APP_NAME = "Hexaquot";
+const APP_NAME = "HexaQuot";
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 const STATE_RANK: Record<TileState, number> = { ABSENT: 1, PRESENT: 2, CORRECT: 3 };
 const SHARE_EMOJI: Record<TileState, string> = { CORRECT: "🟩", PRESENT: "🟨", ABSENT: "⬛" };
+const VICTORY_CONFETTI_COLORS = ["#25d7a1", "#ffd166", "#ff6b7a", "#5ab9ff", "#ffffff"];
+const COUNTDOWN_INTERVAL_MS = 1000;
+const NEXT_CHALLENGE_REFRESH_DELAY_MS = 2000;
+const REPOSITORY_URL = "https://github.com/xprss/huff";
 type BoardColumn = {
   feedback: Array<TileState | undefined>;
 };
 const LOGIN_DECOR_STATES = ["correct", "present", "absent"] as const;
 type LoginDecorState = (typeof LOGIN_DECOR_STATES)[number];
 type LoginDecorTile = {
-  letter: string;
   state: LoginDecorState;
   style: React.CSSProperties;
 };
-const LOGIN_DECOR_TILES = buildLoginDecorTiles(APP_NAME);
+const LOGIN_DECOR_TILES = buildLoginDecorTiles();
 const ZOOM_KEYS = new Set(["+", "-", "=", "_", "0"]);
 
 function App() {
@@ -31,9 +36,12 @@ function App() {
   const [currentGuess, setCurrentGuess] = React.useState("");
   const [message, setMessage] = React.useState("");
   const [showStats, setShowStats] = React.useState(false);
+  const [showInfo, setShowInfo] = React.useState(false);
+  const [showActionsMenu, setShowActionsMenu] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
+  const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
 
   const load = React.useCallback(async () => {
@@ -115,7 +123,7 @@ function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (showStats) return;
+      if (showStats || showInfo) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -129,6 +137,28 @@ function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   });
 
+  React.useEffect(() => {
+    if (!showActionsMenu) return;
+
+    function onPointerDown(event: PointerEvent) {
+      if (actionsMenuRef.current?.contains(event.target as Node)) return;
+      setShowActionsMenu(false);
+    }
+
+    function onEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setShowActionsMenu(false);
+      }
+    }
+
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("keydown", onEscape);
+    return () => {
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("keydown", onEscape);
+    };
+  }, [showActionsMenu]);
+
   function addLetter(letter: string) {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (keyStates.get(letter.toUpperCase()) === "ABSENT") return;
@@ -136,6 +166,17 @@ function App() {
     setCurrentGuess((value) =>
       value.length >= game.answerLength ? value : value + letter.toUpperCase()
     );
+  }
+
+  function pressVirtualKey(event: React.PointerEvent<HTMLButtonElement>, action: () => void) {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    action();
+  }
+
+  function clickVirtualKey(event: React.MouseEvent<HTMLButtonElement>, action: () => void) {
+    if (event.detail !== 0) return;
+    action();
   }
 
   async function submitGuess() {
@@ -149,10 +190,20 @@ function App() {
       const updated = await api.guess(currentGuess);
       setGame(updated);
       setCurrentGuess("");
-      const [statsResponse, globalStatsResponse] = await Promise.all([api.stats(), api.globalStats()]);
+      const statsRequest = Promise.all([api.stats(), api.globalStats()]);
+
+      if (updated.status === "WON") {
+        const [[statsResponse, globalStatsResponse]] = await Promise.all([statsRequest, launchVictoryConfetti()]);
+        setStats(statsResponse);
+        setGlobalStats(globalStatsResponse);
+        setShowStats(true);
+        return;
+      }
+
+      const [statsResponse, globalStatsResponse] = await statsRequest;
       setStats(statsResponse);
       setGlobalStats(globalStatsResponse);
-      if (updated.status === "WON" || updated.status === "LOST") {
+      if (updated.status === "LOST") {
         setShowStats(true);
       }
     } catch (error) {
@@ -213,12 +264,31 @@ function App() {
   React.useEffect(() => {
     if (!completedSolution) return;
 
-    setNextChallengeCountdown(formatNextChallengeCountdown());
-    const timer = window.setInterval(() => {
-      setNextChallengeCountdown(formatNextChallengeCountdown());
-    }, 1000);
+    const nextChallengeTime = getNextChallengeTime();
+    let refreshTimer: number | undefined;
 
-    return () => window.clearInterval(timer);
+    function updateCountdown() {
+      const remainingMilliseconds = getRemainingMilliseconds(nextChallengeTime);
+      setNextChallengeCountdown(formatCountdownDuration(remainingMilliseconds));
+
+      if (remainingMilliseconds > 0 || refreshTimer !== undefined) return;
+
+      setLoading(true);
+      setShowStats(false);
+      refreshTimer = window.setTimeout(() => {
+        window.location.reload();
+      }, NEXT_CHALLENGE_REFRESH_DELAY_MS);
+    }
+
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, COUNTDOWN_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(timer);
+      if (refreshTimer !== undefined) {
+        window.clearTimeout(refreshTimer);
+      }
+    };
   }, [completedSolution]);
 
   return (
@@ -229,34 +299,77 @@ function App() {
             <div className="title-row">
               <div className="title-mark">
                 <h1>{APP_NAME}</h1>
-                <span className="byline">by xprss</span>
+                <p className="date">{puzzleDate}</p>
               </div>
-              <p className="date">{puzzleDate}</p>
-            </div>
-            <div className="actions">
-              {me?.authEnabled && me.loggedIn ? (
-                <a className="icon-button" href={me.logoutUrl ?? "/api/logout"} title="Esci">
-                  <LogOut size={20} />
-                </a>
-              ) : null}
-              {canUseGameActions ? (
-                <button className="icon-button" type="button" onClick={() => setShowStats(true)} title="Statistiche">
-                  <BarChart3 size={21} />
+              <div className="actions" ref={actionsMenuRef}>
+                <button
+                  className="icon-button menu-trigger"
+                  type="button"
+                  onClick={() => setShowActionsMenu((value) => !value)}
+                  aria-haspopup="menu"
+                  aria-expanded={showActionsMenu}
+                  aria-label="Apri menu"
+                  title="Menu"
+                >
+                  <Menu size={21} />
                 </button>
-              ) : null}
-              <button
-                className="icon-button"
-                type="button"
-                onClick={() => setDarkMode((value) => !value)}
-                title={darkMode ? "Tema chiaro" : "Tema scuro"}
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-              {canUseGameActions ? (
-                <button className="icon-button" type="button" onClick={() => void load()} title="Ricarica">
-                  <RotateCw size={20} />
-                </button>
-              ) : null}
+                {showActionsMenu ? (
+                  <div className="action-menu" role="menu" aria-label="Azioni">
+                    {canUseGameActions ? (
+                      <button
+                        className="menu-item"
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setShowStats(true);
+                          setShowActionsMenu(false);
+                        }}
+                      >
+                        <BarChart3 size={18} />
+                        <span>Statistiche</span>
+                      </button>
+                    ) : null}
+                    <button
+                      className="menu-item"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setShowInfo(true);
+                        setShowActionsMenu(false);
+                      }}
+                    >
+                      <Info size={18} />
+                      <span>Info</span>
+                    </button>
+                    <button
+                      className="menu-item"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setDarkMode((value) => !value);
+                        setShowActionsMenu(false);
+                      }}
+                    >
+                      {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+                      <span>{darkMode ? "Tema chiaro" : "Tema scuro"}</span>
+                    </button>
+                    {me?.authEnabled && me.loggedIn ? (
+                      <>
+                        <div className="menu-divider" role="separator" />
+                        <a
+                          className="menu-item"
+                          href={me.logoutUrl ?? "/api/logout"}
+                          role="menuitem"
+                          onClick={() => setShowActionsMenu(false)}
+                        >
+                          <LogOut size={18} />
+                          <span>Esci</span>
+                        </a>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </header>
   
@@ -316,7 +429,13 @@ function App() {
                 {KEY_ROWS.map((row, index) => (
                   <div className="key-row" key={row}>
                     {index === 2 ? (
-                      <button className="key wide" type="button" disabled={!canPlay} onClick={() => void submitGuess()}>
+                      <button
+                        className="key wide primary"
+                        type="button"
+                        disabled={!canPlay}
+                        onPointerDown={(event) => pressVirtualKey(event, () => void submitGuess())}
+                        onClick={(event) => clickVirtualKey(event, () => void submitGuess())}
+                      >
                         Invio
                       </button>
                     ) : null}
@@ -334,7 +453,8 @@ function App() {
                           key={letter}
                           type="button"
                           disabled={!canPlay || isAbsent}
-                          onClick={() => addLetter(letter)}
+                          onPointerDown={(event) => pressVirtualKey(event, () => addLetter(letter))}
+                          onClick={(event) => clickVirtualKey(event, () => addLetter(letter))}
                         >
                           {letter}
                         </button>
@@ -345,7 +465,12 @@ function App() {
                         className="key wide"
                         type="button"
                         disabled={!canPlay}
-                        onClick={() => setCurrentGuess((value) => value.slice(0, -1))}
+                        onPointerDown={(event) =>
+                          pressVirtualKey(event, () => setCurrentGuess((value) => value.slice(0, -1)))
+                        }
+                        onClick={(event) =>
+                          clickVirtualKey(event, () => setCurrentGuess((value) => value.slice(0, -1)))
+                        }
                         title="Cancella"
                       >
                         <Delete size={19} />
@@ -361,6 +486,8 @@ function App() {
         {showStats ? (
           <StatsModal game={game} stats={stats} globalStats={globalStats} onClose={() => setShowStats(false)} />
         ) : null}
+
+        {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
   
         <footer className="app-footer">
           <span>Sviluppato con</span>
@@ -369,6 +496,34 @@ function App() {
         </footer>
       </main>
     </AppThemeProvider>
+  );
+}
+
+function InfoModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="modal info-modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="modal-head">
+          <h2>Info</h2>
+          <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi">
+            <X size={19} />
+          </button>
+        </header>
+
+        <p className="app-version">Versione {APP_VERSION}</p>
+
+        <div className="repo-panel">
+          <Github size={26} aria-hidden="true" />
+          <div>
+            <h3>Repository GitHub</h3>
+            <a className="repo-link" href={REPOSITORY_URL} target="_blank" rel="noreferrer">
+              <span>github.com/xprss/huff</span>
+              <ExternalLink size={16} aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -415,9 +570,7 @@ function LoginScreen({ loginUrl }: { loginUrl: string }) {
     <section className="login-screen" aria-labelledby="login-title">
       <div className="login-decor" aria-hidden="true">
         {LOGIN_DECOR_TILES.map((tile, index) => (
-          <span className={`login-decor-tile ${tile.state}`} key={`${tile.letter}-${index}`} style={tile.style}>
-            {tile.letter}
-          </span>
+          <span className={`login-decor-tile ${tile.state}`} key={index} style={tile.style} />
         ))}
       </div>
       <div className="login-copy">
@@ -432,31 +585,48 @@ function LoginScreen({ loginUrl }: { loginUrl: string }) {
   );
 }
 
-function buildLoginDecorTiles(name: string): LoginDecorTile[] {
-  const letters = name.toUpperCase().split("");
-  const columns = Math.min(4, letters.length);
-  const rows = Math.ceil(letters.length / columns);
-  const xGap = 18;
-  const yGap = 28;
-  const yStart = 50 - ((rows - 1) * yGap) / 2;
-  const rotations = [-10, 7, -6, 11, -8, 9, -11, 6];
+function buildLoginDecorTiles(): LoginDecorTile[] {
+  const columns = 6;
+  const rows = 5;
+  const xJitter = [-3.2, 1.8, -1.1, 3.4, -2.4, 2.6];
+  const yJitter = [2.4, -3.1, 1.6, -1.8, 3.2];
+  const widths = [54, 72, 44, 86, 62, 78, 50, 68];
+  const drift = [
+    [-16, -12],
+    [14, -18],
+    [-10, 16],
+    [18, 10],
+    [-20, 6],
+    [12, 18]
+  ];
 
-  return letters.map((letter, index) => {
+  return Array.from({ length: columns * rows }, (_, index) => {
     const row = Math.floor(index / columns);
     const column = index % columns;
-    const rowLength = Math.min(columns, letters.length - row * columns);
-    const xStart = 50 - ((rowLength - 1) * xGap) / 2;
-    const x = xStart + column * xGap;
-    const y = yStart + row * yGap;
-    const rotation = rotations[index % rotations.length];
+    const x = 8 + column * 16.8 + xJitter[(row + column) % xJitter.length];
+    const y = 11 + row * 20 + yJitter[(column + row * 2) % yJitter.length];
+    const [dx, dy] = drift[index % drift.length];
+    const duration = 6800 + ((index * 467) % 3600);
+    const delay = -1 * ((index * 719) % duration);
+    const opacity = 0.11 + ((index * 7) % 7) * 0.012;
+    const scale = 0.82 + ((index * 5) % 9) * 0.035;
 
     return {
-      letter,
       state: LOGIN_DECOR_STATES[index % LOGIN_DECOR_STATES.length],
       style: {
         "--tile-x": `${x.toFixed(1)}%`,
         "--tile-y": `${y.toFixed(1)}%`,
-        "--tile-rotation": `${rotation}deg`
+        "--tile-width": `${widths[index % widths.length]}px`,
+        "--tile-delay": `${delay}ms`,
+        "--tile-duration": `${duration}ms`,
+        "--tile-start-x": `${(-dx * 0.65).toFixed(1)}px`,
+        "--tile-start-y": `${(-dy * 0.65).toFixed(1)}px`,
+        "--tile-dx": `${dx}px`,
+        "--tile-dy": `${dy}px`,
+        "--tile-opacity": opacity.toFixed(3),
+        "--tile-scale": scale.toFixed(2),
+        "--tile-scale-start": (scale * 0.56).toFixed(2),
+        "--tile-scale-end": (scale * 0.72).toFixed(2)
       } as React.CSSProperties
     };
   });
@@ -509,6 +679,24 @@ Risultato: ${result}/${game.maxAttempts}
 ${attempts}`;
 }
 
+async function launchVictoryConfetti() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const burst = confetti({
+    colors: VICTORY_CONFETTI_COLORS,
+    disableForReducedMotion: true,
+    gravity: 0.82,
+    origin: { x: 0.5, y: 0.45 },
+    particleCount: 100,
+    scalar: 1.1,
+    spread: 95,
+    startVelocity: 48,
+    ticks: 240
+  });
+
+  if (burst) await burst;
+}
+
 function formatPuzzleDate(value: string | undefined) {
   if (!value) {
     return formatItalianDate(new Date());
@@ -529,11 +717,23 @@ function formatItalianDate(date: Date) {
   }).format(date);
 }
 
-function formatNextChallengeCountdown() {
+function getNextChallengeTime() {
   const now = new Date();
   const nextMidnight = new Date(now);
   nextMidnight.setHours(24, 0, 0, 0);
-  const totalSeconds = Math.max(0, Math.ceil((nextMidnight.getTime() - now.getTime()) / 1000));
+  return nextMidnight.getTime();
+}
+
+function getRemainingMilliseconds(targetTime: number) {
+  return Math.max(0, targetTime - Date.now());
+}
+
+function formatNextChallengeCountdown() {
+  return formatCountdownDuration(getRemainingMilliseconds(getNextChallengeTime()));
+}
+
+function formatCountdownDuration(remainingMilliseconds: number) {
+  const totalSeconds = Math.max(0, Math.ceil(remainingMilliseconds / 1000));
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
@@ -570,7 +770,7 @@ function StatsModal({
         <header className="modal-head">
           <h2>Statistiche</h2>
           <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi">
-            x
+            <X size={19} />
           </button>
         </header>
 
