@@ -87,6 +87,7 @@ scripts/db-huff.sh schema
 scripts/db-huff.sh query "SELECT * FROM users;"
 scripts/db-huff.sh backup
 scripts/db-huff.sh dump data/huff-hexaquot.sql
+scripts/delete-player-huff.sh --email player@example.com
 ```
 
 To reset the live database, delete the PostgreSQL data directory and any old residual SQLite files, then redeploy the app:
