@@ -64,13 +64,12 @@ public class UserService {
     }
 
     private AppUser upsertAnonymousUser(String sessionId) {
-        String userId = "anon:" + sessionId;
-        return upsertUser(userId, null, null, "Giocatore", false);
+        return upsertUser(UserIds.anonymous(sessionId), null, null, "Giocatore", false);
     }
 
     private AppUser upsertGoogleUser(String subject, String email, String displayName) {
         String existingId = findUserIdByGoogleSubject(subject);
-        String userId = existingId == null ? "google:" + subject : existingId;
+        String userId = existingId == null ? UserIds.google(subject) : existingId;
         return upsertUser(userId, subject, email, displayName, true);
     }
 
@@ -82,6 +81,9 @@ public class UserService {
     }
 
     private AppUser upsertUser(String userId, String googleSubject, String email, String displayName, boolean authenticated) {
+        if (!UserIds.isCanonical(userId)) {
+            throw new IllegalArgumentException("User id must include a SHA-256 suffix and no whitespace");
+        }
         String now = Instant.now().toString();
         UserEntity user = UserEntity.findById(userId);
         if (user == null) {
