@@ -5,6 +5,93 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${ENV_FILE:-${PROJECT_ROOT}/.env}"
+VERSION_FILE="${VERSION_FILE:-${PROJECT_ROOT}/VERSION}"
+FRONTEND_VERSION_FILE="${FRONTEND_VERSION_FILE:-${PROJECT_ROOT}/frontend/src/version.ts}"
+
+usage() {
+  printf 'Usage: %s [--patch|--minor|--major]\n' "$(basename "$0")"
+  printf '\n'
+  printf 'Version bump options:\n'
+  printf '  --patch  Bump patch version. Default when no option is passed.\n'
+  printf '  --minor  Bump minor version and reset patch to 0.\n'
+  printf '  --major  Bump major version and reset minor and patch to 0.\n'
+}
+
+BUMP_KIND="patch"
+BUMP_OPTION_SET="false"
+
+set_bump_kind() {
+  local next_kind="$1"
+  if [[ "${BUMP_OPTION_SET}" == "true" && "${BUMP_KIND}" != "${next_kind}" ]]; then
+    echo "Choose only one version bump option." >&2
+    usage >&2
+    exit 1
+  fi
+  BUMP_KIND="${next_kind}"
+  BUMP_OPTION_SET="true"
+}
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --patch|patch)
+      set_bump_kind "patch"
+      ;;
+    --minor|minor)
+      set_bump_kind "minor"
+      ;;
+    --major|major)
+      set_bump_kind "major"
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+bump_version() {
+  local current_version="1.0.0"
+  if [[ -f "${VERSION_FILE}" ]]; then
+    current_version="$(tr -d '[:space:]' < "${VERSION_FILE}")"
+  fi
+
+  if [[ ! "${current_version}" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "Invalid version in ${VERSION_FILE}: ${current_version}" >&2
+    exit 1
+  fi
+
+  local major="${BASH_REMATCH[1]}"
+  local minor="${BASH_REMATCH[2]}"
+  local patch="${BASH_REMATCH[3]}"
+
+  case "${BUMP_KIND}" in
+    patch)
+      patch=$((patch + 1))
+      ;;
+    minor)
+      minor=$((minor + 1))
+      patch=0
+      ;;
+    major)
+      major=$((major + 1))
+      minor=0
+      patch=0
+      ;;
+  esac
+
+  APP_VERSION="${major}.${minor}.${patch}"
+  printf '%s\n' "${APP_VERSION}" > "${VERSION_FILE}"
+  printf 'export const APP_VERSION = "%s";\n' "${APP_VERSION}" > "${FRONTEND_VERSION_FILE}"
+  echo "App version: ${current_version} -> ${APP_VERSION} (${BUMP_KIND})"
+}
+
+bump_version
 
 if [[ -f "${ENV_FILE}" ]]; then
   set -a
@@ -26,12 +113,37 @@ POSTGRES_DB="${POSTGRES_DB:-huff_hexaquot}"
 POSTGRES_USER="${POSTGRES_USER:-huff}"
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-huff}"
 POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+POSTGRES_HOST_BIND="${POSTGRES_HOST_BIND:-127.0.0.1}"
+POSTGRES_HOST_PORT="${POSTGRES_HOST_PORT:-}"
+
+POSTGRES_PORT_ARGS=()
+if [[ -n "${POSTGRES_HOST_PORT}" ]]; then
+  POSTGRES_PORT_ARGS=(-p "${POSTGRES_HOST_BIND}:${POSTGRES_HOST_PORT}:5432")
+fi
 
 mkdir -p "${DATA_DIR}" "${POSTGRES_DATA_DIR}"
 
 if ! docker network inspect "${DOCKER_NETWORK}" >/dev/null 2>&1; then
   echo "Creating Docker network: ${DOCKER_NETWORK}"
   docker network create "${DOCKER_NETWORK}" >/dev/null
+fi
+
+postgres_publish_matches() {
+  local published
+  published="$(docker port "${POSTGRES_CONTAINER_NAME}" 5432/tcp 2>/dev/null || true)"
+
+  if [[ -z "${POSTGRES_HOST_PORT}" ]]; then
+    [[ -z "${published}" ]]
+  else
+    [[ "${published}" == *"${POSTGRES_HOST_BIND}:${POSTGRES_HOST_PORT}"* ]]
+  fi
+}
+
+if docker ps -a --format '{{.Names}}' | grep -Fxq "${POSTGRES_CONTAINER_NAME}"; then
+  if ! postgres_publish_matches; then
+    echo "Recreating PostgreSQL container with updated port publishing: ${POSTGRES_CONTAINER_NAME}"
+    docker rm -f "${POSTGRES_CONTAINER_NAME}" >/dev/null
+  fi
 fi
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${POSTGRES_CONTAINER_NAME}"; then
@@ -51,6 +163,7 @@ else
     -e "POSTGRES_USER=${POSTGRES_USER}" \
     -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
     -v "${POSTGRES_DATA_DIR}:/var/lib/postgresql/data" \
+    "${POSTGRES_PORT_ARGS[@]}" \
     "${POSTGRES_IMAGE}" >/dev/null
 fi
 
