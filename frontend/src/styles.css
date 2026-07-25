@@ -1024,7 +1024,6 @@ h1 {
   display: grid;
   place-items: center;
   background: var(--color-terminal-background);
-  border-color: var(--color-present);
   color: var(--color-present);
   animation: marker-reveal 190ms var(--ease-out) both;
 }
@@ -1368,6 +1367,10 @@ h1 {
 
 .result.lost {
   color: var(--color-result-lost);
+}
+
+.rat-in-guess {
+  font-size: 13px;
 }
 
 @media (max-width: 460px) {

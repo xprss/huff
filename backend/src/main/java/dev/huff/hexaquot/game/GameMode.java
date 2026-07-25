@@ -2,7 +2,7 @@ package dev.huff.hexaquot.game;
 
 public enum GameMode {
     CLASSIC("Classica"),
-    MISCHIEVOUS_KITTEN("Gattino dispettoso");
+    MISCHIEVOUS_MOUSE("Topolino dispettoso");
 
     private final String label;
 

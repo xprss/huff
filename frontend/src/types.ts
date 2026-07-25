@@ -1,6 +1,6 @@
 export type TileState = "CORRECT" | "PRESENT" | "ABSENT" | "HIDDEN";
 export type GameStatus = "IN_PROGRESS" | "WON" | "LOST";
-export type GameMode = "CLASSIC" | "MISCHIEVOUS_KITTEN";
+export type GameMode = "CLASSIC" | "MISCHIEVOUS_MOUSE";
 
 export interface TileResult {
   letter: string;
