@@ -1,17 +1,17 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import confetti from "canvas-confetti";
-import { BarChart3, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Sun, X } from "lucide-react";
+import { BarChart3, Cat, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Mouse, Share2, Sun, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
-import type { GameDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
+import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
 import { APP_VERSION } from "./version";
 import "./styles.css";
 
 const APP_NAME = "HexaQuot";
 const KEY_ROWS = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
-const STATE_RANK: Record<TileState, number> = { ABSENT: 1, PRESENT: 2, CORRECT: 3 };
-const SHARE_EMOJI: Record<TileState, string> = { CORRECT: "🟩", PRESENT: "🟨", ABSENT: "⬛" };
+const STATE_RANK: Record<Exclude<TileState, "HIDDEN">, number> = { ABSENT: 1, PRESENT: 2, CORRECT: 3 };
+const SHARE_EMOJI: Record<TileState, string> = { CORRECT: "🟩", PRESENT: "🟨", ABSENT: "⬛", HIDDEN: "🐭" };
 const VICTORY_CONFETTI_COLORS = ["#25d7a1", "#ffd166", "#ff6b7a", "#5ab9ff", "#ffffff"];
 const COUNTDOWN_INTERVAL_MS = 1000;
 const NEXT_CHALLENGE_REFRESH_DELAY_MS = 2000;
@@ -31,6 +31,8 @@ const ZOOM_KEYS = new Set(["+", "-", "=", "_", "0"]);
 function App() {
   const [me, setMe] = React.useState<MeDto | null>(null);
   const [game, setGame] = React.useState<GameDto | null>(null);
+  const [modes, setModes] = React.useState<GameModeDto[]>([]);
+  const [todayPuzzleDate, setTodayPuzzleDate] = React.useState<string | null>(null);
   const [stats, setStats] = React.useState<StatsDto | null>(null);
   const [globalStats, setGlobalStats] = React.useState<GlobalStatsDto | null>(null);
   const [currentGuess, setCurrentGuess] = React.useState("");
@@ -53,14 +55,18 @@ function App() {
       const globalStatsResponse = await api.globalStats();
       setGlobalStats(globalStatsResponse);
       if (meResponse.loggedIn) {
-        const [gameResponse, statsResponse] = await Promise.all([
+        const [todayResponse, statsResponse] = await Promise.all([
           api.today(),
           api.stats()
         ]);
-        setGame(gameResponse);
+        setModes(todayResponse.modes);
+        setTodayPuzzleDate(todayResponse.puzzleDate);
+        setGame(todayResponse.game);
         setStats(statsResponse);
       } else {
         setGame(null);
+        setModes([]);
+        setTodayPuzzleDate(null);
         setStats(null);
       }
     } catch (error) {
@@ -211,6 +217,29 @@ function App() {
     }
   }
 
+  async function selectGameMode(mode: GameMode) {
+    try {
+      setMessage("");
+      const updated = await api.selectMode(mode);
+      setGame(updated);
+      setCurrentGuess("");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Impossibile selezionare la modalita'");
+    }
+  }
+
+  async function useKitten() {
+    if (!game?.kitten.canUse) return;
+
+    try {
+      setMessage("");
+      const updated = await api.useKitten();
+      setGame(updated);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Impossibile usare il gattino");
+    }
+  }
+
   async function shareResult() {
     if (!game || (game.status !== "WON" && game.status !== "LOST")) return;
 
@@ -233,9 +262,10 @@ function App() {
   }
 
   const keyStates = React.useMemo(() => {
-    const states = new Map<string, TileState>();
+    const states = new Map<string, Exclude<TileState, "HIDDEN">>();
     game?.guesses.forEach((guess) => {
       guess.tiles.forEach((tile) => {
+        if (tile.state === "HIDDEN") return;
         const letter = tile.letter.toUpperCase();
         const previous = states.get(letter);
         if (!previous || STATE_RANK[tile.state] > STATE_RANK[previous]) {
@@ -249,7 +279,7 @@ function App() {
   const columns = buildColumns(game);
   const canPlay = Boolean(game && game.status === "IN_PROGRESS");
   const answerLength = game?.answerLength ?? 6;
-  const puzzleDate = formatPuzzleDate(game?.puzzleDate);
+  const puzzleDate = formatPuzzleDate(game?.puzzleDate ?? todayPuzzleDate ?? undefined);
   const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const statusText = message;
@@ -381,10 +411,30 @@ function App() {
             <div className="play-area">
               <LoadingSpinner />
             </div>
+          ) : !game ? (
+            <div className="play-area">
+              <ModeSelection modes={modes} selectedMode={null} onSelect={(mode) => void selectGameMode(mode)} />
+            </div>
           ) : (
             <>
               <div className="play-area">
                 <div className="game-board-wrap">
+                  {game.canChangeMode ? (
+                    <ModeSelection
+                      modes={modes}
+                      selectedMode={game.mode}
+                      compact
+                      onSelect={(mode) => void selectGameMode(mode)}
+                    />
+                  ) : (
+                    <div className="mode-badge">{game.modeLabel}</div>
+                  )}
+                  {game.kitten.canUse ? (
+                    <button className="kitten-button" type="button" onClick={() => void useKitten()}>
+                      <Cat size={18} />
+                      <span>Usa gattino</span>
+                    </button>
+                  ) : null}
                   {completedSolution ? (
                     <button className="share-button" type="button" onClick={() => void shareResult()}>
                       <Share2 size={18} />
@@ -405,12 +455,14 @@ function App() {
                             {column.feedback.map((state, attemptIndex) => (
                               <span
                                 className={`feedback-marker ${
-                                  state === "CORRECT" || state === "PRESENT" || state === "ABSENT"
+                                  state === "CORRECT" || state === "PRESENT" || state === "ABSENT" || state === "HIDDEN"
                                     ? state.toLowerCase()
                                     : "empty"
                                 }`}
                                 key={attemptIndex}
-                              />
+                              >
+                                {state === "HIDDEN" ? <Mouse size={13} /> : null}
+                              </span>
                             ))}
                           </div>
                         </div>
@@ -532,6 +584,38 @@ function LoadingSpinner() {
     <div className="loading-spinner" role="status" aria-label="Caricamento">
       <span />
     </div>
+  );
+}
+
+function ModeSelection({
+  modes,
+  selectedMode,
+  compact = false,
+  onSelect
+}: {
+  modes: GameModeDto[];
+  selectedMode: GameMode | null;
+  compact?: boolean;
+  onSelect: (mode: GameMode) => void;
+}) {
+  return (
+    <section className={`mode-selection ${compact ? "compact" : ""}`} aria-label="Modalita' di gioco">
+      <h2>Modalita'</h2>
+      <div className="mode-options">
+        {modes.map((mode) => (
+          <button
+            className={`mode-option ${selectedMode === mode.mode ? "selected" : ""}`}
+            type="button"
+            key={mode.mode}
+            onClick={() => onSelect(mode.mode)}
+            aria-pressed={selectedMode === mode.mode}
+          >
+            {mode.mode === "MISCHIEVOUS_KITTEN" ? <Cat size={18} /> : <span className="classic-mark" aria-hidden="true" />}
+            <span>{mode.label}</span>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -674,6 +758,7 @@ function buildShareText(game: GameDto) {
     .join("\n");
 
   return `${APP_NAME} - ${formatPuzzleDate(game.puzzleDate)}
+Modalita': ${game.modeLabel}
 Risultato: ${result}/${game.maxAttempts}
 
 ${attempts}`;
