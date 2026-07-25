@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,18 +20,18 @@ public class GameRepository {
 
     @Transactional
     public GameRecord create(String userId, String puzzleDate, String solution, GameMode mode) {
-        GameMode resolvedMode = mode == null ? GameMode.CLASSIC : mode;
+        Objects.requireNonNull(mode, "mode");
         String now = Instant.now().toString();
         GameRecord record = new GameRecord(
             UUID.randomUUID().toString(),
             userId,
             puzzleDate,
-            resolvedMode,
+            mode,
             solution,
             "[]",
             GameStatus.IN_PROGRESS,
             null,
-            resolvedMode == GameMode.CLASSIC,
+            mode == GameMode.CLASSIC,
             false,
             null,
             now,

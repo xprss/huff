@@ -12,6 +12,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
+import java.util.Objects;
+
 @Entity
 @Table(
     name = "games",
@@ -28,7 +30,7 @@ public class GameEntity extends PanacheEntityBase {
     public String puzzleDate;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mode")
+    @Column(name = "mode", nullable = false)
     public GameMode mode;
 
     @Column(name = "solution", nullable = false)
@@ -44,10 +46,10 @@ public class GameEntity extends PanacheEntityBase {
     @Column(name = "mouse_tile_index")
     public Integer mouseTileIndex;
 
-    @Column(name = "mouse_revealed")
+    @Column(name = "mouse_revealed", nullable = false)
     public Boolean mouseRevealed;
 
-    @Column(name = "kitten_unlocked")
+    @Column(name = "kitten_unlocked", nullable = false)
     public Boolean kittenUnlocked;
 
     @Column(name = "kitten_used_at")
@@ -86,13 +88,13 @@ public class GameEntity extends PanacheEntityBase {
             id,
             userId,
             puzzleDate,
-            mode == null ? GameMode.CLASSIC : mode,
+            Objects.requireNonNull(mode, "mode"),
             solution,
             guessesJson,
             status,
             mouseTileIndex,
-            mouseRevealed == null || mouseRevealed,
-            kittenUnlocked != null && kittenUnlocked,
+            Objects.requireNonNull(mouseRevealed, "mouseRevealed"),
+            Objects.requireNonNull(kittenUnlocked, "kittenUnlocked"),
             kittenUsedAt,
             createdAt,
             updatedAt,

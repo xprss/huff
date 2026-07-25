@@ -43,17 +43,22 @@ class UserIdShaMigrationTest {
             .executeUpdate();
         entityManager
             .createNativeQuery(
-                "INSERT INTO games (id, user_id, puzzle_date, solution, guesses_json, status, created_at, updated_at) "
-                    + "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"
+                "INSERT INTO games "
+                    + "(id, user_id, puzzle_date, mode, solution, guesses_json, status, "
+                    + "mouse_revealed, kitten_unlocked, created_at, updated_at) "
+                    + "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"
             )
             .setParameter(1, gameId)
             .setParameter(2, oldUserId)
             .setParameter(3, "2099-01-01")
-            .setParameter(4, "parola")
-            .setParameter(5, "[]")
-            .setParameter(6, "IN_PROGRESS")
-            .setParameter(7, now)
-            .setParameter(8, now)
+            .setParameter(4, "CLASSIC")
+            .setParameter(5, "parola")
+            .setParameter(6, "[]")
+            .setParameter(7, "IN_PROGRESS")
+            .setParameter(8, true)
+            .setParameter(9, false)
+            .setParameter(10, now)
+            .setParameter(11, now)
             .executeUpdate();
 
         assertEquals(1, migration.migrate());
