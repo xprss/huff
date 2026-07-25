@@ -6,6 +6,7 @@ import jakarta.transaction.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -18,15 +19,21 @@ public class GameRepository {
     }
 
     @Transactional
-    public GameRecord create(String userId, String puzzleDate, String solution) {
+    public GameRecord create(String userId, String puzzleDate, String solution, GameMode mode) {
+        Objects.requireNonNull(mode, "mode");
         String now = Instant.now().toString();
         GameRecord record = new GameRecord(
             UUID.randomUUID().toString(),
             userId,
             puzzleDate,
+            mode,
             solution,
             "[]",
             GameStatus.IN_PROGRESS,
+            null,
+            mode == GameMode.CLASSIC,
+            false,
+            null,
             now,
             now,
             null
@@ -42,7 +49,12 @@ public class GameRepository {
             throw new IllegalStateException("Cannot update missing game " + record.id());
         }
         entity.guessesJson = record.guessesJson();
+        entity.mode = record.mode();
         entity.status = record.status();
+        entity.mouseTileIndex = record.mouseTileIndex();
+        entity.mouseRevealed = record.mouseRevealed();
+        entity.kittenUnlocked = record.kittenUnlocked();
+        entity.kittenUsedAt = record.kittenUsedAt();
         entity.updatedAt = record.updatedAt();
         entity.completedAt = record.completedAt();
         return record;

@@ -4,6 +4,7 @@ import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.game.DailyGameService;
 import dev.huff.hexaquot.game.GuessRequest;
+import dev.huff.hexaquot.game.ModeRequest;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;
@@ -34,6 +35,22 @@ public class GameResource {
     }
 
     @POST
+    @Path("/game/today/mode")
+    public Response selectMode(@CookieParam("huff_session") String sessionId, ModeRequest request) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized(resolvedUser.loginUrl());
+        }
+        Response.ResponseBuilder response = Response.ok(
+            dailyGameService.selectMode(resolvedUser.user(), request == null ? null : request.mode())
+        );
+        if (resolvedUser.setCookieHeader() != null) {
+            response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        }
+        return response.build();
+    }
+
+    @POST
     @Path("/game/today/guesses")
     public Response guess(@CookieParam("huff_session") String sessionId, GuessRequest request) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
@@ -41,6 +58,20 @@ public class GameResource {
             return unauthorized(resolvedUser.loginUrl());
         }
         Response.ResponseBuilder response = Response.ok(dailyGameService.guess(resolvedUser.user(), request.guess()));
+        if (resolvedUser.setCookieHeader() != null) {
+            response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        }
+        return response.build();
+    }
+
+    @POST
+    @Path("/game/today/kitten")
+    public Response useKitten(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized(resolvedUser.loginUrl());
+        }
+        Response.ResponseBuilder response = Response.ok(dailyGameService.useKitten(resolvedUser.user()));
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }

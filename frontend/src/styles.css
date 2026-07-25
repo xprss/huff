@@ -641,6 +641,121 @@ h1 {
   gap: 12px;
 }
 
+.mode-selection {
+  width: min(100%, 430px);
+  display: grid;
+  gap: 12px;
+}
+
+.mode-selection h2 {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.mode-selection.compact {
+  gap: 8px;
+}
+
+.mode-selection.compact h2 {
+  display: none;
+}
+
+.mode-options {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mode-option,
+.kitten-button,
+.mode-badge {
+  min-height: 40px;
+  border: var(--control-border-width) solid var(--color-button-border);
+  border-radius: var(--control-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: var(--color-button);
+  color: var(--color-text);
+  font-size: 0.86rem;
+  font-weight: 880;
+  line-height: 1;
+  text-align: center;
+}
+
+.mode-option {
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) var(--ease-press),
+    border-color var(--motion-base) var(--ease-out),
+    background var(--motion-base) var(--ease-out);
+}
+
+.mode-option:hover {
+  border-color: var(--color-hover-border);
+}
+
+.mode-option:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.mode-option.selected {
+  border-color: var(--color-primary);
+  background: var(--color-surface-strong);
+  box-shadow: 0 0 0 1px var(--color-share-button-shadow);
+}
+
+.classic-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+  background:
+    linear-gradient(90deg, var(--color-correct) 0 33%, var(--color-present) 33% 66%, var(--color-absent) 66% 100%);
+}
+
+.mode-option svg,
+.kitten-button svg {
+  flex: 0 0 auto;
+}
+
+.kitten-button {
+  border-color: var(--color-present);
+  background: var(--color-present);
+  color: var(--color-on-present);
+  cursor: pointer;
+  box-shadow: 0 0 18px rgba(255, 209, 102, 0.24);
+  transition:
+    transform var(--motion-fast) var(--ease-press),
+    border-color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out);
+}
+
+.kitten-button:hover {
+  border-color: var(--color-hover-border);
+  box-shadow: 0 0 26px rgba(255, 209, 102, 0.32);
+}
+
+.kitten-button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.mode-badge {
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--color-muted-strong);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
 .share-button {
   min-height: 42px;
   border: var(--control-border-width) solid var(--color-share-button-border);
@@ -902,6 +1017,21 @@ h1 {
   background: var(--color-absent);
   border-color: var(--color-absent);
   animation: marker-reveal 190ms var(--ease-out) both;
+}
+
+.feedback-marker.hidden {
+  min-height: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--color-terminal-background);
+  color: var(--color-present);
+  animation: marker-reveal 190ms var(--ease-out) both;
+}
+
+.feedback-marker.hidden svg {
+  width: min(80%, 14px);
+  height: min(80%, 14px);
+  stroke-width: 2.7;
 }
 
 @keyframes marker-reveal {
@@ -1237,6 +1367,10 @@ h1 {
 
 .result.lost {
   color: var(--color-result-lost);
+}
+
+.rat-in-guess {
+  font-size: 13px;
 }
 
 @media (max-width: 460px) {

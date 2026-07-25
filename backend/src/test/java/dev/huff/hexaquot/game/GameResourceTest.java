@@ -25,21 +25,44 @@ class GameResourceTest {
     }
 
     @Test
-    void createsAnonymousDailyGameAndPersistsSessionCookie() {
+    void exposesDailyModeChoiceAndPersistsSessionCookie() {
         given()
             .when().get("/api/game/today")
             .then()
             .statusCode(200)
             .header("Set-Cookie", notNullValue())
+            .body("game", equalTo(null))
+            .body("modes[0].mode", equalTo("CLASSIC"))
+            .body("modes[1].mode", equalTo("MISCHIEVOUS_MOUSE"));
+    }
+
+    @Test
+    void createsAnonymousDailyGameAfterModeSelection() {
+        String cookie = given()
+            .when().get("/api/game/today")
+            .then()
+            .statusCode(200)
+            .extract().header("Set-Cookie");
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"mode\":\"CLASSIC\"}")
+            .contentType("application/json")
+            .when().post("/api/game/today/mode")
+            .then()
+            .statusCode(200)
             .body("answerLength", equalTo(6))
             .body("maxAttempts", equalTo(6))
+            .body("mode", equalTo("CLASSIC"))
             .body("status", equalTo("IN_PROGRESS"));
     }
 
     @Test
     void rejectsWordsOutsideTheDictionary() {
         String cookie = given()
-            .when().get("/api/game/today")
+            .body("{\"mode\":\"CLASSIC\"}")
+            .contentType("application/json")
+            .when().post("/api/game/today/mode")
             .then()
             .statusCode(200)
             .extract().header("Set-Cookie");
@@ -57,7 +80,9 @@ class GameResourceTest {
     @Test
     void exposesGlobalStats() {
         String cookie = given()
-            .when().get("/api/game/today")
+            .body("{\"mode\":\"CLASSIC\"}")
+            .contentType("application/json")
+            .when().post("/api/game/today/mode")
             .then()
             .statusCode(200)
             .extract().header("Set-Cookie");

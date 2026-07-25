@@ -1,5 +1,6 @@
-export type TileState = "CORRECT" | "PRESENT" | "ABSENT";
+export type TileState = "CORRECT" | "PRESENT" | "ABSENT" | "HIDDEN";
 export type GameStatus = "IN_PROGRESS" | "WON" | "LOST";
+export type GameMode = "CLASSIC" | "MISCHIEVOUS_MOUSE";
 
 export interface TileResult {
   letter: string;
@@ -13,11 +14,30 @@ export interface GuessResult {
 
 export interface GameDto {
   puzzleDate: string;
+  mode: GameMode;
+  modeLabel: string;
   status: GameStatus;
   maxAttempts: number;
   answerLength: number;
   guesses: GuessResult[];
   solution: string | null;
+  canChangeMode: boolean;
+  kitten: {
+    unlocked: boolean;
+    used: boolean;
+    canUse: boolean;
+  };
+}
+
+export interface GameModeDto {
+  mode: GameMode;
+  label: string;
+}
+
+export interface TodayGameDto {
+  puzzleDate: string;
+  modes: GameModeDto[];
+  game: GameDto | null;
 }
 
 export interface StatsDto {
