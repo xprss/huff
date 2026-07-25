@@ -1,4 +1,4 @@
-# Indovena
+# HexaQuot
 
 Daily Italian word puzzle built with React, TypeScript, and a Java Quarkus backend.
 
