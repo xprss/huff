@@ -44,15 +44,15 @@ class DailyGameServiceTest {
     }
 
     @Test
-    void mischievousKittenHidesExactlyOneTileOnlyInFirstGuess() {
+    void mischievousMouseHidesExactlyOneTileOnlyInFirstGuess() {
         var user = new dev.huff.hexaquot.auth.AppUser(
-            "test-kitten-" + UUID.randomUUID(),
+            "test-mouse-" + UUID.randomUUID(),
             null,
-            "Kitten",
+            "Mouse",
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
-        gameRepository.create(user.id(), today, "abbaco", GameMode.MISCHIEVOUS_KITTEN);
+        gameRepository.create(user.id(), today, "abbaco", GameMode.MISCHIEVOUS_MOUSE);
 
         GameDto afterFirstGuess = dailyGameService.guess(user, "abachi");
 
@@ -69,6 +69,23 @@ class DailyGameServiceTest {
 
         assertEquals(0, countTiles(afterKitten.guesses().get(0), TileState.HIDDEN));
         assertTrue(afterKitten.kitten().used());
+    }
+
+    @Test
+    void mischievousMouseUnlocksKittenOnFirstGuessWithAtLeastThreeCorrectTiles() {
+        var user = new dev.huff.hexaquot.auth.AppUser(
+            "test-first-guess-kitten-" + UUID.randomUUID(),
+            null,
+            "First Guess Kitten",
+            false
+        );
+        String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
+        gameRepository.create(user.id(), today, "abbaco", GameMode.MISCHIEVOUS_MOUSE);
+
+        GameDto afterFirstGuess = dailyGameService.guess(user, "abbada");
+
+        assertEquals(1, countTiles(afterFirstGuess.guesses().get(0), TileState.HIDDEN));
+        assertTrue(afterFirstGuess.kitten().canUse());
     }
 
     private int countTiles(GuessResult guess, TileState state) {

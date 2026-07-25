@@ -56,7 +56,7 @@ public class DailyGameService {
     @Transactional
     public GameDto selectMode(AppUser user, GameMode mode) {
         if (mode == null) {
-            throw new BadRequestException("Scegli una modalita' di gioco.");
+            throw new BadRequestException("Scegli una modalità di gioco.");
         }
 
         String date = todayDate();
@@ -66,7 +66,7 @@ public class DailyGameService {
         List<GuessResult> guesses = readGuesses(record);
         if (!guesses.isEmpty() && record.mode() != mode) {
             throw new WebApplicationException(
-                "La modalita' non puo' essere cambiata dopo il primo tentativo.",
+                "La modalità non puo' essere cambiata dopo il primo tentativo.",
                 Response.Status.CONFLICT
             );
         }
@@ -120,12 +120,14 @@ public class DailyGameService {
         boolean mouseRevealed = record.mouseRevealed();
         boolean kittenUnlocked = record.kittenUnlocked();
 
-        if (record.mode() == GameMode.MISCHIEVOUS_KITTEN && guesses.isEmpty()) {
+        if (record.mode() == GameMode.MISCHIEVOUS_MOUSE && countCorrect(scoredGuess) >= 3) {
+            kittenUnlocked = true;
+        }
+
+        if (record.mode() == GameMode.MISCHIEVOUS_MOUSE && guesses.isEmpty()) {
             mouseTileIndex = chooseMouseTileIndex(record);
             mouseRevealed = false;
             scoredGuess = hideTile(scoredGuess, mouseTileIndex);
-        } else if (record.mode() == GameMode.MISCHIEVOUS_KITTEN && guesses.size() >= 1 && countCorrect(scoredGuess) >= 3) {
-            kittenUnlocked = true;
         }
 
         guesses.add(scoredGuess);
@@ -159,8 +161,8 @@ public class DailyGameService {
     @Transactional
     public GameDto useKitten(AppUser user) {
         GameRecord record = todayRecord(user);
-        if (record.mode() != GameMode.MISCHIEVOUS_KITTEN) {
-            throw new WebApplicationException("Il gattino non e' disponibile in questa modalita'.", Response.Status.CONFLICT);
+        if (record.mode() != GameMode.MISCHIEVOUS_MOUSE) {
+            throw new WebApplicationException("Il gattino non e' disponibile in questa modalità.", Response.Status.CONFLICT);
         }
         if (!record.kittenUnlocked() || record.kittenUsedAt() != null || record.mouseRevealed()) {
             throw new WebApplicationException("Il gattino non puo' essere usato ora.", Response.Status.CONFLICT);
@@ -294,7 +296,7 @@ public class DailyGameService {
     private GameRecord todayRecord(AppUser user) {
         String date = todayDate();
         return gameRepository.findByUserAndDate(user.id(), date)
-            .orElseThrow(() -> new BadRequestException("Scegli una modalita' di gioco prima di iniziare."));
+            .orElseThrow(() -> new BadRequestException("Scegli una modalità di gioco prima di iniziare."));
     }
 
     private String todayDate() {
@@ -335,7 +337,7 @@ public class DailyGameService {
     }
 
     private KittenDto kittenDto(GameRecord record) {
-        if (record.mode() != GameMode.MISCHIEVOUS_KITTEN) {
+        if (record.mode() != GameMode.MISCHIEVOUS_MOUSE) {
             return new KittenDto(false, false, false);
         }
         boolean used = record.kittenUsedAt() != null || record.mouseRevealed();
