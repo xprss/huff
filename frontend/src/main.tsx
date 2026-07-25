@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import confetti from "canvas-confetti";
-import { BarChart3, Cat, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Mouse, Share2, Sun, X } from "lucide-react";
+import { BarChart3, Cat, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Rat, Share2, Sun, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
 import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
@@ -167,7 +167,7 @@ function App() {
 
   function addLetter(letter: string) {
     if (!game || game.status !== "IN_PROGRESS") return;
-    if (keyStates.get(letter.toUpperCase()) === "ABSENT") return;
+    if (!shouldHideKeyboardHints && keyStates.get(letter.toUpperCase()) === "ABSENT") return;
     setMessage("");
     setCurrentGuess((value) =>
       value.length >= game.answerLength ? value : value + letter.toUpperCase()
@@ -224,7 +224,7 @@ function App() {
       setGame(updated);
       setCurrentGuess("");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossibile selezionare la modalita'");
+      setMessage(error instanceof Error ? error.message : "Impossibile selezionare la modalità");
     }
   }
 
@@ -278,6 +278,7 @@ function App() {
 
   const columns = buildColumns(game);
   const canPlay = Boolean(game && game.status === "IN_PROGRESS");
+  const shouldHideKeyboardHints = Boolean(game?.mode === "MISCHIEVOUS_MOUSE" && !game.kitten.used);
   const answerLength = game?.answerLength ?? 6;
   const puzzleDate = formatPuzzleDate(game?.puzzleDate ?? todayPuzzleDate ?? undefined);
   const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
@@ -461,7 +462,7 @@ function App() {
                                 }`}
                                 key={attemptIndex}
                               >
-                                {state === "HIDDEN" ? <Mouse size={13} /> : null}
+                                {state === "HIDDEN" ? <Rat size={13} /> : null}
                               </span>
                             ))}
                           </div>
@@ -492,7 +493,7 @@ function App() {
                       </button>
                     ) : null}
                     {row.split("").map((letter) => {
-                      const keyState = keyStates.get(letter);
+                      const keyState = shouldHideKeyboardHints ? undefined : keyStates.get(letter);
                       const keyClass =
                         keyState === "CORRECT" || keyState === "PRESENT" || keyState === "ABSENT"
                           ? keyState.toLowerCase()
@@ -599,8 +600,8 @@ function ModeSelection({
   onSelect: (mode: GameMode) => void;
 }) {
   return (
-    <section className={`mode-selection ${compact ? "compact" : ""}`} aria-label="Modalita' di gioco">
-      <h2>Modalita'</h2>
+    <section className={`mode-selection ${compact ? "compact" : ""}`} aria-label="Modalità di gioco">
+      <h2>Modalità</h2>
       <div className="mode-options">
         {modes.map((mode) => (
           <button
@@ -610,7 +611,7 @@ function ModeSelection({
             onClick={() => onSelect(mode.mode)}
             aria-pressed={selectedMode === mode.mode}
           >
-            {mode.mode === "MISCHIEVOUS_KITTEN" ? <Cat size={18} /> : <span className="classic-mark" aria-hidden="true" />}
+            {mode.mode === "MISCHIEVOUS_MOUSE" ? <Rat size={18} /> : <span className="classic-mark" aria-hidden="true" />}
             <span>{mode.label}</span>
           </button>
         ))}
@@ -758,7 +759,7 @@ function buildShareText(game: GameDto) {
     .join("\n");
 
   return `${APP_NAME} - ${formatPuzzleDate(game.puzzleDate)}
-Modalita': ${game.modeLabel}
+Modalità: ${game.modeLabel}
 Risultato: ${result}/${game.maxAttempts}
 
 ${attempts}`;
