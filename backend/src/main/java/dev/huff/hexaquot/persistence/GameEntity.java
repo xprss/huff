@@ -1,6 +1,7 @@
 package dev.huff.hexaquot.persistence;
 
 import dev.huff.hexaquot.game.GameRecord;
+import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
@@ -26,6 +27,10 @@ public class GameEntity extends PanacheEntityBase {
     @Column(name = "puzzle_date", nullable = false)
     public String puzzleDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode")
+    public GameMode mode;
+
     @Column(name = "solution", nullable = false)
     public String solution;
 
@@ -35,6 +40,18 @@ public class GameEntity extends PanacheEntityBase {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     public GameStatus status;
+
+    @Column(name = "mouse_tile_index")
+    public Integer mouseTileIndex;
+
+    @Column(name = "mouse_revealed")
+    public Boolean mouseRevealed;
+
+    @Column(name = "kitten_unlocked")
+    public Boolean kittenUnlocked;
+
+    @Column(name = "kitten_used_at")
+    public String kittenUsedAt;
 
     @Column(name = "created_at", nullable = false)
     public String createdAt;
@@ -50,9 +67,14 @@ public class GameEntity extends PanacheEntityBase {
         entity.id = record.id();
         entity.userId = record.userId();
         entity.puzzleDate = record.puzzleDate();
+        entity.mode = record.mode();
         entity.solution = record.solution();
         entity.guessesJson = record.guessesJson();
         entity.status = record.status();
+        entity.mouseTileIndex = record.mouseTileIndex();
+        entity.mouseRevealed = record.mouseRevealed();
+        entity.kittenUnlocked = record.kittenUnlocked();
+        entity.kittenUsedAt = record.kittenUsedAt();
         entity.createdAt = record.createdAt();
         entity.updatedAt = record.updatedAt();
         entity.completedAt = record.completedAt();
@@ -64,9 +86,14 @@ public class GameEntity extends PanacheEntityBase {
             id,
             userId,
             puzzleDate,
+            mode == null ? GameMode.CLASSIC : mode,
             solution,
             guessesJson,
             status,
+            mouseTileIndex,
+            mouseRevealed == null || mouseRevealed,
+            kittenUnlocked != null && kittenUnlocked,
+            kittenUsedAt,
             createdAt,
             updatedAt,
             completedAt

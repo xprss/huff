@@ -4,12 +4,20 @@ import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.UUID;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 class DailyGameServiceTest {
     @Inject
     DailyGameService dailyGameService;
+
+    @Inject
+    GameRepository gameRepository;
 
     @Test
     void scoresDuplicateLettersWithPuzzleRules() {
@@ -33,5 +41,39 @@ class DailyGameServiceTest {
         assertEquals(TileState.CORRECT, result.tiles().get(3).state());
         assertEquals(TileState.ABSENT, result.tiles().get(4).state());
         assertEquals(TileState.ABSENT, result.tiles().get(5).state());
+    }
+
+    @Test
+    void mischievousKittenHidesExactlyOneTileOnlyInFirstGuess() {
+        var user = new dev.huff.hexaquot.auth.AppUser(
+            "test-kitten-" + UUID.randomUUID(),
+            null,
+            "Kitten",
+            false
+        );
+        String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
+        gameRepository.create(user.id(), today, "abbaco", GameMode.MISCHIEVOUS_KITTEN);
+
+        GameDto afterFirstGuess = dailyGameService.guess(user, "abachi");
+
+        assertEquals(1, countTiles(afterFirstGuess.guesses().get(0), TileState.HIDDEN));
+        assertEquals(false, afterFirstGuess.kitten().canUse());
+
+        GameDto afterSecondGuess = dailyGameService.guess(user, "abbada");
+
+        assertEquals(1, countTiles(afterSecondGuess.guesses().get(0), TileState.HIDDEN));
+        assertEquals(0, countTiles(afterSecondGuess.guesses().get(1), TileState.HIDDEN));
+        assertTrue(afterSecondGuess.kitten().canUse());
+
+        GameDto afterKitten = dailyGameService.useKitten(user);
+
+        assertEquals(0, countTiles(afterKitten.guesses().get(0), TileState.HIDDEN));
+        assertTrue(afterKitten.kitten().used());
+    }
+
+    private int countTiles(GuessResult guess, TileState state) {
+        return (int) guess.tiles().stream()
+            .filter(tile -> tile.state() == state)
+            .count();
     }
 }

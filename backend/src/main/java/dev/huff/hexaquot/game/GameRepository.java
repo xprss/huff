@@ -18,15 +18,21 @@ public class GameRepository {
     }
 
     @Transactional
-    public GameRecord create(String userId, String puzzleDate, String solution) {
+    public GameRecord create(String userId, String puzzleDate, String solution, GameMode mode) {
+        GameMode resolvedMode = mode == null ? GameMode.CLASSIC : mode;
         String now = Instant.now().toString();
         GameRecord record = new GameRecord(
             UUID.randomUUID().toString(),
             userId,
             puzzleDate,
+            resolvedMode,
             solution,
             "[]",
             GameStatus.IN_PROGRESS,
+            null,
+            resolvedMode == GameMode.CLASSIC,
+            false,
+            null,
             now,
             now,
             null
@@ -42,7 +48,12 @@ public class GameRepository {
             throw new IllegalStateException("Cannot update missing game " + record.id());
         }
         entity.guessesJson = record.guessesJson();
+        entity.mode = record.mode();
         entity.status = record.status();
+        entity.mouseTileIndex = record.mouseTileIndex();
+        entity.mouseRevealed = record.mouseRevealed();
+        entity.kittenUnlocked = record.kittenUnlocked();
+        entity.kittenUsedAt = record.kittenUsedAt();
         entity.updatedAt = record.updatedAt();
         entity.completedAt = record.completedAt();
         return record;

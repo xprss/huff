@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.auth.AppUser;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
@@ -16,6 +17,7 @@ import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,10 +42,60 @@ public class DailyGameService {
     @Inject
     ObjectMapper objectMapper;
 
-    public GameDto today(AppUser user) {
-        return toDto(todayRecord(user), false);
+    public TodayGameDto today(AppUser user) {
+        String date = todayDate();
+        return new TodayGameDto(
+            date,
+            availableModes(),
+            gameRepository.findByUserAndDate(user.id(), date)
+                .map(record -> toDto(record, false))
+                .orElse(null)
+        );
     }
 
+    @Transactional
+    public GameDto selectMode(AppUser user, GameMode mode) {
+        if (mode == null) {
+            throw new BadRequestException("Scegli una modalita' di gioco.");
+        }
+
+        String date = todayDate();
+        GameRecord record = gameRepository.findByUserAndDate(user.id(), date)
+            .orElseGet(() -> gameRepository.create(user.id(), date, solutionFor(date), mode));
+
+        List<GuessResult> guesses = readGuesses(record);
+        if (!guesses.isEmpty() && record.mode() != mode) {
+            throw new WebApplicationException(
+                "La modalita' non puo' essere cambiata dopo il primo tentativo.",
+                Response.Status.CONFLICT
+            );
+        }
+
+        if (record.mode() == mode) {
+            return toDto(record, false);
+        }
+
+        String now = java.time.Instant.now().toString();
+        GameRecord updated = new GameRecord(
+            record.id(),
+            record.userId(),
+            record.puzzleDate(),
+            mode,
+            record.solution(),
+            record.guessesJson(),
+            record.status(),
+            null,
+            mode == GameMode.CLASSIC,
+            false,
+            null,
+            record.createdAt(),
+            now,
+            record.completedAt()
+        );
+        return toDto(gameRepository.update(updated), false);
+    }
+
+    @Transactional
     public GameDto guess(AppUser user, String rawGuess) {
         String guess = wordsProvider.normalize(rawGuess);
         if (guess.length() != WordsProvider.WORD_LENGTH) {
@@ -63,7 +115,20 @@ public class DailyGameService {
             throw new WebApplicationException("Tentativi esauriti.", Response.Status.CONFLICT);
         }
 
-        guesses.add(score(guess, record.solution()));
+        GuessResult scoredGuess = score(guess, record.solution());
+        Integer mouseTileIndex = record.mouseTileIndex();
+        boolean mouseRevealed = record.mouseRevealed();
+        boolean kittenUnlocked = record.kittenUnlocked();
+
+        if (record.mode() == GameMode.MISCHIEVOUS_KITTEN && guesses.isEmpty()) {
+            mouseTileIndex = chooseMouseTileIndex(record);
+            mouseRevealed = false;
+            scoredGuess = hideTile(scoredGuess, mouseTileIndex);
+        } else if (record.mode() == GameMode.MISCHIEVOUS_KITTEN && guesses.size() >= 1 && countCorrect(scoredGuess) >= 3) {
+            kittenUnlocked = true;
+        }
+
+        guesses.add(scoredGuess);
         GameStatus status = GameStatus.IN_PROGRESS;
         if (guess.equals(record.solution())) {
             status = GameStatus.WON;
@@ -76,14 +141,62 @@ public class DailyGameService {
             record.id(),
             record.userId(),
             record.puzzleDate(),
+            record.mode(),
             record.solution(),
             writeGuesses(guesses),
             status,
+            mouseTileIndex,
+            mouseRevealed,
+            kittenUnlocked,
+            record.kittenUsedAt(),
             record.createdAt(),
             now,
             status == GameStatus.IN_PROGRESS ? null : now
         );
         return toDto(gameRepository.update(updated), status != GameStatus.IN_PROGRESS);
+    }
+
+    @Transactional
+    public GameDto useKitten(AppUser user) {
+        GameRecord record = todayRecord(user);
+        if (record.mode() != GameMode.MISCHIEVOUS_KITTEN) {
+            throw new WebApplicationException("Il gattino non e' disponibile in questa modalita'.", Response.Status.CONFLICT);
+        }
+        if (!record.kittenUnlocked() || record.kittenUsedAt() != null || record.mouseRevealed()) {
+            throw new WebApplicationException("Il gattino non puo' essere usato ora.", Response.Status.CONFLICT);
+        }
+        if (record.mouseTileIndex() == null) {
+            throw new WebApplicationException("Nessun topolino da rimuovere.", Response.Status.CONFLICT);
+        }
+
+        List<GuessResult> guesses = readGuesses(record);
+        if (guesses.isEmpty()) {
+            throw new WebApplicationException("Nessun tentativo da rivelare.", Response.Status.CONFLICT);
+        }
+
+        GuessResult firstGuess = guesses.get(0);
+        GuessResult revealedFirstGuess = revealHiddenTile(firstGuess, record.solution(), record.mouseTileIndex());
+        List<GuessResult> updatedGuesses = new ArrayList<>(guesses);
+        updatedGuesses.set(0, revealedFirstGuess);
+
+        String now = java.time.Instant.now().toString();
+        GameRecord updated = new GameRecord(
+            record.id(),
+            record.userId(),
+            record.puzzleDate(),
+            record.mode(),
+            record.solution(),
+            writeGuesses(updatedGuesses),
+            record.status(),
+            record.mouseTileIndex(),
+            true,
+            record.kittenUnlocked(),
+            now,
+            record.createdAt(),
+            now,
+            record.completedAt()
+        );
+        return toDto(gameRepository.update(updated), record.status() != GameStatus.IN_PROGRESS);
     }
 
     public StatsDto stats(AppUser user) {
@@ -179,9 +292,19 @@ public class DailyGameService {
     }
 
     private GameRecord todayRecord(AppUser user) {
-        String date = LocalDate.now(ZoneId.of(timezone)).toString();
+        String date = todayDate();
         return gameRepository.findByUserAndDate(user.id(), date)
-            .orElseGet(() -> gameRepository.create(user.id(), date, solutionFor(date)));
+            .orElseThrow(() -> new BadRequestException("Scegli una modalita' di gioco prima di iniziare."));
+    }
+
+    private String todayDate() {
+        return LocalDate.now(ZoneId.of(timezone)).toString();
+    }
+
+    private List<GameModeDto> availableModes() {
+        return Arrays.stream(GameMode.values())
+            .map(mode -> new GameModeDto(mode, mode.label()))
+            .toList();
     }
 
     private String solutionFor(String puzzleDate) {
@@ -196,14 +319,60 @@ public class DailyGameService {
     }
 
     private GameDto toDto(GameRecord record, boolean revealSolution) {
+        List<GuessResult> guesses = readGuesses(record);
         return new GameDto(
             record.puzzleDate(),
+            record.mode(),
+            record.mode().label(),
             record.status(),
             MAX_ATTEMPTS,
             WordsProvider.WORD_LENGTH,
-            readGuesses(record),
-            revealSolution || record.status() != GameStatus.IN_PROGRESS ? record.solution() : null
+            guesses,
+            revealSolution || record.status() != GameStatus.IN_PROGRESS ? record.solution() : null,
+            guesses.isEmpty() && record.status() == GameStatus.IN_PROGRESS,
+            kittenDto(record)
         );
+    }
+
+    private KittenDto kittenDto(GameRecord record) {
+        if (record.mode() != GameMode.MISCHIEVOUS_KITTEN) {
+            return new KittenDto(false, false, false);
+        }
+        boolean used = record.kittenUsedAt() != null || record.mouseRevealed();
+        return new KittenDto(record.kittenUnlocked(), used, record.kittenUnlocked() && !used);
+    }
+
+    private GuessResult hideTile(GuessResult guess, int tileIndex) {
+        List<TileResult> tiles = new ArrayList<>(guess.tiles());
+        TileResult tile = tiles.get(tileIndex);
+        tiles.set(tileIndex, new TileResult(tile.letter(), TileState.HIDDEN));
+        return new GuessResult(guess.word(), List.copyOf(tiles));
+    }
+
+    private GuessResult revealHiddenTile(GuessResult hiddenGuess, String solution, int tileIndex) {
+        GuessResult scoredGuess = score(hiddenGuess.word(), solution);
+        List<TileResult> tiles = new ArrayList<>(hiddenGuess.tiles());
+        tiles.set(tileIndex, scoredGuess.tiles().get(tileIndex));
+        return new GuessResult(hiddenGuess.word(), List.copyOf(tiles));
+    }
+
+    private int countCorrect(GuessResult guess) {
+        return (int) guess.tiles().stream()
+            .filter(tile -> tile.state() == TileState.CORRECT)
+            .count();
+    }
+
+    private int chooseMouseTileIndex(GameRecord record) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(
+                (wordSeed + ":mouse:" + record.userId() + ":" + record.puzzleDate() + ":" + record.solution())
+                    .getBytes(StandardCharsets.UTF_8)
+            );
+            return new BigInteger(1, hash).mod(BigInteger.valueOf(WordsProvider.WORD_LENGTH)).intValue();
+        } catch (Exception error) {
+            throw new IllegalStateException("Cannot choose hidden tile", error);
+        }
     }
 
     private List<GuessResult> readGuesses(GameRecord record) {
