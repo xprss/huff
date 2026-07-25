@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import confetti from "canvas-confetti";
-import { BarChart3, Cat, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Rat, Share2, Sun, X } from "lucide-react";
+import { BarChart3, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Sun, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
 import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
@@ -432,8 +432,7 @@ function App() {
                   )}
                   {game.kitten.canUse ? (
                     <button className="kitten-button" type="button" onClick={() => void useKitten()}>
-                      <Cat size={18} />
-                      <span>Usa gattino</span>
+                      <span>🐱 Usa gattino</span>
                     </button>
                   ) : null}
                   {completedSolution ? (
@@ -462,7 +461,7 @@ function App() {
                                 }`}
                                 key={attemptIndex}
                               >
-                                {state === "HIDDEN" ? <Rat size={13} /> : null}
+                                {state === "HIDDEN" ? <span className="rat-in-guess">🐭</span> : null}
                               </span>
                             ))}
                           </div>
@@ -611,7 +610,7 @@ function ModeSelection({
             onClick={() => onSelect(mode.mode)}
             aria-pressed={selectedMode === mode.mode}
           >
-            {mode.mode === "MISCHIEVOUS_MOUSE" ? <Rat size={18} /> : <span className="classic-mark" aria-hidden="true" />}
+            {mode.mode === "MISCHIEVOUS_MOUSE" ? <span>🐭</span> : <span className="classic-mark" aria-hidden="true" />}
             <span>{mode.label}</span>
           </button>
         ))}
