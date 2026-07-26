@@ -16,6 +16,7 @@ const VICTORY_CONFETTI_COLORS = ["#25d7a1", "#ffd166", "#ff6b7a", "#5ab9ff", "#f
 const COUNTDOWN_INTERVAL_MS = 1000;
 const NEXT_CHALLENGE_REFRESH_DELAY_MS = 2000;
 const REPOSITORY_URL = "https://github.com/xprss/huff";
+const VIEWPORT_SYNC_DELAYS_MS = [40, 120, 280, 600, 1200];
 type BoardColumn = {
   feedback: Array<TileState | undefined>;
 };
@@ -45,6 +46,7 @@ function App() {
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
+  useAppViewportHeight(me?.loggedIn);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -189,6 +191,10 @@ function App() {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (currentGuess.length !== game.answerLength) {
       setMessage("Servono 6 lettere.");
+      return;
+    }
+    if (game.mode === "MISCHIEVOUS_MOUSE" && hasAlreadyGuessed(game, currentGuess)) {
+      setMessage("Hai già inserito questa parola.");
       return;
     }
 
@@ -551,6 +557,60 @@ function App() {
   );
 }
 
+function useAppViewportHeight(refreshKey: unknown) {
+  React.useLayoutEffect(() => {
+    return installAppViewportHeightSync();
+  }, []);
+
+  React.useLayoutEffect(() => {
+    scheduleAppViewportHeightSync();
+  }, [refreshKey]);
+}
+
+function installAppViewportHeightSync() {
+  scheduleAppViewportHeightSync();
+
+  function onVisibilityChange() {
+    if (document.visibilityState === "visible") {
+      scheduleAppViewportHeightSync();
+    }
+  }
+
+  window.addEventListener("resize", scheduleAppViewportHeightSync);
+  window.addEventListener("orientationchange", scheduleAppViewportHeightSync);
+  window.addEventListener("focus", scheduleAppViewportHeightSync);
+  window.addEventListener("pageshow", scheduleAppViewportHeightSync);
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  window.visualViewport?.addEventListener("resize", scheduleAppViewportHeightSync);
+  window.visualViewport?.addEventListener("scroll", scheduleAppViewportHeightSync);
+
+  return () => {
+    window.removeEventListener("resize", scheduleAppViewportHeightSync);
+    window.removeEventListener("orientationchange", scheduleAppViewportHeightSync);
+    window.removeEventListener("focus", scheduleAppViewportHeightSync);
+    window.removeEventListener("pageshow", scheduleAppViewportHeightSync);
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.visualViewport?.removeEventListener("resize", scheduleAppViewportHeightSync);
+    window.visualViewport?.removeEventListener("scroll", scheduleAppViewportHeightSync);
+  };
+}
+
+function scheduleAppViewportHeightSync() {
+  syncAppViewportHeight();
+  VIEWPORT_SYNC_DELAYS_MS.forEach((delay) => {
+    window.setTimeout(syncAppViewportHeight, delay);
+  });
+}
+
+function syncAppViewportHeight() {
+  const visualViewportHeight = window.visualViewport?.height;
+  const viewportHeight = Math.round(visualViewportHeight && visualViewportHeight > 0 ? visualViewportHeight : window.innerHeight);
+  if (!viewportHeight) return;
+
+  document.documentElement.style.setProperty("--app-height", `${viewportHeight}px`);
+  document.documentElement.style.setProperty("--app-vh", `${viewportHeight * 0.01}px`);
+}
+
 function InfoModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
@@ -749,6 +809,11 @@ function buildColumns(game: GameDto | null): BoardColumn[] {
   return Array.from({ length: answerLength }, (_, columnIndex) => ({
     feedback: Array.from({ length: maxAttempts }, (_, attemptIndex) => submitted[attemptIndex]?.tiles[columnIndex]?.state)
   }));
+}
+
+function hasAlreadyGuessed(game: GameDto, guess: string) {
+  const normalizedGuess = guess.trim().toUpperCase();
+  return game.guesses.some((submittedGuess) => submittedGuess.word.toUpperCase() === normalizedGuess);
 }
 
 function buildShareText(game: GameDto) {
