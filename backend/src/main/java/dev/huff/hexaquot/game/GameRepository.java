@@ -81,6 +81,17 @@ public class GameRepository {
             .toList();
     }
 
+    public List<GameRecord> findCompletedForFeed() {
+        return GameEntity.<GameEntity>find(
+                "status in ?1 order by coalesce(completedAt, updatedAt) desc",
+                List.of(GameStatus.WON, GameStatus.LOST)
+            )
+            .list()
+            .stream()
+            .map(GameEntity::toRecord)
+            .toList();
+    }
+
     public int countPlayers() {
         Long total = GameEntity.getEntityManager()
             .createQuery("SELECT COUNT(DISTINCT g.userId) FROM GameEntity g", Long.class)
