@@ -2,6 +2,7 @@ package dev.huff.hexaquot.game;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
@@ -9,6 +10,7 @@ import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
@@ -86,6 +88,29 @@ class DailyGameServiceTest {
 
         assertEquals(1, countTiles(afterFirstGuess.guesses().get(0), TileState.HIDDEN));
         assertTrue(afterFirstGuess.kitten().canUse());
+    }
+
+    @Test
+    void mischievousMouseRejectsRepeatedGuess() {
+        var user = new dev.huff.hexaquot.auth.AppUser(
+            "test-repeated-mouse-guess-" + UUID.randomUUID(),
+            null,
+            "Repeated Mouse Guess",
+            false
+        );
+        String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
+        gameRepository.create(user.id(), today, "abbaco", GameMode.MISCHIEVOUS_MOUSE);
+
+        dailyGameService.guess(user, "abachi");
+
+        BadRequestException error = assertThrows(
+            BadRequestException.class,
+            () -> dailyGameService.guess(user, "ABACHI")
+        );
+        GameDto todayGame = dailyGameService.today(user).game();
+
+        assertEquals("Hai gia' inserito questa parola.", error.getMessage());
+        assertEquals(1, todayGame.guesses().size());
     }
 
     private int countTiles(GuessResult guess, TileState state) {

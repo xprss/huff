@@ -114,6 +114,9 @@ public class DailyGameService {
         if (guesses.size() >= MAX_ATTEMPTS) {
             throw new WebApplicationException("Tentativi esauriti.", Response.Status.CONFLICT);
         }
+        if (record.mode() == GameMode.MISCHIEVOUS_MOUSE && alreadyGuessed(guesses, guess)) {
+            throw new BadRequestException("Hai gia' inserito questa parola.");
+        }
 
         GuessResult scoredGuess = score(guess, record.solution());
         Integer mouseTileIndex = record.mouseTileIndex();
@@ -362,6 +365,11 @@ public class DailyGameService {
         return (int) guess.tiles().stream()
             .filter(tile -> tile.state() == TileState.CORRECT)
             .count();
+    }
+
+    private boolean alreadyGuessed(List<GuessResult> guesses, String guess) {
+        return guesses.stream()
+            .anyMatch(submittedGuess -> submittedGuess.word().equals(guess));
     }
 
     private int chooseMouseTileIndex(GameRecord record) {
