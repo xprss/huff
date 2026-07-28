@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import confetti from "canvas-confetti";
-import { BarChart3, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Sun, X } from "lucide-react";
+import { BarChart3, Bell, BellOff, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Sun, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
-import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, MeDto, StatsDto, TileState } from "./types";
+import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, MeDto, PushSubscriptionDto, StatsDto, TileState } from "./types";
 import { APP_VERSION } from "./version";
 import "./styles.css";
 
@@ -17,6 +17,9 @@ const COUNTDOWN_INTERVAL_MS = 1000;
 const NEXT_CHALLENGE_REFRESH_DELAY_MS = 2000;
 const REPOSITORY_URL = "https://github.com/xprss/huff";
 const VIEWPORT_SYNC_DELAYS_MS = [40, 120, 280, 600, 1200];
+const GAME_NOTIFICATIONS_ENABLED_KEY = "huffGameNotificationsEnabled";
+const PUSH_PUBLIC_KEY_KEY = "huffPushPublicKey";
+const SERVICE_WORKER_READY_TIMEOUT_MS = 2500;
 type BoardColumn = {
   feedback: Array<TileState | undefined>;
 };
@@ -43,6 +46,10 @@ function App() {
   const [showActionsMenu, setShowActionsMenu] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(() => areGameNotificationsEnabled());
+  const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
+    getNotificationPermission
+  );
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
@@ -85,6 +92,20 @@ function App() {
   React.useEffect(() => {
     localStorage.setItem("darkMode", String(darkMode));
   }, [darkMode]);
+
+  React.useEffect(() => {
+    function refreshNotificationState() {
+      setNotificationPermission(getNotificationPermission());
+      setNotificationsEnabled(areGameNotificationsEnabled());
+    }
+
+    window.addEventListener("focus", refreshNotificationState);
+    document.addEventListener("visibilitychange", refreshNotificationState);
+    return () => {
+      window.removeEventListener("focus", refreshNotificationState);
+      document.removeEventListener("visibilitychange", refreshNotificationState);
+    };
+  }, []);
 
   React.useEffect(() => {
     let lastTouchEnd = 0;
@@ -289,6 +310,7 @@ function App() {
   const puzzleDate = formatPuzzleDate(game?.puzzleDate ?? todayPuzzleDate ?? undefined);
   const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
+  const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
   const statusText = message;
   const lastGuess = game?.guesses[game.guesses.length - 1];
   const completedSolution =
@@ -297,6 +319,16 @@ function App() {
       : null;
   const terminalValue = completedSolution ?? currentGuess;
   const terminalResult = completedSolution ? (game?.status === "WON" ? "won" : "lost") : null;
+
+  React.useEffect(() => {
+    if (!canUseGameActions || !notificationsEnabled) return;
+
+    void syncPushSubscription().catch((error) => {
+      setNotificationsEnabled(false);
+      setGameNotificationsEnabled(false);
+      setMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
+    });
+  }, [canUseGameActions, notificationsEnabled]);
 
   React.useEffect(() => {
     if (!completedSolution) return;
@@ -327,6 +359,30 @@ function App() {
       }
     };
   }, [completedSolution]);
+
+  async function toggleGameNotifications() {
+    setShowActionsMenu(false);
+
+    if (notificationsEnabled) {
+      await disableGameNotifications();
+      setNotificationsEnabled(false);
+      setNotificationPermission(getNotificationPermission());
+      setMessage("Notifiche disattivate.");
+      return;
+    }
+
+    try {
+      await enableGameNotifications();
+      setNotificationsEnabled(true);
+      setNotificationPermission(getNotificationPermission());
+      setMessage("Notifiche attive.");
+    } catch (error) {
+      setNotificationsEnabled(false);
+      setGameNotificationsEnabled(false);
+      setNotificationPermission(getNotificationPermission());
+      setMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
+    }
+  }
 
   return (
     <AppThemeProvider conditions={themeConditions}>
@@ -377,6 +433,15 @@ function App() {
                     >
                       <Info size={18} />
                       <span>Info</span>
+                    </button>
+                    <button
+                      className="menu-item"
+                      type="button"
+                      role="menuitem"
+                      onClick={() => void toggleGameNotifications()}
+                    >
+                      {notificationsEnabled ? <BellOff size={18} /> : <Bell size={18} />}
+                      <span>{notificationMenuLabel}</span>
                     </button>
                     <button
                       className="menu-item"
@@ -897,6 +962,161 @@ function formatCountdownDuration(remainingMilliseconds: number) {
 
 function formatTimeUnit(value: number, singular: string, plural: string) {
   return `${value} ${value === 1 ? singular : plural}`;
+}
+
+function arePushNotificationsSupported() {
+  return "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
+}
+
+function getNotificationPermission(): NotificationPermission {
+  return "Notification" in window ? Notification.permission : "default";
+}
+
+function areGameNotificationsEnabled() {
+  return localStorage.getItem(GAME_NOTIFICATIONS_ENABLED_KEY) === "true" && getNotificationPermission() === "granted";
+}
+
+function setGameNotificationsEnabled(enabled: boolean) {
+  if (enabled) {
+    localStorage.setItem(GAME_NOTIFICATIONS_ENABLED_KEY, "true");
+  } else {
+    localStorage.removeItem(GAME_NOTIFICATIONS_ENABLED_KEY);
+    localStorage.removeItem(PUSH_PUBLIC_KEY_KEY);
+  }
+}
+
+function getNotificationMenuLabel(enabled: boolean, permission: NotificationPermission) {
+  if (enabled) return "Disattiva notifiche";
+  if (permission === "denied") return "Notifiche bloccate";
+  return "Attiva notifiche";
+}
+
+async function enableGameNotifications() {
+  if (!arePushNotificationsSupported()) {
+    throw new Error("Le notifiche push non sono supportate da questo browser.");
+  }
+
+  const settings = await api.pushSettings();
+  if (!settings.supported || !settings.publicKey) {
+    throw new Error("Notifiche push non configurate sul server.");
+  }
+
+  let permission = getNotificationPermission();
+  if (permission === "default") {
+    permission = await Notification.requestPermission();
+  }
+  if (permission !== "granted") {
+    throw new Error(
+      permission === "denied"
+        ? "Notifiche bloccate: abilitarle dalle impostazioni del browser."
+        : "Notifiche non attivate."
+    );
+  }
+
+  await subscribeToGamePush(settings.publicKey);
+  setGameNotificationsEnabled(true);
+}
+
+async function disableGameNotifications() {
+  setGameNotificationsEnabled(false);
+
+  if (!arePushNotificationsSupported()) return;
+
+  const registration = await getReadyServiceWorkerRegistration();
+  const subscription = await registration.pushManager.getSubscription();
+  if (!subscription) return;
+
+  await api.deletePushSubscription(toPushSubscriptionDto(subscription)).catch(() => undefined);
+  await subscription.unsubscribe();
+}
+
+async function syncPushSubscription() {
+  if (getNotificationPermission() !== "granted") {
+    throw new Error("Notifiche non autorizzate.");
+  }
+
+  const settings = await api.pushSettings();
+  if (!settings.supported || !settings.publicKey) {
+    throw new Error("Notifiche push non configurate sul server.");
+  }
+
+  await subscribeToGamePush(settings.publicKey);
+}
+
+async function subscribeToGamePush(publicKey: string) {
+  const registration = await getReadyServiceWorkerRegistration();
+  let existingSubscription = await registration.pushManager.getSubscription();
+  if (existingSubscription && localStorage.getItem(PUSH_PUBLIC_KEY_KEY) !== publicKey) {
+    await api.deletePushSubscription(toPushSubscriptionDto(existingSubscription)).catch(() => undefined);
+    await existingSubscription.unsubscribe();
+    existingSubscription = null;
+  }
+  const subscription =
+    existingSubscription ??
+    (await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey)
+    }));
+
+  await api.savePushSubscription(toPushSubscriptionDto(subscription));
+  localStorage.setItem(PUSH_PUBLIC_KEY_KEY, publicKey);
+}
+
+async function getReadyServiceWorkerRegistration() {
+  await navigator.serviceWorker.register("/sw.js").then((registration) => registration.update());
+  return await withTimeout(
+    navigator.serviceWorker.ready,
+    SERVICE_WORKER_READY_TIMEOUT_MS,
+    "Service worker non pronto per le notifiche."
+  );
+}
+
+function toPushSubscriptionDto(subscription: PushSubscription): PushSubscriptionDto {
+  const p256dh = subscription.getKey("p256dh");
+  const auth = subscription.getKey("auth");
+  if (!p256dh || !auth) {
+    throw new Error("Subscription push non valida.");
+  }
+
+  return {
+    endpoint: subscription.endpoint,
+    keys: {
+      p256dh: arrayBufferToBase64Url(p256dh),
+      auth: arrayBufferToBase64Url(auth)
+    }
+  };
+}
+
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from(rawData, (character) => character.charCodeAt(0));
+}
+
+function arrayBufferToBase64Url(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return window.btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string) {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
 }
 
 function StatsModal({

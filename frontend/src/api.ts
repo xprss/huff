@@ -1,4 +1,13 @@
-import type { GameDto, GameMode, GlobalStatsDto, MeDto, StatsDto, TodayGameDto } from "./types";
+import type {
+  GameDto,
+  GameMode,
+  GlobalStatsDto,
+  MeDto,
+  PushSettingsDto,
+  PushSubscriptionDto,
+  StatsDto,
+  TodayGameDto
+} from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -13,6 +22,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(body?.message ?? "Richiesta non riuscita");
+  }
+  if (response.status === 204) {
+    return undefined as T;
   }
   return response.json() as Promise<T>;
 }
@@ -35,5 +47,16 @@ export const api = {
       method: "POST"
     }),
   stats: () => request<StatsDto>("/api/stats"),
-  globalStats: () => request<GlobalStatsDto>("/api/stats/global")
+  globalStats: () => request<GlobalStatsDto>("/api/stats/global"),
+  pushSettings: () => request<PushSettingsDto>("/api/push/settings"),
+  savePushSubscription: (subscription: PushSubscriptionDto) =>
+    request<void>("/api/push/subscriptions", {
+      method: "POST",
+      body: JSON.stringify(subscription)
+    }),
+  deletePushSubscription: (subscription: PushSubscriptionDto) =>
+    request<void>("/api/push/subscriptions", {
+      method: "DELETE",
+      body: JSON.stringify(subscription)
+    })
 };
