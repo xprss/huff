@@ -51,3 +51,51 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(request))
   );
 });
+
+self.addEventListener("push", (event) => {
+  const payload = readPushPayload(event);
+  const title = payload.title || "HexaQuot";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: payload.body || "Nuova partita disponibile.",
+      icon: payload.icon || "/icons/huff-icon.svg",
+      badge: "/icons/huff-icon.svg",
+      tag: payload.tag || "new-game",
+      data: {
+        url: payload.url || "/"
+      }
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((clients) => {
+        const focusedClient = clients.find((client) => client.url === targetUrl);
+        if (focusedClient) {
+          return focusedClient.focus();
+        }
+        return self.clients.openWindow(targetUrl);
+      })
+  );
+});
+
+function readPushPayload(event) {
+  if (!event.data) {
+    return {};
+  }
+
+  try {
+    return event.data.json();
+  } catch (_error) {
+    return {
+      body: event.data.text()
+    };
+  }
+}

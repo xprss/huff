@@ -56,6 +56,22 @@ https://www.huff.ottonovembre.it/auth/callback
 
 Login starts at `/api/login`; local logout uses `/api/logout`.
 
+Push notifications use standard Web Push with VAPID keys. Generate a stable key pair and put it in `.env` before deploying:
+
+```bash
+node scripts/generate-vapid-keys.mjs
+```
+
+```bash
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:notifications@huff.ottonovembre.it
+PUSH_NEW_GAME_CRON=0 2 0 * * ?
+PUSH_DAILY_REMINDER_CRON=0 0 23 * * ?
+```
+
+The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification per subscribed browser for each new daily puzzle. `PUSH_DAILY_REMINDER_CRON` reminds subscribed browsers whose user has not submitted any guess for the current puzzle date.
+
 The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 
 ## Deploy

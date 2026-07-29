@@ -302,7 +302,7 @@ public class DailyGameService {
             .orElseThrow(() -> new BadRequestException("Scegli una modalità di gioco prima di iniziare."));
     }
 
-    private String todayDate() {
+    public String todayDate() {
         return LocalDate.now(ZoneId.of(timezone)).toString();
     }
 

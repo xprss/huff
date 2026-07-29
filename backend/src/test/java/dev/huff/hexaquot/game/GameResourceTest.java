@@ -98,4 +98,33 @@ class GameResourceTest {
             .body("won", greaterThanOrEqualTo(0))
             .body("lost", greaterThanOrEqualTo(0));
     }
+
+    @Test
+    void exposesDisabledPushSettingsWhenVapidKeysAreMissing() {
+        given()
+            .when().get("/api/push/settings")
+            .then()
+            .statusCode(200)
+            .body("supported", equalTo(false))
+            .body("publicKey", equalTo(null));
+    }
+
+    @Test
+    void rejectsPushSubscriptionWhenVapidKeysAreMissing() {
+        given()
+            .body("""
+                {
+                  "endpoint": "https://example.test/push",
+                  "keys": {
+                    "p256dh": "key",
+                    "auth": "auth"
+                  }
+                }
+                """)
+            .contentType("application/json")
+            .when().post("/api/push/subscriptions")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"));
+    }
 }

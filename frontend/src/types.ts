@@ -69,3 +69,16 @@ export interface MeDto {
   logoutUrl: string | null;
   authEnabled: boolean;
 }
+
+export interface PushSettingsDto {
+  supported: boolean;
+  publicKey: string | null;
+}
+
+export interface PushSubscriptionDto {
+  endpoint: string;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+}
