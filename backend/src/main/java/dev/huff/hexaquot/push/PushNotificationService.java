@@ -28,6 +28,7 @@ import java.util.UUID;
 public class PushNotificationService {
     private static final Logger LOG = Logger.getLogger(PushNotificationService.class);
     private static final int NEW_GAME_PUSH_TTL_SECONDS = 24 * 60 * 60;
+    private static final int DAILY_REMINDER_PUSH_TTL_SECONDS = 60 * 60;
 
     @ConfigProperty(name = "app.push.vapid.public-key")
     Optional<String> vapidPublicKey;
@@ -86,6 +87,15 @@ public class PushNotificationService {
         notifyNewGame(dailyGameService.todayDate());
     }
 
+    @Scheduled(cron = "{app.push.daily-reminder.cron}", timeZone = "{app.game.timezone}")
+    void remindUnplayedDailyGame() {
+        if (!configured()) {
+            LOG.debug("Skipping daily reminder push notifications because VAPID is not configured");
+            return;
+        }
+        remindUnplayedDailyGame(dailyGameService.todayDate());
+    }
+
     @Transactional
     public void notifyNewGame(String puzzleDate) {
         if (!configured()) {
@@ -101,29 +111,83 @@ public class PushNotificationService {
         }
     }
 
+    @Transactional
+    public void remindUnplayedDailyGame(String puzzleDate) {
+        if (!configured()) {
+            return;
+        }
+
+        List<PushSubscriptionEntity> subscriptions = findSubscriptionsForDailyReminder(puzzleDate);
+
+        for (PushSubscriptionEntity subscription : subscriptions) {
+            sendDailyReminderNotification(subscription, puzzleDate);
+        }
+    }
+
+    List<PushSubscriptionEntity> findSubscriptionsForDailyReminder(String puzzleDate) {
+        return PushSubscriptionEntity.getEntityManager()
+            .createQuery("""
+                SELECT subscription
+                FROM PushSubscriptionEntity subscription
+                WHERE (subscription.lastRemindedPuzzleDate IS NULL OR subscription.lastRemindedPuzzleDate <> :puzzleDate)
+                  AND NOT EXISTS (
+                    SELECT game.id
+                    FROM GameEntity game
+                    WHERE game.userId = subscription.userId
+                      AND game.puzzleDate = :puzzleDate
+                      AND game.guessesJson <> '[]'
+                  )
+                """, PushSubscriptionEntity.class)
+            .setParameter("puzzleDate", puzzleDate)
+            .getResultList();
+    }
+
     private void sendNewGameNotification(PushSubscriptionEntity subscription, String puzzleDate) {
+        NotificationPayload payload = new NotificationPayload(
+            "new-game",
+            "Nuova partita disponibile",
+            "La sfida di oggi ti aspetta su HexaQuot.",
+            "/",
+            "/icons/huff-icon.svg",
+            "new-game-" + puzzleDate
+        );
+        if (sendNotification(subscription, payload, NEW_GAME_PUSH_TTL_SECONDS)) {
+            subscription.lastNotifiedPuzzleDate = puzzleDate;
+            subscription.updatedAt = Instant.now().toString();
+        }
+    }
+
+    private void sendDailyReminderNotification(PushSubscriptionEntity subscription, String puzzleDate) {
+        NotificationPayload payload = new NotificationPayload(
+            "daily-reminder",
+            "HexaQuot ti aspetta",
+            "Hai ancora tempo per giocare la partita di oggi.",
+            "/",
+            "/icons/huff-icon.svg",
+            "daily-reminder-" + puzzleDate
+        );
+        if (sendNotification(subscription, payload, DAILY_REMINDER_PUSH_TTL_SECONDS)) {
+            subscription.lastRemindedPuzzleDate = puzzleDate;
+            subscription.updatedAt = Instant.now().toString();
+        }
+    }
+
+    private boolean sendNotification(PushSubscriptionEntity subscription, NotificationPayload payload, int ttlSeconds) {
         try {
-            String payload = objectMapper.writeValueAsString(new NotificationPayload(
-                "new-game",
-                "Nuova partita disponibile",
-                "La sfida di oggi ti aspetta su HexaQuot.",
-                "/",
-                "/icons/huff-icon.svg",
-                "new-game-" + puzzleDate
-            ));
+            String payloadJson = objectMapper.writeValueAsString(payload);
             Notification notification = new Notification(
                 subscription.endpoint,
                 subscription.p256dh,
                 subscription.auth,
-                payload.getBytes(StandardCharsets.UTF_8),
-                NEW_GAME_PUSH_TTL_SECONDS
+                payloadJson.getBytes(StandardCharsets.UTF_8),
+                ttlSeconds
             );
             HttpResponse response = service().send(notification);
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
-                subscription.lastNotifiedPuzzleDate = puzzleDate;
-                subscription.updatedAt = Instant.now().toString();
-            } else if (status == 404 || status == 410) {
+                return true;
+            }
+            if (status == 404 || status == 410) {
                 subscription.delete();
             } else {
                 LOG.warnf("Push notification failed for subscription %s with status %d", subscription.id, status);
@@ -131,6 +195,7 @@ public class PushNotificationService {
         } catch (Exception error) {
             LOG.warnf(error, "Push notification failed for subscription %s", subscription.id);
         }
+        return false;
     }
 
     private PushService service() throws GeneralSecurityException {

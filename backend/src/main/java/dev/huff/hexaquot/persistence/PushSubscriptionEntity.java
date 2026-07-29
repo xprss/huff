@@ -31,6 +31,9 @@ public class PushSubscriptionEntity extends PanacheEntityBase {
     @Column(name = "last_notified_puzzle_date")
     public String lastNotifiedPuzzleDate;
 
+    @Column(name = "last_reminded_puzzle_date")
+    public String lastRemindedPuzzleDate;
+
     @Column(name = "created_at", nullable = false)
     public String createdAt;
 
