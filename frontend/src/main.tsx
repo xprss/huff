@@ -31,6 +31,7 @@ type LoginDecorTile = {
 };
 const LOGIN_DECOR_TILES = buildLoginDecorTiles();
 const ZOOM_KEYS = new Set(["+", "-", "=", "_", "0"]);
+type StatusMessageVariant = "error" | "success";
 
 function App() {
   const [me, setMe] = React.useState<MeDto | null>(null);
@@ -41,6 +42,7 @@ function App() {
   const [globalStats, setGlobalStats] = React.useState<GlobalStatsDto | null>(null);
   const [currentGuess, setCurrentGuess] = React.useState("");
   const [message, setMessage] = React.useState("");
+  const [messageVariant, setMessageVariant] = React.useState<StatusMessageVariant>("error");
   const [showStats, setShowStats] = React.useState(false);
   const [showInfo, setShowInfo] = React.useState(false);
   const [showActionsMenu, setShowActionsMenu] = React.useState(false);
@@ -55,9 +57,19 @@ function App() {
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
   useAppViewportHeight(me?.loggedIn);
 
+  function clearMessage() {
+    setMessage("");
+    setMessageVariant("error");
+  }
+
+  function showMessage(nextMessage: string, variant: StatusMessageVariant = "error") {
+    setMessageVariant(variant);
+    setMessage(nextMessage);
+  }
+
   const load = React.useCallback(async () => {
     setLoading(true);
-    setMessage("");
+    clearMessage();
     try {
       const meResponse = await api.me();
       setMe(meResponse);
@@ -79,7 +91,7 @@ function App() {
         setStats(null);
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Errore imprevisto");
+      showMessage(error instanceof Error ? error.message : "Errore imprevisto");
     } finally {
       setLoading(false);
     }
@@ -191,7 +203,7 @@ function App() {
   function addLetter(letter: string) {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (!shouldHideKeyboardHints && keyStates.get(letter.toUpperCase()) === "ABSENT") return;
-    setMessage("");
+    clearMessage();
     setCurrentGuess((value) =>
       value.length >= game.answerLength ? value : value + letter.toUpperCase()
     );
@@ -211,11 +223,11 @@ function App() {
   async function submitGuess() {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (currentGuess.length !== game.answerLength) {
-      setMessage("Servono 6 lettere.");
+      showMessage("Servono 6 lettere.");
       return;
     }
     if (game.mode === "MISCHIEVOUS_MOUSE" && hasAlreadyGuessed(game, currentGuess)) {
-      setMessage("Hai già inserito questa parola.");
+      showMessage("Hai già inserito questa parola.");
       return;
     }
 
@@ -240,18 +252,18 @@ function App() {
         setShowStats(true);
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Tentativo non valido");
+      showMessage(error instanceof Error ? error.message : "Tentativo non valido");
     }
   }
 
   async function selectGameMode(mode: GameMode) {
     try {
-      setMessage("");
+      clearMessage();
       const updated = await api.selectMode(mode);
       setGame(updated);
       setCurrentGuess("");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossibile selezionare la modalità");
+      showMessage(error instanceof Error ? error.message : "Impossibile selezionare la modalità");
     }
   }
 
@@ -259,11 +271,11 @@ function App() {
     if (!game?.kitten.canUse) return;
 
     try {
-      setMessage("");
+      clearMessage();
       const updated = await api.useKitten();
       setGame(updated);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Impossibile usare il gattino");
+      showMessage(error instanceof Error ? error.message : "Impossibile usare il gattino");
     }
   }
 
@@ -271,12 +283,12 @@ function App() {
     if (!game || (game.status !== "WON" && game.status !== "LOST")) return;
 
     if (!navigator.share) {
-      setMessage("Condivisione non disponibile su questo dispositivo.");
+      showMessage("Condivisione non disponibile su questo dispositivo.");
       return;
     }
 
     try {
-      setMessage("");
+      clearMessage();
       await navigator.share({
         title: APP_NAME,
         text: buildShareText(game),
@@ -284,7 +296,7 @@ function App() {
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      setMessage("Impossibile aprire la condivisione.");
+      showMessage("Impossibile aprire la condivisione.");
     }
   }
 
@@ -326,7 +338,7 @@ function App() {
     void syncPushSubscription().catch((error) => {
       setNotificationsEnabled(false);
       setGameNotificationsEnabled(false);
-      setMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
+      showMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
     });
   }, [canUseGameActions, notificationsEnabled]);
 
@@ -367,7 +379,7 @@ function App() {
       await disableGameNotifications();
       setNotificationsEnabled(false);
       setNotificationPermission(getNotificationPermission());
-      setMessage("Notifiche disattivate.");
+      showMessage("Notifiche disattivate.");
       return;
     }
 
@@ -375,12 +387,12 @@ function App() {
       await enableGameNotifications();
       setNotificationsEnabled(true);
       setNotificationPermission(getNotificationPermission());
-      setMessage("Notifiche attive.");
+      showMessage("Notifiche attive.", "success");
     } catch (error) {
       setNotificationsEnabled(false);
       setGameNotificationsEnabled(false);
       setNotificationPermission(getNotificationPermission());
-      setMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
+      showMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
     }
   }
 
@@ -475,7 +487,7 @@ function App() {
             </div>
           </header>
   
-          <p className={`status-line ${message ? "error" : ""}`}>{statusText}</p>
+          <p className={`status-line ${message ? messageVariant : ""}`}>{statusText}</p>
   
           {showLoginScreen ? (
             <LoginScreen loginUrl={me?.loginUrl ?? "/api/login"} />

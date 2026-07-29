@@ -466,6 +466,10 @@ h1 {
   color: var(--color-error);
 }
 
+.status-line.success {
+  color: var(--color-correct);
+}
+
 .login-screen {
   position: relative;
   width: 100%;
