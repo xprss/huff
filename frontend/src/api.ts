@@ -6,6 +6,7 @@ import type {
   PushSettingsDto,
   PushSubscriptionDto,
   StatsDto,
+  StarRevealDto,
   TodayGameDto
 } from "./types";
 
@@ -44,6 +45,10 @@ export const api = {
     }),
   useKitten: () =>
     request<GameDto>("/api/game/today/kitten", {
+      method: "POST"
+    }),
+  useStar: () =>
+    request<StarRevealDto>("/api/game/today/star", {
       method: "POST"
     }),
   stats: () => request<StatsDto>("/api/stats"),

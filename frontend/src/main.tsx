@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import confetti from "canvas-confetti";
-import { BarChart3, Bell, BellOff, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Sun, X } from "lucide-react";
+import { BarChart3, Bell, BellOff, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Star, Sun, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
-import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, MeDto, PushSubscriptionDto, StatsDto, TileState } from "./types";
+import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, GuessResult, MeDto, PushSubscriptionDto, StatsDto, TileState } from "./types";
 import { APP_VERSION } from "./version";
 import "./styles.css";
 
@@ -15,6 +15,8 @@ const SHARE_EMOJI: Record<TileState, string> = { CORRECT: "🟩", PRESENT: "🟨
 const VICTORY_CONFETTI_COLORS = ["#25d7a1", "#ffd166", "#ff6b7a", "#5ab9ff", "#ffffff"];
 const COUNTDOWN_INTERVAL_MS = 1000;
 const NEXT_CHALLENGE_REFRESH_DELAY_MS = 2000;
+const STAR_REVEAL_DURATION_MS = 15000;
+const TOAST_DURATION_MS = 3800;
 const REPOSITORY_URL = "https://github.com/xprss/huff";
 const VIEWPORT_SYNC_DELAYS_MS = [40, 120, 280, 600, 1200];
 const GAME_NOTIFICATIONS_ENABLED_KEY = "huffGameNotificationsEnabled";
@@ -31,7 +33,12 @@ type LoginDecorTile = {
 };
 const LOGIN_DECOR_TILES = buildLoginDecorTiles();
 const ZOOM_KEYS = new Set(["+", "-", "=", "_", "0"]);
-type StatusMessageVariant = "error" | "success";
+type ToastVariant = "error" | "success" | "warning" | "neutral";
+type ToastMessage = {
+  id: number;
+  text: string;
+  variant: ToastVariant;
+};
 
 function App() {
   const [me, setMe] = React.useState<MeDto | null>(null);
@@ -41,10 +48,10 @@ function App() {
   const [stats, setStats] = React.useState<StatsDto | null>(null);
   const [globalStats, setGlobalStats] = React.useState<GlobalStatsDto | null>(null);
   const [currentGuess, setCurrentGuess] = React.useState("");
-  const [message, setMessage] = React.useState("");
-  const [messageVariant, setMessageVariant] = React.useState<StatusMessageVariant>("error");
   const [showStats, setShowStats] = React.useState(false);
   const [showInfo, setShowInfo] = React.useState(false);
+  const [starReveal, setStarReveal] = React.useState<GuessResult[] | null>(null);
+  const [toast, setToast] = React.useState<ToastMessage | null>(null);
   const [showActionsMenu, setShowActionsMenu] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
@@ -57,19 +64,17 @@ function App() {
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
   useAppViewportHeight(me?.loggedIn);
 
-  function clearMessage() {
-    setMessage("");
-    setMessageVariant("error");
+  function clearToast() {
+    setToast(null);
   }
 
-  function showMessage(nextMessage: string, variant: StatusMessageVariant = "error") {
-    setMessageVariant(variant);
-    setMessage(nextMessage);
+  function showToast(text: string, variant: ToastVariant = "neutral") {
+    setToast({ id: Date.now(), text, variant });
   }
 
   const load = React.useCallback(async () => {
     setLoading(true);
-    clearMessage();
+    clearToast();
     try {
       const meResponse = await api.me();
       setMe(meResponse);
@@ -91,7 +96,7 @@ function App() {
         setStats(null);
       }
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Errore imprevisto");
+      showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
     } finally {
       setLoading(false);
     }
@@ -163,8 +168,22 @@ function App() {
   }, []);
 
   React.useEffect(() => {
+    if (!toast) return;
+
+    const timer = window.setTimeout(() => setToast(null), TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  React.useEffect(() => {
+    if (!starReveal) return;
+
+    const timer = window.setTimeout(() => setStarReveal(null), STAR_REVEAL_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [starReveal]);
+
+  React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (showStats || showInfo) return;
+      if (showStats || showInfo || starReveal) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -203,7 +222,7 @@ function App() {
   function addLetter(letter: string) {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (!shouldHideKeyboardHints && keyStates.get(letter.toUpperCase()) === "ABSENT") return;
-    clearMessage();
+    clearToast();
     setCurrentGuess((value) =>
       value.length >= game.answerLength ? value : value + letter.toUpperCase()
     );
@@ -223,11 +242,11 @@ function App() {
   async function submitGuess() {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (currentGuess.length !== game.answerLength) {
-      showMessage("Servono 6 lettere.");
+      showToast("Servono 6 lettere.", "warning");
       return;
     }
     if (game.mode === "MISCHIEVOUS_MOUSE" && hasAlreadyGuessed(game, currentGuess)) {
-      showMessage("Hai già inserito questa parola.");
+      showToast("Hai già inserito questa parola.", "warning");
       return;
     }
 
@@ -235,6 +254,9 @@ function App() {
       const updated = await api.guess(currentGuess);
       setGame(updated);
       setCurrentGuess("");
+      if (updated.star.justAwarded) {
+        showToast("Hai conquistato una stella.", "success");
+      }
       const statsRequest = Promise.all([api.stats(), api.globalStats()]);
 
       if (updated.status === "WON") {
@@ -252,18 +274,18 @@ function App() {
         setShowStats(true);
       }
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Tentativo non valido");
+      showToast(error instanceof Error ? error.message : "Tentativo non valido", "warning");
     }
   }
 
   async function selectGameMode(mode: GameMode) {
     try {
-      clearMessage();
+      clearToast();
       const updated = await api.selectMode(mode);
       setGame(updated);
       setCurrentGuess("");
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Impossibile selezionare la modalità");
+      showToast(error instanceof Error ? error.message : "Impossibile selezionare la modalità", "error");
     }
   }
 
@@ -271,11 +293,29 @@ function App() {
     if (!game?.kitten.canUse) return;
 
     try {
-      clearMessage();
+      clearToast();
       const updated = await api.useKitten();
       setGame(updated);
     } catch (error) {
-      showMessage(error instanceof Error ? error.message : "Impossibile usare il gattino");
+      showToast(error instanceof Error ? error.message : "Impossibile usare il gattino", "error");
+    }
+  }
+
+  async function useStar() {
+    setShowActionsMenu(false);
+    if (!game || game.status !== "IN_PROGRESS" || game.guesses.length === 0) return;
+    if (!game.star.canUse) {
+      showToast("Completa 3 partite di fila per ottenere una stella.");
+      return;
+    }
+
+    try {
+      clearToast();
+      const reveal = await api.useStar();
+      setGame(reveal.game);
+      setStarReveal(reveal.guesses);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Impossibile usare la stella.", "error");
     }
   }
 
@@ -283,12 +323,12 @@ function App() {
     if (!game || (game.status !== "WON" && game.status !== "LOST")) return;
 
     if (!navigator.share) {
-      showMessage("Condivisione non disponibile su questo dispositivo.");
+      showToast("Condivisione non disponibile su questo dispositivo.", "neutral");
       return;
     }
 
     try {
-      clearMessage();
+      clearToast();
       await navigator.share({
         title: APP_NAME,
         text: buildShareText(game),
@@ -296,7 +336,7 @@ function App() {
       });
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      showMessage("Impossibile aprire la condivisione.");
+      showToast("Impossibile aprire la condivisione.", "error");
     }
   }
 
@@ -323,7 +363,7 @@ function App() {
   const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
-  const statusText = message;
+  const showStarButton = Boolean(game && game.status === "IN_PROGRESS" && game.guesses.length > 0);
   const lastGuess = game?.guesses[game.guesses.length - 1];
   const completedSolution =
     game?.status === "WON" || game?.status === "LOST"
@@ -338,7 +378,7 @@ function App() {
     void syncPushSubscription().catch((error) => {
       setNotificationsEnabled(false);
       setGameNotificationsEnabled(false);
-      showMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
+      showToast(error instanceof Error ? error.message : "Impossibile attivare le notifiche.", "error");
     });
   }, [canUseGameActions, notificationsEnabled]);
 
@@ -379,7 +419,7 @@ function App() {
       await disableGameNotifications();
       setNotificationsEnabled(false);
       setNotificationPermission(getNotificationPermission());
-      showMessage("Notifiche disattivate.");
+      showToast("Notifiche disattivate.", "neutral");
       return;
     }
 
@@ -387,12 +427,12 @@ function App() {
       await enableGameNotifications();
       setNotificationsEnabled(true);
       setNotificationPermission(getNotificationPermission());
-      showMessage("Notifiche attive.", "success");
+      showToast("Notifiche attive.", "success");
     } catch (error) {
       setNotificationsEnabled(false);
       setGameNotificationsEnabled(false);
       setNotificationPermission(getNotificationPermission());
-      showMessage(error instanceof Error ? error.message : "Impossibile attivare le notifiche.");
+      showToast(error instanceof Error ? error.message : "Impossibile attivare le notifiche.", "error");
     }
   }
 
@@ -407,6 +447,18 @@ function App() {
                 <p className="date">{puzzleDate}</p>
               </div>
               <div className="actions" ref={actionsMenuRef}>
+                {showStarButton ? (
+                  <button
+                    className={`icon-button star-action ${game?.star.canUse ? "available" : "unavailable"}`}
+                    type="button"
+                    onClick={() => void useStar()}
+                    aria-disabled={!game?.star.canUse}
+                    aria-label={game?.star.canUse ? "Usa stella" : "Stella non disponibile"}
+                    title={game?.star.canUse ? "Usa stella" : "Completa 3 partite di fila per ottenere una stella"}
+                  >
+                    <Star size={21} />
+                  </button>
+                ) : null}
                 <button
                   className="icon-button menu-trigger"
                   type="button"
@@ -486,8 +538,6 @@ function App() {
               </div>
             </div>
           </header>
-  
-          <p className={`status-line ${message ? messageVariant : ""}`}>{statusText}</p>
   
           {showLoginScreen ? (
             <LoginScreen loginUrl={me?.loginUrl ?? "/api/login"} />
@@ -623,6 +673,14 @@ function App() {
         ) : null}
 
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
+
+        {starReveal ? <StarRevealModal guesses={starReveal} onClose={() => setStarReveal(null)} /> : null}
+
+        {toast ? (
+          <div className={`toast ${toast.variant}`} role="status" aria-live="polite" key={toast.id}>
+            {toast.text}
+          </div>
+        ) : null}
   
         <footer className="app-footer">
           <span>Sviluppato con</span>
@@ -710,6 +768,38 @@ function InfoModal({ onClose }: { onClose: () => void }) {
               <ExternalLink size={16} aria-hidden="true" />
             </a>
           </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function StarRevealModal({ guesses, onClose }: { guesses: GuessResult[]; onClose: () => void }) {
+  return (
+    <div className="modal-backdrop star-reveal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section
+        className="modal star-reveal-modal"
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        <header className="modal-head">
+          <h2>Stella</h2>
+          <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi">
+            <X size={19} />
+          </button>
+        </header>
+
+        <div className="star-reveal-grid" aria-label="Lettere rivelate">
+          {guesses.map((guess, guessIndex) => (
+            <div className="star-reveal-row" key={`${guess.word}-${guessIndex}`}>
+              {guess.tiles.map((tile, tileIndex) => (
+                <span className={`star-reveal-tile ${tile.state.toLowerCase()}`} key={`${tile.letter}-${tileIndex}`}>
+                  {tile.letter.toUpperCase()}
+                </span>
+              ))}
+            </div>
+          ))}
         </div>
       </section>
     </div>

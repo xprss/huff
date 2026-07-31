@@ -27,6 +27,17 @@ export interface GameDto {
     used: boolean;
     canUse: boolean;
   };
+  star: {
+    available: boolean;
+    used: boolean;
+    canUse: boolean;
+    justAwarded: boolean;
+  };
+}
+
+export interface StarRevealDto {
+  game: GameDto;
+  guesses: GuessResult[];
 }
 
 export interface GameModeDto {

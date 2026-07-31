@@ -3,6 +3,7 @@ package dev.huff.hexaquot.game;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.auth.AppUser;
+import dev.huff.hexaquot.persistence.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -158,7 +159,9 @@ public class DailyGameService {
             now,
             status == GameStatus.IN_PROGRESS ? null : now
         );
-        return toDto(gameRepository.update(updated), status != GameStatus.IN_PROGRESS);
+        GameRecord persisted = gameRepository.update(updated);
+        boolean starAwarded = status == GameStatus.IN_PROGRESS ? false : awardStarIfEligible(user.id());
+        return toDto(persisted, status != GameStatus.IN_PROGRESS, starAwarded);
     }
 
     @Transactional
@@ -202,6 +205,32 @@ public class DailyGameService {
             record.completedAt()
         );
         return toDto(gameRepository.update(updated), record.status() != GameStatus.IN_PROGRESS);
+    }
+
+    @Transactional
+    public StarRevealDto useStar(AppUser user) {
+        GameRecord record = todayRecord(user);
+        List<GuessResult> guesses = readGuesses(record);
+        if (record.status() != GameStatus.IN_PROGRESS) {
+            throw new WebApplicationException("La stella puo' essere usata solo durante una partita.", Response.Status.CONFLICT);
+        }
+        if (guesses.isEmpty()) {
+            throw new WebApplicationException("Prova un tentativo prima di usare la stella.", Response.Status.CONFLICT);
+        }
+
+        UserEntity userEntity = UserEntity.findById(user.id());
+        if (userEntity == null || !Boolean.TRUE.equals(userEntity.starAvailable)) {
+            throw new WebApplicationException("Completa 3 partite di fila per ottenere una stella.", Response.Status.CONFLICT);
+        }
+
+        String now = java.time.Instant.now().toString();
+        userEntity.starAvailable = false;
+        userEntity.starUsedAt = now;
+
+        return new StarRevealDto(
+            toDto(record, false),
+            revealAllTiles(guesses, record.solution())
+        );
     }
 
     public StatsDto stats(AppUser user) {
@@ -324,6 +353,10 @@ public class DailyGameService {
     }
 
     private GameDto toDto(GameRecord record, boolean revealSolution) {
+        return toDto(record, revealSolution, false);
+    }
+
+    private GameDto toDto(GameRecord record, boolean revealSolution, boolean starJustAwarded) {
         List<GuessResult> guesses = readGuesses(record);
         return new GameDto(
             record.puzzleDate(),
@@ -335,7 +368,8 @@ public class DailyGameService {
             guesses,
             revealSolution || record.status() != GameStatus.IN_PROGRESS ? record.solution() : null,
             guesses.isEmpty() && record.status() == GameStatus.IN_PROGRESS,
-            kittenDto(record)
+            kittenDto(record),
+            starDto(record, guesses, starJustAwarded)
         );
     }
 
@@ -345,6 +379,54 @@ public class DailyGameService {
         }
         boolean used = record.kittenUsedAt() != null || record.mouseRevealed();
         return new KittenDto(record.kittenUnlocked(), used, record.kittenUnlocked() && !used);
+    }
+
+    private StarDto starDto(GameRecord record, List<GuessResult> guesses, boolean justAwarded) {
+        UserEntity userEntity = UserEntity.findById(record.userId());
+        boolean available = userEntity != null && Boolean.TRUE.equals(userEntity.starAvailable);
+        boolean used = userEntity != null && userEntity.starUsedAt != null && !available;
+        boolean canUse = available && record.status() == GameStatus.IN_PROGRESS && !guesses.isEmpty();
+        return new StarDto(available, used, canUse, justAwarded);
+    }
+
+    private boolean awardStarIfEligible(String userId) {
+        UserEntity userEntity = UserEntity.findById(userId);
+        if (userEntity == null || Boolean.TRUE.equals(userEntity.starAvailable)) {
+            return false;
+        }
+
+        int completionStreak = currentCompletionStreak(gameRepository.findCompletedByUser(userId));
+        if (completionStreak < 3) {
+            return false;
+        }
+
+        userEntity.starAvailable = true;
+        userEntity.starAwardedAt = java.time.Instant.now().toString();
+        userEntity.starUsedAt = null;
+        return true;
+    }
+
+    private int currentCompletionStreak(List<GameRecord> records) {
+        int runningStreak = 0;
+        LocalDate expectedNextDate = null;
+
+        for (GameRecord record : records) {
+            LocalDate date = LocalDate.parse(record.puzzleDate());
+            if (expectedNextDate == null || date.equals(expectedNextDate)) {
+                runningStreak++;
+            } else {
+                runningStreak = 1;
+            }
+            expectedNextDate = date.plusDays(1);
+        }
+
+        return runningStreak;
+    }
+
+    private List<GuessResult> revealAllTiles(List<GuessResult> guesses, String solution) {
+        return guesses.stream()
+            .map(guess -> score(guess.word(), solution))
+            .toList();
     }
 
     private GuessResult hideTile(GuessResult guess, int tileIndex) {

@@ -106,6 +106,13 @@ scripts/db-huff.sh dump data/huff-hexaquot.sql
 scripts/delete-player-huff.sh --email player@example.com
 ```
 
+Schema updates that add game or user bonus columns can be applied with:
+
+```bash
+scripts/migrate-game-modes-huff.sh
+scripts/migrate-user-stars-huff.sh
+```
+
 To reset the live database, delete the PostgreSQL data directory and any old residual SQLite files, then redeploy the app:
 
 ```bash

@@ -25,6 +25,15 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false)
     public String createdAt;
 
+    @Column(name = "star_available", nullable = false, columnDefinition = "boolean default false")
+    public Boolean starAvailable = false;
+
+    @Column(name = "star_awarded_at")
+    public String starAwardedAt;
+
+    @Column(name = "star_used_at")
+    public String starUsedAt;
+
     public AppUser toAppUser(boolean authenticated) {
         return new AppUser(id, email, displayName, authenticated);
     }
