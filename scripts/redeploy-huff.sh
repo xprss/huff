@@ -185,7 +185,7 @@ if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
   PREVIOUS_IMAGE_ID="$(docker inspect --format '{{.Image}}' "${CONTAINER_NAME}")"
 fi
 
-docker build -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+DOCKER_BUILDKIT=1 docker build -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 NEW_IMAGE_ID="$(docker image inspect --format '{{.Id}}' "${IMAGE_NAME}:latest")"
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then

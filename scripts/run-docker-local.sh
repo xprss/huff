@@ -104,7 +104,7 @@ done
 
 if [[ "${BUILD_IMAGE}" == "true" ]]; then
   echo "Building ${IMAGE_NAME}:latest"
-  docker build -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+  DOCKER_BUILDKIT=1 docker build -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 fi
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
