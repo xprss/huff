@@ -71,14 +71,24 @@ export interface GlobalStatsDto {
 
 export interface MeDto {
   loggedIn: boolean;
-  user: null | {
-    email: string | null;
-    displayName: string | null;
-    authenticated: boolean;
-  };
+  user: UserDto | null;
   loginUrl: string | null;
   logoutUrl: string | null;
   authEnabled: boolean;
+}
+
+export interface UserDto {
+  email: string | null;
+  displayName: string | null;
+  nickname: string;
+  profileEmoji: string;
+  authenticated: boolean;
+}
+
+export interface ProfileUpdateDto {
+  displayName: string;
+  nickname: string;
+  profileEmoji: string;
 }
 
 export interface PushSettingsDto {

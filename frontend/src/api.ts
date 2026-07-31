@@ -3,11 +3,13 @@ import type {
   GameMode,
   GlobalStatsDto,
   MeDto,
+  ProfileUpdateDto,
   PushSettingsDto,
   PushSubscriptionDto,
   StatsDto,
   StarRevealDto,
-  TodayGameDto
+  TodayGameDto,
+  UserDto
 } from "./types";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -52,6 +54,11 @@ export const api = {
       method: "POST"
     }),
   stats: () => request<StatsDto>("/api/stats"),
+  updateProfile: (profile: ProfileUpdateDto) =>
+    request<UserDto>("/api/me/profile", {
+      method: "PUT",
+      body: JSON.stringify(profile)
+    }),
   globalStats: () => request<GlobalStatsDto>("/api/stats/global"),
   pushSettings: () => request<PushSettingsDto>("/api/push/settings"),
   savePushSubscription: (subscription: PushSubscriptionDto) =>
