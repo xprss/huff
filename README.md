@@ -21,6 +21,16 @@ npm run dev
 
 The frontend uses the Vite proxy to reach Quarkus on `localhost:8080`.
 
+To build and run the complete Docker image locally with PostgreSQL:
+
+```bash
+scripts/run-docker-local.sh
+```
+
+The application is available at `http://localhost:8080`. Press Ctrl-C to stop
+the application container; the local PostgreSQL container and its named volume
+are retained for the next run. Use `--no-build` to reuse the existing image.
+
 ## Configuration
 
 Copy `.env.example` to `.env` for Docker deployments. Authentication is disabled by default:
@@ -104,6 +114,22 @@ scripts/db-huff.sh query "SELECT * FROM users;"
 scripts/db-huff.sh backup
 scripts/db-huff.sh dump data/huff-hexaquot.sql
 scripts/delete-player-huff.sh --email player@example.com
+```
+
+To seed three consecutive completed games for every player, run:
+
+```bash
+scripts/seed-star-streak-huff.sh
+```
+
+The script inserts completed games for yesterday through three days ago for all
+players.
+
+Schema updates that add game or user bonus columns can be applied with:
+
+```bash
+scripts/migrate-game-modes-huff.sh
+scripts/migrate-user-stars-huff.sh
 ```
 
 To reset the live database, delete the PostgreSQL data directory and any old residual SQLite files, then redeploy the app:

@@ -5,6 +5,7 @@ import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.game.DailyGameService;
 import dev.huff.hexaquot.game.GuessRequest;
 import dev.huff.hexaquot.game.ModeRequest;
+import dev.huff.hexaquot.game.StarRevealDto;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;
@@ -72,6 +73,21 @@ public class GameResource {
             return unauthorized(resolvedUser.loginUrl());
         }
         Response.ResponseBuilder response = Response.ok(dailyGameService.useKitten(resolvedUser.user()));
+        if (resolvedUser.setCookieHeader() != null) {
+            response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        }
+        return response.build();
+    }
+
+    @POST
+    @Path("/game/today/star")
+    public Response useStar(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized(resolvedUser.loginUrl());
+        }
+        StarRevealDto reveal = dailyGameService.useStar(resolvedUser.user());
+        Response.ResponseBuilder response = Response.ok(reveal);
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }

@@ -90,6 +90,7 @@ public class UserService {
             user = new UserEntity();
             user.id = userId;
             user.createdAt = now;
+            user.starAvailable = false;
             user.persist();
         }
         user.googleSubject = googleSubject;
