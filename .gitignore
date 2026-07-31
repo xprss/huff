@@ -3,4 +3,5 @@ frontend/dist/
 frontend/node_modules/
 data/
 .env
+.env.staging
 *.log
