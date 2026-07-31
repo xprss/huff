@@ -537,6 +537,12 @@ function App() {
                 ) : null}
               </div>
             </div>
+
+            {toast ? (
+              <div className={`toast ${toast.variant}`} role="status" aria-live="polite" key={toast.id}>
+                {toast.text}
+              </div>
+            ) : null}
           </header>
   
           {showLoginScreen ? (
@@ -676,12 +682,6 @@ function App() {
 
         {starReveal ? <StarRevealModal guesses={starReveal} onClose={() => setStarReveal(null)} /> : null}
 
-        {toast ? (
-          <div className={`toast ${toast.variant}`} role="status" aria-live="polite" key={toast.id}>
-            {toast.text}
-          </div>
-        ) : null}
-  
         <footer className="app-footer">
           <span>Sviluppato con</span>
           <Heart className="footer-heart" aria-hidden="true" />

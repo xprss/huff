@@ -261,6 +261,7 @@ button {
 }
 
 .topbar {
+  position: relative;
   display: block;
   padding: 2px 0 0;
 }
@@ -1310,10 +1311,10 @@ h1 {
 }
 
 .toast {
-  position: fixed;
+  position: absolute;
   z-index: 60;
   left: 50%;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  top: calc(100% + var(--surface-gap));
   width: min(calc(100vw - 28px), 420px);
   min-height: 44px;
   border: var(--control-border-width) solid var(--color-button-border);
