@@ -565,7 +565,7 @@ function App() {
                       <>
                         <div className="menu-divider" role="separator" />
                         <a
-                          className="menu-item"
+                          className="menu-item danger"
                           href={me.logoutUrl ?? "/api/logout"}
                           role="menuitem"
                           onClick={() => setShowActionsMenu(false)}
@@ -902,6 +902,10 @@ function ModeSelection({
   );
 }
 
+function toEditableNickname(nickname: string) {
+  return nickname.replace(/@/g, "");
+}
+
 function ProfileView({
   user,
   stats,
@@ -922,19 +926,19 @@ function ProfileView({
   onError: (message: string) => void;
 }) {
   const [displayName, setDisplayName] = React.useState(user.displayName ?? "");
-  const [nickname, setNickname] = React.useState(user.nickname);
+  const [nicknameHandle, setNicknameHandle] = React.useState(toEditableNickname(user.nickname));
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const winRate = stats && stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
 
   React.useEffect(() => {
     setDisplayName(user.displayName ?? "");
-    setNickname(user.nickname);
+    setNicknameHandle(toEditableNickname(user.nickname));
   }, [user.displayName, user.nickname]);
 
   function cancelEdit() {
     setDisplayName(user.displayName ?? "");
-    setNickname(user.nickname);
+    setNicknameHandle(toEditableNickname(user.nickname));
     onEditingChange(false);
   }
 
@@ -943,7 +947,7 @@ function ProfileView({
       setSaving(true);
       const updated = await onSave(profile);
       setDisplayName(updated.displayName ?? "");
-      setNickname(updated.nickname);
+      setNicknameHandle(toEditableNickname(updated.nickname));
       onEditingChange(false);
       setShowEmojiPicker(false);
       onSuccess(successMessage);
@@ -959,7 +963,7 @@ function ProfileView({
     void saveProfile(
       {
         displayName,
-        nickname,
+        nickname: `@${nicknameHandle}`,
         profileEmoji: user.profileEmoji
       },
       "Profilo aggiornato."
@@ -1000,14 +1004,17 @@ function ProfileView({
                 </label>
                 <label>
                   <span>Nickname</span>
-                  <input
-                    value={nickname}
-                    onChange={(event) => setNickname(event.target.value)}
-                    maxLength={30}
-                    disabled={saving}
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
+                  <div className="profile-nickname-field">
+                    <span className="profile-nickname-prefix" aria-hidden="true">@</span>
+                    <input
+                      value={nicknameHandle}
+                      onChange={(event) => setNicknameHandle(toEditableNickname(event.target.value))}
+                      maxLength={29}
+                      disabled={saving}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
                 </label>
                 <div className="profile-form-actions">
                   <button className="profile-action-button primary" type="submit" disabled={saving}>

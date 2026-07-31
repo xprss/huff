@@ -444,6 +444,14 @@ h1 {
   background: var(--color-surface-strong);
 }
 
+.menu-item.danger {
+  color: var(--color-danger);
+}
+
+.menu-item.danger svg {
+  color: currentColor;
+}
+
 .menu-divider {
   height: 1px;
   margin: 6px 4px;
@@ -761,7 +769,8 @@ h1 {
   text-transform: uppercase;
 }
 
-.profile-form input {
+.profile-form input,
+.profile-nickname-field {
   width: 100%;
   min-height: 38px;
   border: 1px solid var(--color-button-border);
@@ -775,9 +784,38 @@ h1 {
   outline: 0;
 }
 
-.profile-form input:focus {
+.profile-nickname-field {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.profile-nickname-prefix {
+  color: var(--color-muted);
+  flex: 0 0 auto;
+  user-select: none;
+  pointer-events: none;
+}
+
+.profile-nickname-field input {
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+.profile-form input:focus,
+.profile-nickname-field:focus-within {
   border-color: var(--color-hover-border);
   box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.profile-nickname-field input:focus {
+  box-shadow: none;
 }
 
 .profile-form-actions {
