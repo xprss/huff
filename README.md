@@ -92,6 +92,16 @@ scripts/redeploy-huff.sh
 
 The script builds the Docker image, creates the Docker network if needed, starts PostgreSQL with persistent data in `POSTGRES_DATA_DIR`, and replaces the application container.
 
+## Staging Deploy
+
+Copy `.env.staging.example` to `.env.staging` to override staging defaults, then run:
+
+```bash
+scripts/redeploy-huff-staging.sh
+```
+
+The staging deploy uses isolated Docker resources by default: `huff-hexaquot-staging`, `huff-postgres-staging`, `huff-hexaquot-staging` network, and `127.0.0.1:8084`.
+
 ## Quarkus Logs
 
 ```bash
@@ -130,6 +140,14 @@ Schema updates that add game or user bonus columns can be applied with:
 ```bash
 scripts/migrate-game-modes-huff.sh
 scripts/migrate-user-stars-huff.sh
+scripts/migrate-user-profile-huff.sh
+```
+
+User profile nicknames can be changed directly in PostgreSQL when needed. The command is a dry-run by default and only writes with `--yes`:
+
+```bash
+scripts/set-user-nickname-huff.sh --id USER_ID --nickname nickname
+scripts/set-user-nickname-huff.sh --id USER_ID --nickname @nickname --yes
 ```
 
 To reset the live database, delete the PostgreSQL data directory and any old residual SQLite files, then redeploy the app:

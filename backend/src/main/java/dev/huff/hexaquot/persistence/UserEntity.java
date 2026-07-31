@@ -22,6 +22,12 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "display_name")
     public String displayName;
 
+    @Column(name = "nickname", length = 30)
+    public String nickname;
+
+    @Column(name = "profile_emoji", length = 16)
+    public String profileEmoji;
+
     @Column(name = "created_at", nullable = false)
     public String createdAt;
 
@@ -35,6 +41,6 @@ public class UserEntity extends PanacheEntityBase {
     public String starUsedAt;
 
     public AppUser toAppUser(boolean authenticated) {
-        return new AppUser(id, email, displayName, authenticated);
+        return new AppUser(id, email, displayName, nickname, profileEmoji, authenticated);
     }
 }

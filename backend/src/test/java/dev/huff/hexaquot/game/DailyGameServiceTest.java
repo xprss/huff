@@ -62,6 +62,8 @@ class DailyGameServiceTest {
             "test-mouse-" + UUID.randomUUID(),
             null,
             "Mouse",
+            "@mouse",
+            "😀",
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
@@ -90,6 +92,8 @@ class DailyGameServiceTest {
             "test-first-guess-kitten-" + UUID.randomUUID(),
             null,
             "First Guess Kitten",
+            "@first-guess-kitten",
+            "😀",
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
@@ -107,6 +111,8 @@ class DailyGameServiceTest {
             "test-repeated-mouse-guess-" + UUID.randomUUID(),
             null,
             "Repeated Mouse Guess",
+            "@repeated-mouse-guess",
+            "😀",
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
@@ -243,10 +249,12 @@ class DailyGameServiceTest {
         UserEntity user = new UserEntity();
         user.id = "test-" + label + "-" + UUID.randomUUID();
         user.displayName = "Star Test";
+        user.nickname = "@star-test-" + UUID.randomUUID().toString().substring(0, 8);
+        user.profileEmoji = "😀";
         user.createdAt = now;
         user.starAvailable = false;
         user.persist();
-        return new AppUser(user.id, null, user.displayName, false);
+        return new AppUser(user.id, null, user.displayName, user.nickname, user.profileEmoji, false);
     }
 
     private void createCompletedGame(AppUser user, LocalDate date, GameStatus status) throws Exception {

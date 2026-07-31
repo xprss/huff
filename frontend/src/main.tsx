@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import confetti from "canvas-confetti";
-import { BarChart3, Bell, BellOff, Delete, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Star, Sun, X } from "lucide-react";
+import { BarChart3, Bell, BellOff, Check, ChevronLeft, Delete, Edit3, ExternalLink, Github, Heart, Info, LogOut, Menu, Moon, Share2, Star, Sun, UserRound, X } from "lucide-react";
 import { api } from "./api";
 import { AppThemeProvider, applyThemeToDocument, baseAppTheme, useAppTheme } from "./theme";
-import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, GuessResult, MeDto, PushSubscriptionDto, StatsDto, TileState } from "./types";
+import type { GameDto, GameMode, GameModeDto, GlobalStatsDto, GuessResult, MeDto, ProfileUpdateDto, PushSubscriptionDto, StatsDto, TileState, UserDto } from "./types";
 import { APP_VERSION } from "./version";
 import "./styles.css";
 
@@ -22,6 +22,8 @@ const VIEWPORT_SYNC_DELAYS_MS = [40, 120, 280, 600, 1200];
 const GAME_NOTIFICATIONS_ENABLED_KEY = "huffGameNotificationsEnabled";
 const PUSH_PUBLIC_KEY_KEY = "huffPushPublicKey";
 const SERVICE_WORKER_READY_TIMEOUT_MS = 2500;
+const PROFILE_EMOJIS = ["😀", "😄", "😎", "🤓", "🥳", "😇", "🤠", "😴", "😤", "😍", "🙃", "😌"];
+type AppView = "game" | "profile";
 type BoardColumn = {
   feedback: Array<TileState | undefined>;
 };
@@ -50,6 +52,8 @@ function App() {
   const [currentGuess, setCurrentGuess] = React.useState("");
   const [showStats, setShowStats] = React.useState(false);
   const [showInfo, setShowInfo] = React.useState(false);
+  const [activeView, setActiveView] = React.useState<AppView>("game");
+  const [profileEditing, setProfileEditing] = React.useState(false);
   const [starReveal, setStarReveal] = React.useState<GuessResult[] | null>(null);
   const [toast, setToast] = React.useState<ToastMessage | null>(null);
   const [showActionsMenu, setShowActionsMenu] = React.useState(false);
@@ -183,7 +187,7 @@ function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (showStats || showInfo || starReveal) return;
+      if (activeView !== "game" || showStats || showInfo || starReveal) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -196,6 +200,12 @@ function App() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   });
+
+  React.useEffect(() => {
+    if (activeView !== "profile") {
+      setProfileEditing(false);
+    }
+  }, [activeView]);
 
   React.useEffect(() => {
     if (!showActionsMenu) return;
@@ -436,6 +446,12 @@ function App() {
     }
   }
 
+  async function updateProfile(profile: ProfileUpdateDto) {
+    const updatedUser = await api.updateProfile(profile);
+    setMe((current) => (current?.user ? { ...current, user: updatedUser } : current));
+    return updatedUser;
+  }
+
   return (
     <AppThemeProvider conditions={themeConditions}>
       <main className="app-shell">
@@ -459,6 +475,17 @@ function App() {
                     <Star size={21} />
                   </button>
                 ) : null}
+                {activeView === "profile" && me?.user && !profileEditing ? (
+                  <button
+                    className="icon-button profile-nav-edit"
+                    type="button"
+                    onClick={() => setProfileEditing(true)}
+                    aria-label="Modifica nome e nickname"
+                    title="Modifica"
+                  >
+                    <Edit3 size={19} />
+                  </button>
+                ) : null}
                 <button
                   className="icon-button menu-trigger"
                   type="button"
@@ -473,18 +500,33 @@ function App() {
                 {showActionsMenu ? (
                   <div className="action-menu" role="menu" aria-label="Azioni">
                     {canUseGameActions ? (
-                      <button
-                        className="menu-item"
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setShowStats(true);
-                          setShowActionsMenu(false);
-                        }}
-                      >
-                        <BarChart3 size={18} />
-                        <span>Statistiche</span>
-                      </button>
+                      <>
+                        <button
+                          className="menu-item"
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setActiveView("profile");
+                            setProfileEditing(false);
+                            setShowActionsMenu(false);
+                          }}
+                        >
+                          <UserRound size={18} />
+                          <span>Profilo</span>
+                        </button>
+                        <button
+                          className="menu-item"
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setShowStats(true);
+                            setShowActionsMenu(false);
+                          }}
+                        >
+                          <BarChart3 size={18} />
+                          <span>Statistiche</span>
+                        </button>
+                      </>
                     ) : null}
                     <button
                       className="menu-item"
@@ -551,6 +593,20 @@ function App() {
             <div className="play-area">
               <LoadingSpinner />
             </div>
+          ) : activeView === "profile" && me?.user ? (
+            <ProfileView
+              user={me.user}
+              stats={stats}
+              editing={profileEditing}
+              onEditingChange={setProfileEditing}
+              onBack={() => {
+                setProfileEditing(false);
+                setActiveView("game");
+              }}
+              onSave={(profile) => updateProfile(profile)}
+              onSuccess={(message) => showToast(message, "success")}
+              onError={(message) => showToast(message, "error")}
+            />
           ) : !game ? (
             <div className="play-area">
               <ModeSelection modes={modes} selectedMode={null} onSelect={(mode) => void selectGameMode(mode)} />
@@ -842,6 +898,193 @@ function ModeSelection({
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+function ProfileView({
+  user,
+  stats,
+  editing,
+  onEditingChange,
+  onBack,
+  onSave,
+  onSuccess,
+  onError
+}: {
+  user: UserDto;
+  stats: StatsDto | null;
+  editing: boolean;
+  onEditingChange: (editing: boolean) => void;
+  onBack: () => void;
+  onSave: (profile: ProfileUpdateDto) => Promise<UserDto>;
+  onSuccess: (message: string) => void;
+  onError: (message: string) => void;
+}) {
+  const [displayName, setDisplayName] = React.useState(user.displayName ?? "");
+  const [nickname, setNickname] = React.useState(user.nickname);
+  const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const winRate = stats && stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+
+  React.useEffect(() => {
+    setDisplayName(user.displayName ?? "");
+    setNickname(user.nickname);
+  }, [user.displayName, user.nickname]);
+
+  function cancelEdit() {
+    setDisplayName(user.displayName ?? "");
+    setNickname(user.nickname);
+    onEditingChange(false);
+  }
+
+  async function saveProfile(profile: ProfileUpdateDto, successMessage: string) {
+    try {
+      setSaving(true);
+      const updated = await onSave(profile);
+      setDisplayName(updated.displayName ?? "");
+      setNickname(updated.nickname);
+      onEditingChange(false);
+      setShowEmojiPicker(false);
+      onSuccess(successMessage);
+    } catch (error) {
+      onError(error instanceof Error ? error.message : "Impossibile aggiornare il profilo.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function submitProfile(event: React.FormEvent) {
+    event.preventDefault();
+    void saveProfile(
+      {
+        displayName,
+        nickname,
+        profileEmoji: user.profileEmoji
+      },
+      "Profilo aggiornato."
+    );
+  }
+
+  return (
+    <section className="profile-view" aria-label="Profilo">
+      <div className="profile-summary">
+        <div className="profile-head">
+          <button className="icon-button profile-back" type="button" onClick={onBack} aria-label="Torna al gioco" title="Torna">
+            <ChevronLeft size={23} />
+          </button>
+          <button
+            className="profile-emoji"
+            type="button"
+            onClick={() => setShowEmojiPicker(true)}
+            aria-label="Modifica emoji profilo"
+            title="Modifica emoji"
+          >
+            <span className="profile-emoji-glyph">{user.profileEmoji}</span>
+            <span className="profile-emoji-edit" aria-hidden="true">
+              <Edit3 size={10} />
+            </span>
+          </button>
+          <div className="profile-identity">
+            {editing ? (
+              <form className="profile-form" onSubmit={submitProfile}>
+                <label>
+                  <span>Nome</span>
+                  <input
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    maxLength={80}
+                    disabled={saving}
+                    autoComplete="name"
+                  />
+                </label>
+                <label>
+                  <span>Nickname</span>
+                  <input
+                    value={nickname}
+                    onChange={(event) => setNickname(event.target.value)}
+                    maxLength={30}
+                    disabled={saving}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+                <div className="profile-form-actions">
+                  <button className="profile-action-button primary" type="submit" disabled={saving}>
+                    <Check size={17} />
+                    <span>Salva</span>
+                  </button>
+                  <button className="profile-action-button" type="button" onClick={cancelEdit} disabled={saving}>
+                    <X size={17} />
+                    <span>Annulla</span>
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <strong>{user.displayName}</strong>
+                <span>{user.nickname}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="profile-stats" aria-label="Statistiche personali">
+        <div className="stat-grid">
+          <Metric label="Giocate" value={stats?.played ?? 0} />
+          <Metric label="Vinte" value={stats?.won ?? 0} />
+          <Metric label="Perse" value={stats?.lost ?? 0} />
+          <Metric label="Vittorie" value={`${winRate}%`} />
+        </div>
+        <div className="stat-grid compact">
+          <Metric label="Serie" value={stats?.currentStreak ?? 0} />
+          <Metric label="Record" value={stats?.maxStreak ?? 0} />
+        </div>
+        <Distribution distribution={stats?.guessDistribution ?? {}} />
+      </div>
+
+      {showEmojiPicker ? (
+        <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowEmojiPicker(false)}>
+          <section
+            className="modal emoji-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Scegli emoji profilo"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="modal-head">
+              <h2>Emoji</h2>
+              <button className="close-button" type="button" onClick={() => setShowEmojiPicker(false)} aria-label="Chiudi">
+                <X size={19} />
+              </button>
+            </header>
+            <div className="emoji-grid">
+              {PROFILE_EMOJIS.map((emoji) => (
+                <button
+                  className={`emoji-choice ${emoji === user.profileEmoji ? "selected" : ""}`}
+                  type="button"
+                  key={emoji}
+                  onClick={() =>
+                    void saveProfile(
+                      {
+                        displayName: user.displayName ?? "",
+                        nickname: user.nickname,
+                        profileEmoji: emoji
+                      },
+                      "Emoji aggiornata."
+                    )
+                  }
+                  disabled={saving}
+                  aria-pressed={emoji === user.profileEmoji}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }
