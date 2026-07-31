@@ -7,6 +7,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.startsWith;
 
 @QuarkusTest
 class GameResourceTest {
@@ -20,8 +21,115 @@ class GameResourceTest {
             .body("loggedIn", equalTo(true))
             .body("authEnabled", equalTo(false))
             .body("user.displayName", equalTo("Giocatore"))
+            .body("user.nickname", startsWith("@giocatore-"))
+            .body("user.profileEmoji", equalTo("😀"))
             .body("loginUrl", equalTo(null))
             .body("logoutUrl", equalTo(null));
+    }
+
+    @Test
+    void updatesCurrentUserProfileAndKeepsCustomDisplayNameOnResolve() {
+        String cookie = given()
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .extract().header("Set-Cookie");
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"displayName\":\"Nome Profilo\",\"nickname\":\"Profilo.Test\",\"profileEmoji\":\"😎\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(200)
+            .body("displayName", equalTo("Nome Profilo"))
+            .body("nickname", equalTo("@profilo.test"))
+            .body("profileEmoji", equalTo("😎"));
+
+        given()
+            .header("Cookie", cookie)
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .body("user.displayName", equalTo("Nome Profilo"))
+            .body("user.nickname", equalTo("@profilo.test"))
+            .body("user.profileEmoji", equalTo("😎"));
+    }
+
+    @Test
+    void rejectsDuplicateNickname() {
+        String firstCookie = given()
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .extract().header("Set-Cookie");
+        String secondCookie = given()
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .extract().header("Set-Cookie");
+
+        given()
+            .header("Cookie", firstCookie)
+            .body("{\"displayName\":\"Primo\",\"nickname\":\"@duplicato\",\"profileEmoji\":\"😀\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(200);
+
+        given()
+            .header("Cookie", secondCookie)
+            .body("{\"displayName\":\"Secondo\",\"nickname\":\"duplicato\",\"profileEmoji\":\"😄\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(409)
+            .body("code", equalTo("request_failed"));
+    }
+
+    @Test
+    void rejectsInvalidProfileUpdates() {
+        String cookie = given()
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .extract().header("Set-Cookie");
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"displayName\":\"   \",\"nickname\":\"@valido\",\"profileEmoji\":\"😀\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"));
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@non valido\",\"profileEmoji\":\"😀\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"));
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@abcdefghijklmnopqrstuvwxyz1234\",\"profileEmoji\":\"😀\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"));
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@valido\",\"profileEmoji\":\"🔥\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"));
     }
 
     @Test

@@ -5,16 +5,31 @@ import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class UserService {
     private static final String SESSION_COOKIE = "huff_session";
+    public static final String DEFAULT_PROFILE_EMOJI = "😀";
+    public static final Set<String> ALLOWED_PROFILE_EMOJIS = Set.of(
+        "😀", "😄", "😎", "🤓", "🥳", "😇", "🤠", "😴", "😤", "😍", "🙃", "😌"
+    );
+    private static final Pattern NICKNAME_PATTERN = Pattern.compile("@[a-z0-9._-]+");
+    private static final int MAX_NICKNAME_LENGTH = 30;
 
     @ConfigProperty(name = "app.auth.enabled")
     boolean authEnabled;
@@ -91,12 +106,123 @@ public class UserService {
             user.id = userId;
             user.createdAt = now;
             user.starAvailable = false;
+            user.googleSubject = googleSubject;
+            user.email = email;
+            user.displayName = defaultDisplayName(displayName);
+            user.nickname = defaultNickname(userId, user.displayName);
+            user.profileEmoji = DEFAULT_PROFILE_EMOJI;
             user.persist();
+            return user.toAppUser(authenticated);
         }
         user.googleSubject = googleSubject;
         user.email = email;
-        user.displayName = displayName;
+        if (isBlank(user.displayName)) {
+            user.displayName = defaultDisplayName(displayName);
+        }
+        if (isBlank(user.nickname)) {
+            user.nickname = defaultNickname(userId, user.displayName);
+        }
+        if (!ALLOWED_PROFILE_EMOJIS.contains(user.profileEmoji)) {
+            user.profileEmoji = DEFAULT_PROFILE_EMOJI;
+        }
         return user.toAppUser(authenticated);
+    }
+
+    @Transactional
+    public AppUser updateProfile(String userId, String displayName, String nickname, String profileEmoji, boolean authenticated) {
+        UserEntity user = UserEntity.findById(userId);
+        if (user == null) {
+            throw new NotAuthorizedException("Utente non trovato.");
+        }
+
+        String normalizedDisplayName = normalizeDisplayName(displayName);
+        String normalizedNickname = normalizeNickname(nickname);
+        String normalizedProfileEmoji = normalizeProfileEmoji(profileEmoji);
+        UserEntity nicknameOwner = UserEntity.<UserEntity>find("nickname", normalizedNickname).firstResult();
+        if (nicknameOwner != null && !nicknameOwner.id.equals(userId)) {
+            throw new WebApplicationException("Nickname già in uso.", Response.Status.CONFLICT);
+        }
+
+        user.displayName = normalizedDisplayName;
+        user.nickname = normalizedNickname;
+        user.profileEmoji = normalizedProfileEmoji;
+        return user.toAppUser(authenticated);
+    }
+
+    private String defaultDisplayName(String displayName) {
+        if (isBlank(displayName)) {
+            return "Giocatore";
+        }
+        return displayName.trim();
+    }
+
+    private String defaultNickname(String userId, String displayName) {
+        String slug = slugify(defaultDisplayName(displayName));
+        String suffix = deterministicSuffix(userId);
+        int maxSlugLength = MAX_NICKNAME_LENGTH - 1 - 1 - suffix.length();
+        String trimmedSlug = slug.length() > maxSlugLength ? slug.substring(0, maxSlugLength) : slug;
+        return "@" + trimmedSlug + "-" + suffix;
+    }
+
+    private String normalizeDisplayName(String displayName) {
+        if (isBlank(displayName)) {
+            throw new BadRequestException("Il nome non può essere vuoto.");
+        }
+        return displayName.trim();
+    }
+
+    public static String normalizeNickname(String nickname) {
+        if (isBlank(nickname)) {
+            throw new BadRequestException("Il nickname non può essere vuoto.");
+        }
+        String normalized = nickname.trim().toLowerCase(Locale.ROOT);
+        if (!normalized.startsWith("@")) {
+            normalized = "@" + normalized;
+        }
+        if (normalized.length() > MAX_NICKNAME_LENGTH) {
+            throw new BadRequestException("Il nickname può avere al massimo 30 caratteri.");
+        }
+        if (!NICKNAME_PATTERN.matcher(normalized).matches()) {
+            throw new BadRequestException("Il nickname deve avere formato @[a-z0-9._-]+.");
+        }
+        return normalized;
+    }
+
+    private String normalizeProfileEmoji(String profileEmoji) {
+        if (!ALLOWED_PROFILE_EMOJIS.contains(profileEmoji)) {
+            throw new BadRequestException("Emoji profilo non ammessa.");
+        }
+        return profileEmoji;
+    }
+
+    private String slugify(String value) {
+        String slug = value
+            .toLowerCase(Locale.ROOT)
+            .replaceAll("[^a-z0-9._-]+", "-")
+            .replaceAll("^[._-]+|[._-]+$", "");
+        return slug.isBlank() ? "giocatore" : slug;
+    }
+
+    private String deterministicSuffix(String userId) {
+        int separator = userId.lastIndexOf(':');
+        if (separator >= 0 && userId.length() >= separator + 9) {
+            return userId.substring(separator + 1, separator + 9);
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(userId.getBytes(StandardCharsets.UTF_8));
+            StringBuilder value = new StringBuilder();
+            for (int index = 0; index < 4; index++) {
+                value.append(String.format("%02x", bytes[index]));
+            }
+            return value.toString();
+        } catch (NoSuchAlgorithmException error) {
+            throw new IllegalStateException("SHA-256 not available", error);
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private String sessionCookie(String sessionId) {
