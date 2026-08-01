@@ -1,105 +1,196 @@
 export type TileState = "CORRECT" | "PRESENT" | "ABSENT" | "HIDDEN";
 export type GameStatus = "IN_PROGRESS" | "WON" | "LOST";
 export type GameMode = "CLASSIC" | "MISCHIEVOUS_MOUSE";
+export type IsoDateString = `${number}-${number}-${number}`;
+export type GuessAttempt = "1" | "2" | "3" | "4" | "5" | "6";
+export type GuessDistributionDto = Partial<Record<GuessAttempt, number>>;
+
+export interface ApiErrorDto {
+  readonly code?: string;
+  readonly message?: string;
+  readonly loginUrl?: string | null;
+}
 
 export interface TileResult {
-  letter: string;
-  state: TileState;
+  readonly letter: string;
+  readonly state: TileState;
 }
 
 export interface GuessResult {
-  word: string;
-  tiles: TileResult[];
+  readonly word: string;
+  readonly tiles: readonly TileResult[];
+}
+
+export interface KittenDto {
+  readonly unlocked: boolean;
+  readonly used: boolean;
+  readonly canUse: boolean;
+}
+
+export interface StarDto {
+  readonly available: boolean;
+  readonly used: boolean;
+  readonly canUse: boolean;
+  readonly justAwarded: boolean;
 }
 
 export interface GameDto {
-  puzzleDate: string;
-  mode: GameMode;
-  modeLabel: string;
-  status: GameStatus;
-  maxAttempts: number;
-  answerLength: number;
-  guesses: GuessResult[];
-  solution: string | null;
-  canChangeMode: boolean;
-  kitten: {
-    unlocked: boolean;
-    used: boolean;
-    canUse: boolean;
-  };
-  star: {
-    available: boolean;
-    used: boolean;
-    canUse: boolean;
-    justAwarded: boolean;
-  };
+  readonly puzzleDate: IsoDateString;
+  readonly mode: GameMode;
+  readonly modeLabel: string;
+  readonly status: GameStatus;
+  readonly maxAttempts: number;
+  readonly answerLength: number;
+  readonly guesses: readonly GuessResult[];
+  readonly solution: string | null;
+  readonly canChangeMode: boolean;
+  readonly kitten: KittenDto;
+  readonly star: StarDto;
 }
 
 export interface StarRevealDto {
-  game: GameDto;
-  guesses: GuessResult[];
+  readonly game: GameDto;
+  readonly guesses: readonly GuessResult[];
 }
 
 export interface GameModeDto {
-  mode: GameMode;
-  label: string;
+  readonly mode: GameMode;
+  readonly label: string;
 }
 
 export interface TodayGameDto {
-  puzzleDate: string;
-  modes: GameModeDto[];
-  game: GameDto | null;
+  readonly puzzleDate: IsoDateString;
+  readonly modes: readonly GameModeDto[];
+  readonly game: GameDto | null;
 }
 
 export interface StatsDto {
-  played: number;
-  won: number;
-  lost: number;
-  currentStreak: number;
-  maxStreak: number;
-  guessDistribution: Record<string, number>;
+  readonly played: number;
+  readonly won: number;
+  readonly lost: number;
+  readonly currentStreak: number;
+  readonly maxStreak: number;
+  readonly guessDistribution: GuessDistributionDto;
 }
 
 export interface GlobalStatsDto {
-  players: number;
-  gamesStarted: number;
-  completed: number;
-  won: number;
-  lost: number;
-  guessDistribution: Record<string, number>;
+  readonly players: number;
+  readonly gamesStarted: number;
+  readonly completed: number;
+  readonly won: number;
+  readonly lost: number;
+  readonly guessDistribution: GuessDistributionDto;
 }
 
 export interface MeDto {
-  loggedIn: boolean;
-  user: UserDto | null;
-  loginUrl: string | null;
-  logoutUrl: string | null;
-  authEnabled: boolean;
+  readonly loggedIn: boolean;
+  readonly user: UserDto | null;
+  readonly loginUrl: string | null;
+  readonly logoutUrl: string | null;
+  readonly authEnabled: boolean;
 }
 
 export interface UserDto {
-  email: string | null;
-  displayName: string | null;
-  nickname: string;
-  profileEmoji: string;
-  authenticated: boolean;
+  readonly email: string | null;
+  readonly displayName: string | null;
+  readonly nickname: string;
+  readonly profileEmoji: string;
+  readonly authenticated: boolean;
 }
 
 export interface ProfileUpdateDto {
-  displayName: string;
-  nickname: string;
-  profileEmoji: string;
+  readonly displayName: string;
+  readonly nickname: string;
+  readonly profileEmoji: string;
+}
+
+export interface ModeRequestDto {
+  readonly mode: GameMode;
+}
+
+export interface GuessRequestDto {
+  readonly guess: string;
 }
 
 export interface PushSettingsDto {
-  supported: boolean;
-  publicKey: string | null;
+  readonly supported: boolean;
+  readonly publicKey: string | null;
+}
+
+export interface PushSubscriptionKeysDto {
+  readonly p256dh: string;
+  readonly auth: string;
 }
 
 export interface PushSubscriptionDto {
-  endpoint: string;
-  keys: {
-    p256dh: string;
-    auth: string;
-  };
+  readonly endpoint: string;
+  readonly keys: PushSubscriptionKeysDto;
 }
+
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+
+export type ApiEndpointMap = {
+  "/api/me": {
+    GET: {
+      response: MeDto;
+    };
+  };
+  "/api/game/today": {
+    GET: {
+      response: TodayGameDto;
+    };
+  };
+  "/api/game/today/mode": {
+    POST: {
+      body: ModeRequestDto;
+      response: GameDto;
+    };
+  };
+  "/api/game/today/guesses": {
+    POST: {
+      body: GuessRequestDto;
+      response: GameDto;
+    };
+  };
+  "/api/game/today/kitten": {
+    POST: {
+      response: GameDto;
+    };
+  };
+  "/api/game/today/star": {
+    POST: {
+      response: StarRevealDto;
+    };
+  };
+  "/api/stats": {
+    GET: {
+      response: StatsDto;
+    };
+  };
+  "/api/me/profile": {
+    PUT: {
+      body: ProfileUpdateDto;
+      response: UserDto;
+    };
+  };
+  "/api/stats/global": {
+    GET: {
+      response: GlobalStatsDto;
+    };
+  };
+  "/api/push/settings": {
+    GET: {
+      response: PushSettingsDto;
+    };
+  };
+  "/api/push/subscriptions": {
+    POST: {
+      body: PushSubscriptionDto;
+      response: void;
+    };
+    DELETE: {
+      body: PushSubscriptionDto;
+      response: void;
+    };
+  };
+};

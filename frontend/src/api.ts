@@ -1,74 +1,115 @@
 import type {
-  GameDto,
+  ApiEndpointMap,
+  ApiErrorDto,
+  HttpMethod,
   GameMode,
-  GlobalStatsDto,
-  MeDto,
   ProfileUpdateDto,
-  PushSettingsDto,
   PushSubscriptionDto,
-  StatsDto,
-  StarRevealDto,
-  TodayGameDto,
-  UserDto
 } from "./types";
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+type ApiPath = keyof ApiEndpointMap;
+type ApiMethod<Path extends ApiPath> = keyof ApiEndpointMap[Path] & HttpMethod;
+type ApiSpec<Path extends ApiPath, Method extends ApiMethod<Path>> = ApiEndpointMap[Path][Method];
+type ApiResponse<Path extends ApiPath, Method extends ApiMethod<Path>> = ApiSpec<Path, Method> extends {
+  response: infer Response;
+}
+  ? Response
+  : never;
+type ApiRequestBody<Path extends ApiPath, Method extends ApiMethod<Path>> = ApiSpec<Path, Method> extends {
+  body: infer Body;
+}
+  ? Body
+  : never;
+type ApiRequestInit<Path extends ApiPath, Method extends ApiMethod<Path>> = Omit<RequestInit, "body" | "method"> & {
+  method: Method;
+} & ([ApiRequestBody<Path, Method>] extends [never]
+    ? { body?: never }
+    : { body: ApiRequestBody<Path, Method> });
+type EndpointHandler<Path extends ApiPath, Method extends ApiMethod<Path>, Args extends readonly unknown[] = []> = (
+  ...args: Args
+) => Promise<ApiResponse<Path, Method>>;
+
+export type ApiClient = {
+  readonly me: EndpointHandler<"/api/me", "GET">;
+  readonly today: EndpointHandler<"/api/game/today", "GET">;
+  readonly selectMode: EndpointHandler<"/api/game/today/mode", "POST", [mode: GameMode]>;
+  readonly guess: EndpointHandler<"/api/game/today/guesses", "POST", [guess: string]>;
+  readonly useKitten: EndpointHandler<"/api/game/today/kitten", "POST">;
+  readonly useStar: EndpointHandler<"/api/game/today/star", "POST">;
+  readonly stats: EndpointHandler<"/api/stats", "GET">;
+  readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
+  readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
+  readonly pushSettings: EndpointHandler<"/api/push/settings", "GET">;
+  readonly savePushSubscription: EndpointHandler<"/api/push/subscriptions", "POST", [subscription: PushSubscriptionDto]>;
+  readonly deletePushSubscription: EndpointHandler<
+    "/api/push/subscriptions",
+    "DELETE",
+    [subscription: PushSubscriptionDto]
+  >;
+};
+
+async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
+  path: Path,
+  init: ApiRequestInit<Path, Method>
+): Promise<ApiResponse<Path, Method>> {
+  const { body, headers, ...requestInit } = init;
   const response = await fetch(path, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(init?.headers ?? {})
+      ...(headers ?? {})
     },
-    ...init
+    ...requestInit,
+    body: body === undefined ? undefined : JSON.stringify(body)
   });
 
   if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(body?.message ?? "Richiesta non riuscita");
+    const errorBody = (await response.json().catch(() => null)) as ApiErrorDto | null;
+    throw new Error(errorBody?.message ?? "Richiesta non riuscita");
   }
   if (response.status === 204) {
-    return undefined as T;
+    return undefined as ApiResponse<Path, Method>;
   }
-  return response.json() as Promise<T>;
+  return response.json() as Promise<ApiResponse<Path, Method>>;
 }
 
 export const api = {
-  me: () => request<MeDto>("/api/me"),
-  today: () => request<TodayGameDto>("/api/game/today"),
+  me: () => request("/api/me", { method: "GET" }),
+  today: () => request("/api/game/today", { method: "GET" }),
   selectMode: (mode: GameMode) =>
-    request<GameDto>("/api/game/today/mode", {
+    request("/api/game/today/mode", {
       method: "POST",
-      body: JSON.stringify({ mode })
+      body: { mode }
     }),
   guess: (guess: string) =>
-    request<GameDto>("/api/game/today/guesses", {
+    request("/api/game/today/guesses", {
       method: "POST",
-      body: JSON.stringify({ guess })
+      body: { guess }
     }),
   useKitten: () =>
-    request<GameDto>("/api/game/today/kitten", {
+    request("/api/game/today/kitten", {
       method: "POST"
     }),
   useStar: () =>
-    request<StarRevealDto>("/api/game/today/star", {
+    request("/api/game/today/star", {
       method: "POST"
     }),
-  stats: () => request<StatsDto>("/api/stats"),
+  stats: () => request("/api/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
-    request<UserDto>("/api/me/profile", {
+    request("/api/me/profile", {
       method: "PUT",
-      body: JSON.stringify(profile)
+      body: profile
     }),
-  globalStats: () => request<GlobalStatsDto>("/api/stats/global"),
-  pushSettings: () => request<PushSettingsDto>("/api/push/settings"),
+  globalStats: () => request("/api/stats/global", { method: "GET" }),
+  pushSettings: () => request("/api/push/settings", { method: "GET" }),
   savePushSubscription: (subscription: PushSubscriptionDto) =>
-    request<void>("/api/push/subscriptions", {
+    request("/api/push/subscriptions", {
       method: "POST",
-      body: JSON.stringify(subscription)
+      body: subscription
     }),
   deletePushSubscription: (subscription: PushSubscriptionDto) =>
-    request<void>("/api/push/subscriptions", {
+    request("/api/push/subscriptions", {
       method: "DELETE",
-      body: JSON.stringify(subscription)
+      body: subscription
     })
-};
+} satisfies ApiClient;
