@@ -46,6 +46,7 @@ AUTH_ENABLED=true
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 COOKIE_SECURE=true
+OIDC_SESSION_AGE_EXTENSION=30D
 ```
 
 In the Google OAuth client, use the `Web application` application type.
@@ -65,6 +66,10 @@ https://www.huff.ottonovembre.it/auth/callback
 ```
 
 Login starts at `/api/login`; local logout uses `/api/logout`.
+Google OAuth is requested with offline access so Quarkus can refresh expired
+tokens without forcing a new interactive login on returning users. The first
+login after enabling this setting can show Google's consent prompt once, so that
+Google issues the refresh token.
 
 Push notifications use standard Web Push with VAPID keys. Generate a stable key pair and put it in `.env` before deploying:
 
