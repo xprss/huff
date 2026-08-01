@@ -542,7 +542,13 @@ export function App() {
 
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
 
-        {starReveal ? <StarRevealModal guesses={starReveal} onClose={() => setStarReveal(null)} /> : null}
+        {starReveal ? (
+          <StarRevealModal
+            durationMs={STAR_REVEAL_DURATION_MS}
+            guesses={starReveal}
+            onClose={() => setStarReveal(null)}
+          />
+        ) : null}
 
         <footer className="app-footer">
           <span>Sviluppato con</span>

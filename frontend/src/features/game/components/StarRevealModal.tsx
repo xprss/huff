@@ -1,7 +1,24 @@
+import type { CSSProperties } from "react";
 import { X } from "lucide-react";
 import type { GuessResult } from "../../../types";
 
-export function StarRevealModal({ guesses, onClose }: { guesses: readonly GuessResult[]; onClose: () => void }) {
+type StarRevealTimerStyle = CSSProperties & {
+  "--star-reveal-duration": string;
+};
+
+export function StarRevealModal({
+  durationMs,
+  guesses,
+  onClose
+}: {
+  durationMs: number;
+  guesses: readonly GuessResult[];
+  onClose: () => void;
+}) {
+  const timerStyle: StarRevealTimerStyle = {
+    "--star-reveal-duration": `${durationMs}ms`
+  };
+
   return (
     <div className="modal-backdrop star-reveal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
@@ -10,8 +27,17 @@ export function StarRevealModal({ guesses, onClose }: { guesses: readonly GuessR
         aria-modal="true"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <header className="modal-head">
-          <h2>Stella</h2>
+        <header className="modal-head star-reveal-head">
+          <div
+            className="star-reveal-timer"
+            role="progressbar"
+            aria-label="Tempo rimanente"
+            aria-valuemin={0}
+            aria-valuemax={Math.round(durationMs / 1000)}
+            style={timerStyle}
+          >
+            <span />
+          </div>
           <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi">
             <X size={19} />
           </button>

@@ -135,6 +135,14 @@ scripts/seed-star-streak-huff.sh
 The script inserts completed games for yesterday through three days ago for all
 players.
 
+To make every staging user able to use a star from the frontend, run:
+
+```bash
+scripts/grant-staging-stars-huff.sh
+```
+
+The script can be run again after testing to restore consumed stars.
+
 Schema updates that add game or user bonus columns can be applied with:
 
 ```bash
