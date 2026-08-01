@@ -126,6 +126,24 @@ scripts/db-huff.sh dump data/huff-hexaquot.sql
 scripts/delete-player-huff.sh --email player@example.com
 ```
 
+Production backups can be scheduled with the included systemd timer. It runs
+`scripts/db-huff.sh backup` every day at 03:00 UTC and removes
+`data/backups/huff-hexaquot-*.sql` files older than 30 days:
+
+```bash
+sudo install -m 0644 systemd/huff-db-backup.service /etc/systemd/system/huff-db-backup.service
+sudo install -m 0644 systemd/huff-db-backup.timer /etc/systemd/system/huff-db-backup.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now huff-db-backup.timer
+systemctl list-timers --all huff-db-backup.timer
+```
+
+To run one backup immediately:
+
+```bash
+sudo systemctl start huff-db-backup.service
+```
+
 To seed three consecutive completed games for every player, run:
 
 ```bash

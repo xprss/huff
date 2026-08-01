@@ -1,0 +1,11 @@
+[Unit]
+Description=Back up the Huff PostgreSQL database
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/huff
+Environment=ENV_FILE=/root/huff/.env
+ExecStart=/root/huff/scripts/db-huff.sh backup
+ExecStartPost=/usr/bin/find /root/huff/data/backups -type f -name huff-hexaquot-*.sql -mtime +30 -delete
