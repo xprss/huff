@@ -1,7 +1,7 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart } from "lucide-react";
-import { api } from "../api";
+import { api, isAuthRequiredError } from "../api";
 import { AppThemeProvider } from "../theme";
 import type {
   GameDto,
@@ -159,12 +159,52 @@ export function App() {
     setToast({ id: Date.now(), text, variant });
   }
 
+  function handleAuthRequired(error: unknown) {
+    if (!isAuthRequiredError(error)) return false;
+
+    queryClient.setQueryData<MeDto>(queryKeys.me, {
+      loggedIn: false,
+      user: null,
+      loginUrl: error.loginUrl ?? "/api/login",
+      logoutUrl: null,
+      authEnabled: true
+    });
+    void queryClient.cancelQueries({ queryKey: queryKeys.today });
+    void queryClient.cancelQueries({ queryKey: queryKeys.stats });
+    queryClient.removeQueries({ queryKey: queryKeys.today });
+    queryClient.removeQueries({ queryKey: queryKeys.stats });
+    setCurrentGuess("");
+    setShowStats(false);
+    setShowInfo(false);
+    setProfileEditing(false);
+    setShowActionsMenu(false);
+    setActiveRoute("game");
+    setStarReveal(null);
+    showToast("Sessione scaduta. Accedi di nuovo.", "warning");
+    return true;
+  }
+
   React.useEffect(() => {
     const error = meQuery.error ?? globalStatsQuery.error ?? todayQuery.error ?? statsQuery.error;
     if (!error) return;
+    if (handleAuthRequired(error)) return;
 
     showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
   }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error]);
+
+  React.useEffect(() => {
+    if (!me?.authEnabled || me.loggedIn) return;
+
+    queryClient.removeQueries({ queryKey: queryKeys.today });
+    queryClient.removeQueries({ queryKey: queryKeys.stats });
+    setCurrentGuess("");
+    setShowStats(false);
+    setShowInfo(false);
+    setProfileEditing(false);
+    setShowActionsMenu(false);
+    setStarReveal(null);
+    setActiveRoute("game");
+  }, [me?.authEnabled, me?.loggedIn, queryClient, setActiveRoute]);
 
   React.useEffect(() => {
     localStorage.setItem("darkMode", String(darkMode));
@@ -276,6 +316,7 @@ export function App() {
     if (!canUseGameActions || !notificationsEnabled) return;
 
     void syncPushSubscription().catch((error) => {
+      if (handleAuthRequired(error)) return;
       setNotificationsEnabled(false);
       setGameNotificationsEnabled(false);
       showToast(error instanceof Error ? error.message : "Impossibile attivare le notifiche.", "error");
@@ -350,6 +391,7 @@ export function App() {
         setShowStats(true);
       }
     } catch (error) {
+      if (handleAuthRequired(error)) return;
       showToast(error instanceof Error ? error.message : "Tentativo non valido", "warning");
     }
   }
@@ -359,6 +401,7 @@ export function App() {
       clearToast();
       await selectModeMutation.mutateAsync(mode);
     } catch (error) {
+      if (handleAuthRequired(error)) return;
       showToast(error instanceof Error ? error.message : "Impossibile selezionare la modalità", "error");
     }
   }
@@ -370,6 +413,7 @@ export function App() {
       clearToast();
       await useKittenMutation.mutateAsync();
     } catch (error) {
+      if (handleAuthRequired(error)) return;
       showToast(error instanceof Error ? error.message : "Impossibile usare il gattino", "error");
     }
   }
@@ -386,6 +430,7 @@ export function App() {
       clearToast();
       await useStarMutation.mutateAsync();
     } catch (error) {
+      if (handleAuthRequired(error)) return;
       showToast(error instanceof Error ? error.message : "Impossibile usare la stella.", "error");
     }
   }
@@ -428,6 +473,7 @@ export function App() {
       setNotificationPermission(getNotificationPermission());
       showToast("Notifiche attive.", "success");
     } catch (error) {
+      if (handleAuthRequired(error)) return;
       setNotificationsEnabled(false);
       setGameNotificationsEnabled(false);
       setNotificationPermission(getNotificationPermission());
@@ -436,7 +482,14 @@ export function App() {
   }
 
   async function updateProfile(profile: ProfileUpdateDto) {
-    return await updateProfileMutation.mutateAsync(profile);
+    try {
+      return await updateProfileMutation.mutateAsync(profile);
+    } catch (error) {
+      if (handleAuthRequired(error)) {
+        throw new Error("Sessione scaduta. Accedi di nuovo.");
+      }
+      throw error;
+    }
   }
 
   return (

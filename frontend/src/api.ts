@@ -29,6 +29,24 @@ type EndpointHandler<Path extends ApiPath, Method extends ApiMethod<Path>, Args 
   ...args: Args
 ) => Promise<ApiResponse<Path, Method>>;
 
+export class ApiError extends Error {
+  readonly status: number;
+  readonly code: string | null;
+  readonly loginUrl: string | null;
+
+  constructor(message: string, status: number, code?: string | null, loginUrl?: string | null) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code ?? null;
+    this.loginUrl = loginUrl ?? null;
+  }
+}
+
+export function isAuthRequiredError(error: unknown): error is ApiError {
+  return error instanceof ApiError && (error.status === 401 || error.code === "auth_required");
+}
+
 export type ApiClient = {
   readonly me: EndpointHandler<"/api/me", "GET">;
   readonly today: EndpointHandler<"/api/game/today", "GET">;
@@ -65,7 +83,12 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
 
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as ApiErrorDto | null;
-    throw new Error(errorBody?.message ?? "Richiesta non riuscita");
+    throw new ApiError(
+      errorBody?.message ?? (response.status === 401 ? "Accesso Google richiesto." : "Richiesta non riuscita"),
+      response.status,
+      errorBody?.code,
+      errorBody?.loginUrl
+    );
   }
   if (response.status === 204) {
     return undefined as ApiResponse<Path, Method>;

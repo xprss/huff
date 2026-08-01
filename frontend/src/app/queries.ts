@@ -11,7 +11,11 @@ export const queryKeys = {
 export const meQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.me,
-    queryFn: api.me
+    queryFn: api.me,
+    refetchOnMount: "always",
+    refetchOnReconnect: "always",
+    refetchOnWindowFocus: "always",
+    staleTime: 0
   });
 
 export const todayQueryOptions = () =>
