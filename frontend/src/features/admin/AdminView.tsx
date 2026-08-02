@@ -1,0 +1,437 @@
+import React from "react";
+import { Check, Search, Save, Trash2, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../../api";
+import { PROFILE_EMOJIS } from "../../app/constants";
+import { adminPlayerQueryOptions, adminPlayersQueryOptions } from "../../app/queries";
+import { Distribution } from "../../shared/components/Distribution";
+import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
+import { Metric } from "../../shared/components/Metric";
+import type { AdminGameDto, AdminPlayerDetailDto, AdminPlayerSummaryDto, AdminPlayerUpdateDto } from "../../types";
+
+type ConfirmAction = { readonly kind: "save" } | { readonly kind: "delete"; readonly typedValue: string };
+
+export function AdminView({
+  canManagePlayers,
+  onAuthRequired,
+  onSuccess,
+  onError
+}: {
+  canManagePlayers: boolean;
+  onAuthRequired: (error: unknown) => boolean;
+  onSuccess: (message: string) => void;
+  onError: (message: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = React.useState("");
+  const [selectedUserId, setSelectedUserId] = React.useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = React.useState<ConfirmAction | null>(null);
+  const playersQuery = useQuery(adminPlayersQueryOptions(search));
+  const detailQuery = useQuery({
+    ...adminPlayerQueryOptions(selectedUserId ?? ""),
+    enabled: Boolean(selectedUserId)
+  });
+  const detail = detailQuery.data ?? null;
+  const [draft, setDraft] = React.useState<AdminPlayerUpdateDto | null>(null);
+
+  const updateMutation = useMutation({
+    mutationFn: ({ userId, update }: { userId: string; update: AdminPlayerUpdateDto }) =>
+      api.updateAdminPlayer(userId, update),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(adminPlayerQueryOptions(updated.player.id).queryKey, updated);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "players"] });
+      setConfirmAction(null);
+      onSuccess("Giocatore aggiornato.");
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: api.deleteAdminPlayer,
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "players"] });
+      setSelectedUserId(null);
+      setConfirmAction(null);
+      onSuccess(`Giocatore eliminato. Rimossi ${result.games} partite e ${result.pushSubscriptions} subscription.`);
+    }
+  });
+
+  React.useEffect(() => {
+    const error = playersQuery.error ?? detailQuery.error ?? updateMutation.error ?? deleteMutation.error;
+    if (!error) return;
+    if (onAuthRequired(error)) return;
+    onError(error instanceof Error ? error.message : "Operazione admin non riuscita.");
+  }, [playersQuery.error, detailQuery.error, updateMutation.error, deleteMutation.error, onAuthRequired, onError]);
+
+  React.useEffect(() => {
+    if (!detail) {
+      setDraft(null);
+      return;
+    }
+    setDraft({
+      displayName: detail.player.displayName ?? "",
+      nickname: detail.player.nickname,
+      profileEmoji: detail.player.profileEmoji,
+      starAvailable: detail.player.starAvailable,
+      starAwardedAt: detail.player.starAwardedAt,
+      starUsedAt: detail.player.starUsedAt
+    });
+    setConfirmAction(null);
+  }, [detail]);
+
+  function openPlayer(player: AdminPlayerSummaryDto) {
+    setSelectedUserId(player.id);
+    setConfirmAction(null);
+  }
+
+  function closeModal() {
+    if (updateMutation.isPending || deleteMutation.isPending) return;
+    setSelectedUserId(null);
+    setConfirmAction(null);
+  }
+
+  function requestSave(event: React.FormEvent) {
+    event.preventDefault();
+    if (!canManagePlayers || !detail || !draft) return;
+    setConfirmAction({ kind: "save" });
+  }
+
+  async function confirmSave() {
+    if (!detail || !draft) return;
+    await updateMutation.mutateAsync({ userId: detail.player.id, update: draft });
+  }
+
+  async function confirmDelete() {
+    if (!detail || confirmAction?.kind !== "delete") return;
+    const expected = deleteConfirmationValue(detail.player);
+    if (confirmAction.typedValue !== expected) return;
+    await deleteMutation.mutateAsync(detail.player.id);
+  }
+
+  const players = playersQuery.data ?? [];
+
+  return (
+    <section className="admin-view" aria-label="Admin">
+      <div className="admin-toolbar">
+        <div>
+          <h2>Admin</h2>
+          <p>{players.length} giocatori</p>
+        </div>
+        <label className="admin-search">
+          <Search size={17} />
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Cerca"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </label>
+      </div>
+
+      {playersQuery.isPending ? (
+        <div className="admin-loading">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <div className="admin-card-grid">
+          {players.map((player) => (
+            <button className="admin-player-card" type="button" key={player.id} onClick={() => openPlayer(player)}>
+              <span className="admin-player-emoji">{player.profileEmoji}</span>
+              <span className="admin-player-main">
+                <strong>{player.displayName ?? "Giocatore"}</strong>
+                <span>{player.nickname}</span>
+              </span>
+              <span className="admin-player-meta">
+                <span>{player.completed}/{player.gamesStarted} concluse</span>
+                <span>{player.winRate}% vittorie</span>
+              </span>
+              <span className="admin-player-badges">
+                {player.admin ? <span>Admin</span> : null}
+                {player.starAvailable ? <span>Stella</span> : null}
+                <span>{player.authenticated ? "Google" : "Anon"}</span>
+              </span>
+            </button>
+          ))}
+          {players.length === 0 ? <p className="admin-empty">Nessun giocatore trovato.</p> : null}
+        </div>
+      )}
+
+      {selectedUserId ? (
+        <div className="modal-backdrop" role="presentation" onMouseDown={closeModal}>
+          <section
+            className="modal admin-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Dettaglio admin giocatore"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <header className="modal-head">
+              <h2>Giocatore</h2>
+              <button className="close-button" type="button" onClick={closeModal} aria-label="Chiudi">
+                <X size={19} />
+              </button>
+            </header>
+
+            {detailQuery.isPending || !detail || !draft ? (
+              <div className="admin-loading">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <div className="admin-modal-content">
+                <PlayerIdentity detail={detail} />
+                <StatsBlock detail={detail} />
+
+                <form className="admin-edit-panel" onSubmit={requestSave}>
+                  <h3>Gestione</h3>
+                  <label>
+                    <span>Nome</span>
+                    <input
+                      value={draft.displayName}
+                      onChange={(event) => setDraft({ ...draft, displayName: event.target.value })}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    <span>Nickname</span>
+                    <input
+                      value={draft.nickname}
+                      onChange={(event) => setDraft({ ...draft, nickname: event.target.value })}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                      spellCheck={false}
+                    />
+                  </label>
+                  <label>
+                    <span>Emoji</span>
+                    <select
+                      value={draft.profileEmoji}
+                      onChange={(event) => setDraft({ ...draft, profileEmoji: event.target.value })}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                    >
+                      {PROFILE_EMOJIS.map((emoji) => (
+                        <option value={emoji} key={emoji}>
+                          {emoji}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="admin-check">
+                    <input
+                      type="checkbox"
+                      checked={draft.starAvailable}
+                      onChange={(event) => setDraft({ ...draft, starAvailable: event.target.checked })}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                    />
+                    <span>Stella disponibile</span>
+                  </label>
+                  <label>
+                    <span>Stella assegnata</span>
+                    <input
+                      value={draft.starAwardedAt ?? ""}
+                      onChange={(event) => setDraft({ ...draft, starAwardedAt: event.target.value || null })}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                      placeholder="ISO timestamp"
+                    />
+                  </label>
+                  <label>
+                    <span>Stella usata</span>
+                    <input
+                      value={draft.starUsedAt ?? ""}
+                      onChange={(event) => setDraft({ ...draft, starUsedAt: event.target.value || null })}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                      placeholder="ISO timestamp"
+                    />
+                  </label>
+                  <div className="admin-actions">
+                    <button className="profile-action-button primary" type="submit" disabled={!canManagePlayers}>
+                      <Save size={17} />
+                      <span>Salva</span>
+                    </button>
+                    <button
+                      className="profile-action-button danger"
+                      type="button"
+                      onClick={() => setConfirmAction({ kind: "delete", typedValue: "" })}
+                      disabled={!canManagePlayers || deleteMutation.isPending}
+                    >
+                      <Trash2 size={17} />
+                      <span>Elimina</span>
+                    </button>
+                  </div>
+                </form>
+
+                {confirmAction ? (
+                  <ConfirmPanel
+                    action={confirmAction}
+                    detail={detail}
+                    pending={updateMutation.isPending || deleteMutation.isPending}
+                    onActionChange={setConfirmAction}
+                    onCancel={() => setConfirmAction(null)}
+                    onConfirmSave={() => void confirmSave()}
+                    onConfirmDelete={() => void confirmDelete()}
+                  />
+                ) : null}
+
+                <GameHistory games={detail.games} />
+              </div>
+            )}
+          </section>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function PlayerIdentity({ detail }: { detail: AdminPlayerDetailDto }) {
+  return (
+    <div className="admin-detail-head">
+      <span className="admin-detail-emoji">{detail.player.profileEmoji}</span>
+      <div>
+        <strong>{detail.player.displayName ?? "Giocatore"}</strong>
+        <span>{detail.player.nickname}</span>
+      </div>
+      <div className="admin-facts">
+        <span>ID: {detail.player.id}</span>
+        <span>Email: {detail.player.email ?? "n/d"}</span>
+        <span>Google subject: {detail.googleSubject ?? "n/d"}</span>
+        <span>Creato: {formatDateTime(detail.createdAt)}</span>
+        <span>Ultima attività: {formatDateTime(detail.player.lastActivityAt)}</span>
+        <span>Push subscriptions: {detail.pushSubscriptions}</span>
+      </div>
+    </div>
+  );
+}
+
+function StatsBlock({ detail }: { detail: AdminPlayerDetailDto }) {
+  return (
+    <section className="admin-stats-panel" aria-label="Statistiche giocatore">
+      <div className="stat-grid">
+        <Metric label="Giocate" value={detail.stats.played} />
+        <Metric label="Vinte" value={detail.stats.won} />
+        <Metric label="Perse" value={detail.stats.lost} />
+        <Metric label="Vittorie" value={`${detail.player.winRate}%`} />
+      </div>
+      <div className="stat-grid compact">
+        <Metric label="Serie" value={detail.stats.currentStreak} />
+        <Metric label="Record" value={detail.stats.maxStreak} />
+      </div>
+      <Distribution distribution={detail.stats.guessDistribution} />
+    </section>
+  );
+}
+
+function ConfirmPanel({
+  action,
+  detail,
+  pending,
+  onActionChange,
+  onCancel,
+  onConfirmSave,
+  onConfirmDelete
+}: {
+  action: ConfirmAction;
+  detail: AdminPlayerDetailDto;
+  pending: boolean;
+  onActionChange: (action: ConfirmAction) => void;
+  onCancel: () => void;
+  onConfirmSave: () => void;
+  onConfirmDelete: () => void;
+}) {
+  if (action.kind === "save") {
+    return (
+      <section className="admin-confirm-panel" aria-label="Conferma salvataggio">
+        <strong>Conferma aggiornamento</strong>
+        <p>Vuoi aggiornare profilo e stato stella di {detail.player.nickname}?</p>
+        <div className="admin-actions">
+          <button className="profile-action-button primary" type="button" onClick={onConfirmSave} disabled={pending}>
+            <Check size={17} />
+            <span>Conferma</span>
+          </button>
+          <button className="profile-action-button" type="button" onClick={onCancel} disabled={pending}>
+            <X size={17} />
+            <span>Annulla</span>
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  const expected = deleteConfirmationValue(detail.player);
+  return (
+    <section className="admin-confirm-panel danger" aria-label="Conferma eliminazione">
+      <strong>Conferma eliminazione</strong>
+      <p>Scrivi {expected} per eliminare utente, partite e subscription.</p>
+      <input
+        value={action.typedValue}
+        onChange={(event) => onActionChange({ kind: "delete", typedValue: event.target.value })}
+        disabled={pending}
+        spellCheck={false}
+      />
+      <div className="admin-actions">
+        <button
+          className="profile-action-button danger"
+          type="button"
+          onClick={onConfirmDelete}
+          disabled={pending || action.typedValue !== expected}
+        >
+          <Trash2 size={17} />
+          <span>Elimina</span>
+        </button>
+        <button className="profile-action-button" type="button" onClick={onCancel} disabled={pending}>
+          <X size={17} />
+          <span>Annulla</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function GameHistory({ games }: { games: readonly AdminGameDto[] }) {
+  return (
+    <section className="admin-games-panel" aria-label="Partite">
+      <h3>Partite</h3>
+      {games.map((game) => (
+        <article className="admin-game-row" key={game.id}>
+          <header>
+            <strong>{game.puzzleDate}</strong>
+            <span>{game.status}</span>
+            <span>{game.modeLabel}</span>
+          </header>
+          <p>Soluzione: {game.solution.toUpperCase()}</p>
+          <p>
+            Tentativi: {game.guesses.length} · Creata {formatDateTime(game.createdAt)} · Aggiornata{" "}
+            {formatDateTime(game.updatedAt)}
+          </p>
+          {game.completedAt ? <p>Completata {formatDateTime(game.completedAt)}</p> : null}
+          <div className="admin-guesses">
+            {game.guesses.map((guess, index) => (
+              <div className="admin-guess" key={`${game.id}-${index}`}>
+                <span>{guess.word.toUpperCase()}</span>
+                <span>
+                  {guess.tiles.map((tile, tileIndex) => (
+                    <i className={`admin-tile ${tile.state.toLowerCase()}`} key={`${guess.word}-${tileIndex}`}>
+                      {tile.letter.toUpperCase()}
+                    </i>
+                  ))}
+                </span>
+              </div>
+            ))}
+          </div>
+        </article>
+      ))}
+      {games.length === 0 ? <p className="admin-empty">Nessuna partita.</p> : null}
+    </section>
+  );
+}
+
+function deleteConfirmationValue(player: AdminPlayerSummaryDto) {
+  return player.nickname || player.id;
+}
+
+function formatDateTime(value: string | null | undefined) {
+  if (!value) return "n/d";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("it-IT", {
+    dateStyle: "short",
+    timeStyle: "short"
+  });
+}

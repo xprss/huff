@@ -3,6 +3,7 @@ import type {
   ApiErrorDto,
   HttpMethod,
   GameMode,
+  AdminPlayerUpdateDto,
   ProfileUpdateDto,
   PushSubscriptionDto,
 } from "./types";
@@ -64,6 +65,14 @@ export type ApiClient = {
     "DELETE",
     [subscription: PushSubscriptionDto]
   >;
+  readonly adminPlayers: EndpointHandler<"/api/admin/players", "GET", [query?: string]>;
+  readonly adminPlayer: EndpointHandler<"/api/admin/players/:userId", "GET", [userId: string]>;
+  readonly updateAdminPlayer: EndpointHandler<
+    "/api/admin/players/:userId",
+    "PUT",
+    [userId: string, player: AdminPlayerUpdateDto]
+  >;
+  readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
 };
 
 async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
@@ -134,5 +143,24 @@ export const api = {
     request("/api/push/subscriptions", {
       method: "DELETE",
       body: subscription
+    }),
+  adminPlayers: (query?: string) => {
+    const search = query?.trim();
+    return request(search ? (`/api/admin/players?q=${encodeURIComponent(search)}` as "/api/admin/players") : "/api/admin/players", {
+      method: "GET"
+    });
+  },
+  adminPlayer: (userId: string) =>
+    request(`/api/admin/players/${encodeURIComponent(userId)}` as "/api/admin/players/:userId", {
+      method: "GET"
+    }),
+  updateAdminPlayer: (userId: string, player: AdminPlayerUpdateDto) =>
+    request(`/api/admin/players/${encodeURIComponent(userId)}` as "/api/admin/players/:userId", {
+      method: "PUT",
+      body: player
+    }),
+  deleteAdminPlayer: (userId: string) =>
+    request(`/api/admin/players/${encodeURIComponent(userId)}` as "/api/admin/players/:userId", {
+      method: "DELETE"
     })
 } satisfies ApiClient;

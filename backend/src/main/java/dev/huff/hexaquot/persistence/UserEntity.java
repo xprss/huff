@@ -1,6 +1,7 @@
 package dev.huff.hexaquot.persistence;
 
 import dev.huff.hexaquot.auth.AppUser;
+import dev.huff.hexaquot.auth.AdminPrivileges;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +42,10 @@ public class UserEntity extends PanacheEntityBase {
     public String starUsedAt;
 
     public AppUser toAppUser(boolean authenticated) {
-        return new AppUser(id, email, displayName, nickname, profileEmoji, authenticated);
+        return toAppUser(authenticated, null);
+    }
+
+    public AppUser toAppUser(boolean authenticated, AdminPrivileges admin) {
+        return new AppUser(id, email, displayName, nickname, profileEmoji, authenticated, admin);
     }
 }

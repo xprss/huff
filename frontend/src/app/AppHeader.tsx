@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Edit3, Info, LogOut, Menu, Moon, Star, Sun, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Edit3, Info, LogOut, Menu, Moon, Shield, Star, Sun, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { ToastMessage } from "../shared/toast";
 
@@ -12,6 +12,7 @@ export function AppHeader({
   showActionsMenu,
   actionsMenuRef,
   canUseGameActions,
+  showAdmin,
   notificationsEnabled,
   notificationMenuLabel,
   darkMode,
@@ -22,6 +23,7 @@ export function AppHeader({
   onToggleMenu,
   onOpenProfile,
   onOpenStats,
+  onOpenAdmin,
   onOpenInfo,
   onToggleNotifications,
   onToggleTheme,
@@ -35,6 +37,7 @@ export function AppHeader({
   showActionsMenu: boolean;
   actionsMenuRef: React.RefObject<HTMLDivElement>;
   canUseGameActions: boolean;
+  showAdmin: boolean;
   notificationsEnabled: boolean;
   notificationMenuLabel: string;
   darkMode: boolean;
@@ -45,6 +48,7 @@ export function AppHeader({
   onToggleMenu: () => void;
   onOpenProfile: () => void;
   onOpenStats: () => void;
+  onOpenAdmin: () => void;
   onOpenInfo: () => void;
   onToggleNotifications: () => void;
   onToggleTheme: () => void;
@@ -104,6 +108,12 @@ export function AppHeader({
                     <BarChart3 size={18} />
                     <span>Statistiche</span>
                   </button>
+                  {showAdmin ? (
+                    <button className="menu-item" type="button" role="menuitem" onClick={onOpenAdmin}>
+                      <Shield size={18} />
+                      <span>Admin</span>
+                    </button>
+                  ) : null}
                 </>
               ) : null}
               <button className="menu-item" type="button" role="menuitem" onClick={onOpenInfo}>

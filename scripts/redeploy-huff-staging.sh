@@ -205,6 +205,7 @@ if [[ "${RUN_MIGRATIONS}" == "true" ]]; then
   ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-game-modes-huff.sh"
   ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-user-stars-huff.sh"
   ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-user-profile-huff.sh"
+  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-admin-users-huff.sh"
 fi
 
 NEW_IMAGE_ID="$(docker image inspect --format '{{.Id}}' "${IMAGE_NAME}:latest")"

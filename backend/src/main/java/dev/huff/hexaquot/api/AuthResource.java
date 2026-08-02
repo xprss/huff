@@ -2,6 +2,7 @@ package dev.huff.hexaquot.api;
 
 import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
+import dev.huff.hexaquot.auth.AdminPrivileges;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;
@@ -62,9 +63,23 @@ public class AuthResource {
     public record MeDto(boolean loggedIn, UserDto user, String loginUrl, String logoutUrl, boolean authEnabled) {
     }
 
-    public record UserDto(String email, String displayName, String nickname, String profileEmoji, boolean authenticated) {
+    public record UserDto(
+        String email,
+        String displayName,
+        String nickname,
+        String profileEmoji,
+        boolean authenticated,
+        AdminPrivileges admin
+    ) {
         static UserDto from(dev.huff.hexaquot.auth.AppUser user) {
-            return new UserDto(user.email(), user.displayName(), user.nickname(), user.profileEmoji(), user.authenticated());
+            return new UserDto(
+                user.email(),
+                user.displayName(),
+                user.nickname(),
+                user.profileEmoji(),
+                user.authenticated(),
+                user.admin()
+            );
         }
     }
 

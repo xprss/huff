@@ -1,12 +1,14 @@
 import React from "react";
 
-export type AppRoute = "game" | "profile";
+export type AppRoute = "game" | "profile" | "admin";
 
 function routeFromHash(hash: string): AppRoute {
+  if (hash === "#/admin") return "admin";
   return hash === "#/profile" ? "profile" : "game";
 }
 
 function hashFromRoute(route: AppRoute) {
+  if (route === "admin") return "#/admin";
   return route === "profile" ? "#/profile" : "#/";
 }
 

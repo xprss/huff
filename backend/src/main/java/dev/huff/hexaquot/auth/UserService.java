@@ -1,6 +1,7 @@
 package dev.huff.hexaquot.auth;
 
 import dev.huff.hexaquot.persistence.UserEntity;
+import dev.huff.hexaquot.persistence.AdminUserEntity;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -112,7 +113,7 @@ public class UserService {
             user.nickname = defaultNickname(userId, user.displayName);
             user.profileEmoji = DEFAULT_PROFILE_EMOJI;
             user.persist();
-            return user.toAppUser(authenticated);
+            return user.toAppUser(authenticated, adminPrivileges(userId));
         }
         user.googleSubject = googleSubject;
         user.email = email;
@@ -125,7 +126,7 @@ public class UserService {
         if (!ALLOWED_PROFILE_EMOJIS.contains(user.profileEmoji)) {
             user.profileEmoji = DEFAULT_PROFILE_EMOJI;
         }
-        return user.toAppUser(authenticated);
+        return user.toAppUser(authenticated, adminPrivileges(userId));
     }
 
     @Transactional
@@ -146,7 +147,12 @@ public class UserService {
         user.displayName = normalizedDisplayName;
         user.nickname = normalizedNickname;
         user.profileEmoji = normalizedProfileEmoji;
-        return user.toAppUser(authenticated);
+        return user.toAppUser(authenticated, adminPrivileges(userId));
+    }
+
+    private AdminPrivileges adminPrivileges(String userId) {
+        AdminUserEntity admin = AdminUserEntity.findById(userId);
+        return admin == null ? null : admin.toPrivileges();
     }
 
     private String defaultDisplayName(String displayName) {

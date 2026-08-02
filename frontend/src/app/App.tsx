@@ -42,6 +42,7 @@ import {
 } from "../features/notifications/pushNotifications";
 import { ProfileView } from "../features/profile/ProfileView";
 import { StatsModal } from "../features/stats/StatsModal";
+import { AdminView } from "../features/admin/AdminView";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
 import { useAppViewportHeight } from "../shared/hooks/useAppViewportHeight";
 import { usePreventZoom } from "../shared/hooks/usePreventZoom";
@@ -91,6 +92,8 @@ export function App() {
   const todayPuzzleDate = today?.puzzleDate ?? null;
   const stats = isLoggedIn ? statsQuery.data ?? null : null;
   const globalStats = globalStatsQuery.data ?? null;
+  const canViewAdmin = Boolean(me?.user?.admin?.canViewPlayers);
+  const canManagePlayers = Boolean(me?.user?.admin?.canManagePlayers);
   const loading =
     refreshingChallenge ||
     meQuery.isPending ||
@@ -171,8 +174,10 @@ export function App() {
     });
     void queryClient.cancelQueries({ queryKey: queryKeys.today });
     void queryClient.cancelQueries({ queryKey: queryKeys.stats });
+    void queryClient.cancelQueries({ queryKey: ["admin"] });
     queryClient.removeQueries({ queryKey: queryKeys.today });
     queryClient.removeQueries({ queryKey: queryKeys.stats });
+    queryClient.removeQueries({ queryKey: ["admin"] });
     setCurrentGuess("");
     setShowStats(false);
     setShowInfo(false);
@@ -197,6 +202,7 @@ export function App() {
 
     queryClient.removeQueries({ queryKey: queryKeys.today });
     queryClient.removeQueries({ queryKey: queryKeys.stats });
+    queryClient.removeQueries({ queryKey: ["admin"] });
     setCurrentGuess("");
     setShowStats(false);
     setShowInfo(false);
@@ -259,6 +265,12 @@ export function App() {
       setProfileEditing(false);
     }
   }, [activeRoute]);
+
+  React.useEffect(() => {
+    if (activeRoute === "admin" && me && !canViewAdmin) {
+      setActiveRoute("game");
+    }
+  }, [activeRoute, canViewAdmin, me, setActiveRoute]);
 
   React.useEffect(() => {
     if (!showActionsMenu) return;
@@ -505,6 +517,7 @@ export function App() {
             showActionsMenu={showActionsMenu}
             actionsMenuRef={actionsMenuRef}
             canUseGameActions={canUseGameActions}
+            showAdmin={canViewAdmin}
             notificationsEnabled={notificationsEnabled}
             notificationMenuLabel={notificationMenuLabel}
             darkMode={darkMode}
@@ -520,6 +533,10 @@ export function App() {
             }}
             onOpenStats={() => {
               setShowStats(true);
+              setShowActionsMenu(false);
+            }}
+            onOpenAdmin={() => {
+              setActiveRoute("admin");
               setShowActionsMenu(false);
             }}
             onOpenInfo={() => {
@@ -551,6 +568,13 @@ export function App() {
                 setActiveRoute("game");
               }}
               onSave={(profile) => updateProfile(profile)}
+              onSuccess={(message) => showToast(message, "success")}
+              onError={(message) => showToast(message, "error")}
+            />
+          ) : activeRoute === "admin" && canViewAdmin ? (
+            <AdminView
+              canManagePlayers={canManagePlayers}
+              onAuthRequired={handleAuthRequired}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}
             />

@@ -90,12 +90,20 @@ export interface MeDto {
   readonly authEnabled: boolean;
 }
 
+export interface AdminPrivilegesDto {
+  readonly canViewPlayers: boolean;
+  readonly canViewPlayerDetails: boolean;
+  readonly canManagePlayers: boolean;
+  readonly canManageAdmins: boolean;
+}
+
 export interface UserDto {
   readonly email: string | null;
   readonly displayName: string | null;
   readonly nickname: string;
   readonly profileEmoji: string;
   readonly authenticated: boolean;
+  readonly admin: AdminPrivilegesDto | null;
 }
 
 export interface ProfileUpdateDto {
@@ -125,6 +133,67 @@ export interface PushSubscriptionKeysDto {
 export interface PushSubscriptionDto {
   readonly endpoint: string;
   readonly keys: PushSubscriptionKeysDto;
+}
+
+export interface AdminPlayerSummaryDto {
+  readonly id: string;
+  readonly email: string | null;
+  readonly displayName: string | null;
+  readonly nickname: string;
+  readonly profileEmoji: string;
+  readonly authenticated: boolean;
+  readonly admin: boolean;
+  readonly starAvailable: boolean;
+  readonly starAwardedAt: string | null;
+  readonly starUsedAt: string | null;
+  readonly gamesStarted: number;
+  readonly completed: number;
+  readonly won: number;
+  readonly lost: number;
+  readonly winRate: number;
+  readonly lastActivityAt: string | null;
+}
+
+export interface AdminGameDto {
+  readonly id: string;
+  readonly puzzleDate: IsoDateString;
+  readonly mode: GameMode;
+  readonly modeLabel: string;
+  readonly solution: string;
+  readonly guesses: readonly GuessResult[];
+  readonly status: GameStatus;
+  readonly mouseTileIndex: number | null;
+  readonly mouseRevealed: boolean | null;
+  readonly kittenUnlocked: boolean | null;
+  readonly kittenUsedAt: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly completedAt: string | null;
+}
+
+export interface AdminPlayerDetailDto {
+  readonly player: AdminPlayerSummaryDto;
+  readonly googleSubject: string | null;
+  readonly createdAt: string;
+  readonly pushSubscriptions: number;
+  readonly stats: StatsDto;
+  readonly games: readonly AdminGameDto[];
+}
+
+export interface AdminPlayerUpdateDto {
+  readonly displayName: string;
+  readonly nickname: string;
+  readonly profileEmoji: string;
+  readonly starAvailable: boolean;
+  readonly starAwardedAt: string | null;
+  readonly starUsedAt: string | null;
+}
+
+export interface AdminDeleteResultDto {
+  readonly users: number;
+  readonly games: number;
+  readonly pushSubscriptions: number;
+  readonly adminRows: number;
 }
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -191,6 +260,23 @@ export type ApiEndpointMap = {
     DELETE: {
       body: PushSubscriptionDto;
       response: void;
+    };
+  };
+  "/api/admin/players": {
+    GET: {
+      response: readonly AdminPlayerSummaryDto[];
+    };
+  };
+  "/api/admin/players/:userId": {
+    GET: {
+      response: AdminPlayerDetailDto;
+    };
+    PUT: {
+      body: AdminPlayerUpdateDto;
+      response: AdminPlayerDetailDto;
+    };
+    DELETE: {
+      response: AdminDeleteResultDto;
     };
   };
 };

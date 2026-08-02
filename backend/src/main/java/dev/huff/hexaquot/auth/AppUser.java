@@ -6,6 +6,17 @@ public record AppUser(
     String displayName,
     String nickname,
     String profileEmoji,
-    boolean authenticated
+    boolean authenticated,
+    AdminPrivileges admin
 ) {
+    public AppUser(
+        String id,
+        String email,
+        String displayName,
+        String nickname,
+        String profileEmoji,
+        boolean authenticated
+    ) {
+        this(id, email, displayName, nickname, profileEmoji, authenticated, null);
+    }
 }
