@@ -30,7 +30,6 @@ import { StarRevealModal } from "../features/game/components/StarRevealModal";
 import { buildColumns, buildShareText, hasAlreadyGuessed } from "../features/game/gameUtils";
 import { launchVictoryConfetti } from "../features/game/confetti";
 import { InfoModal } from "../features/info/InfoModal";
-import { LoginScreen } from "../features/login/LoginScreen";
 import {
   areGameNotificationsEnabled,
   disableGameNotifications,
@@ -97,6 +96,7 @@ export function App() {
   const loading =
     refreshingChallenge ||
     meQuery.isPending ||
+    isAuthRequiredError(meQuery.error) ||
     globalStatsQuery.isPending ||
     (isLoggedIn && (todayQuery.isPending || statsQuery.isPending));
 
@@ -164,14 +164,6 @@ export function App() {
 
   function handleAuthRequired(error: unknown) {
     if (!isAuthRequiredError(error)) return false;
-
-    queryClient.setQueryData<MeDto>(queryKeys.me, {
-      loggedIn: false,
-      user: null,
-      loginUrl: error.loginUrl ?? "/api/login",
-      logoutUrl: null,
-      authEnabled: true
-    });
     void queryClient.cancelQueries({ queryKey: queryKeys.today });
     void queryClient.cancelQueries({ queryKey: queryKeys.stats });
     void queryClient.cancelQueries({ queryKey: ["admin"] });
@@ -185,7 +177,7 @@ export function App() {
     setShowActionsMenu(false);
     setActiveRoute("game");
     setStarReveal(null);
-    showToast("Sessione scaduta. Accedi di nuovo.", "warning");
+    redirectToLogin(error.loginUrl);
     return true;
   }
 
@@ -210,6 +202,7 @@ export function App() {
     setShowActionsMenu(false);
     setStarReveal(null);
     setActiveRoute("game");
+    redirectToLogin(me.loginUrl);
   }, [me?.authEnabled, me?.loggedIn, queryClient, setActiveRoute]);
 
   React.useEffect(() => {
@@ -314,7 +307,6 @@ export function App() {
   const shouldHideKeyboardHints = Boolean(game?.mode === "MISCHIEVOUS_MOUSE" && !game.kitten.used);
   const answerLength = game?.answerLength ?? 6;
   const puzzleDate = formatPuzzleDate(game?.puzzleDate ?? todayPuzzleDate ?? undefined);
-  const showLoginScreen = Boolean(!loading && me?.authEnabled && !me.loggedIn);
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
   const showStarButton = Boolean(game && game.status === "IN_PROGRESS" && game.guesses.length > 0);
@@ -551,9 +543,7 @@ export function App() {
             onCloseMenu={() => setShowActionsMenu(false)}
           />
 
-          {showLoginScreen ? (
-            <LoginScreen loginUrl={me?.loginUrl ?? "/api/login"} />
-          ) : loading ? (
+          {loading ? (
             <div className="play-area">
               <LoadingSpinner />
             </div>
@@ -635,4 +625,11 @@ export function App() {
       </main>
     </AppThemeProvider>
   );
+}
+
+function redirectToLogin(loginUrl: string | null | undefined) {
+  const fallback = new URL("/api/login", window.location.origin);
+  const requested = new URL(loginUrl ?? fallback.href, window.location.origin);
+  const target = requested.origin === window.location.origin ? requested : fallback;
+  window.location.replace(target.href);
 }

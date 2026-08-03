@@ -80,10 +80,12 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
   init: ApiRequestInit<Path, Method>
 ): Promise<ApiResponse<Path, Method>> {
   const { body, headers, ...requestInit } = init;
+  const isMutation = init.method !== "GET";
   const response = await fetch(path, {
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(isMutation ? { "X-Huff-Request": "1" } : {}),
       ...(headers ?? {})
     },
     ...requestInit,
