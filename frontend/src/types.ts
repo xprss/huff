@@ -154,6 +154,17 @@ export interface AdminPlayerSummaryDto {
   readonly lastActivityAt: string | null;
 }
 
+export type AdminPlayerSortDto = "alphabetical" | "recent-game" | "games-played";
+
+export interface AdminPlayersPageDto {
+  readonly players: readonly AdminPlayerSummaryDto[];
+  readonly page: number;
+  readonly pageSize: number;
+  readonly totalPlayers: number;
+  readonly totalPages: number;
+  readonly sort: AdminPlayerSortDto;
+}
+
 export interface AdminGameDto {
   readonly id: string;
   readonly puzzleDate: IsoDateString;
@@ -264,7 +275,7 @@ export type ApiEndpointMap = {
   };
   "/api/admin/players": {
     GET: {
-      response: readonly AdminPlayerSummaryDto[];
+      response: AdminPlayersPageDto;
     };
   };
   "/api/admin/players/:userId": {

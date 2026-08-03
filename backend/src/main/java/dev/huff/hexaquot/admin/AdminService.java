@@ -15,6 +15,7 @@ import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
@@ -22,13 +23,17 @@ import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 @ApplicationScoped
 public class AdminService {
+    private static final int ADMIN_PLAYERS_PAGE_SIZE = 10;
+    private static final String SORT_ALPHABETICAL = "alphabetical";
+    private static final String SORT_RECENT_GAME = "recent-game";
+    private static final String SORT_GAMES_PLAYED = "games-played";
+
     @Inject
     ObjectMapper objectMapper;
 
@@ -38,18 +43,23 @@ public class AdminService {
     @Inject
     UserService userService;
 
-    public List<AdminPlayerSummaryDto> listPlayers(AppUser admin, String query) {
+    @Inject
+    EntityManager entityManager;
+
+    public AdminPlayersPageDto listPlayers(AppUser admin, String query, String sort, Integer page) {
         requireViewPlayers(admin);
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
-        return UserEntity.<UserEntity>listAll()
-            .stream()
-            .filter(user -> matches(user, normalizedQuery))
-            .sorted(Comparator
-                .comparing((UserEntity user) -> safeLower(user.displayName))
-                .thenComparing(user -> safeLower(user.nickname))
-                .thenComparing(user -> user.id))
-            .map(this::summary)
-            .toList();
+        String normalizedSort = normalizeSort(sort);
+        int pageIndex = page == null || page < 0 ? 0 : page;
+        int totalPlayers = Math.toIntExact(countPlayers(normalizedQuery));
+        int totalPages = Math.max(1, (int) Math.ceil(totalPlayers / (double) ADMIN_PLAYERS_PAGE_SIZE));
+        int boundedPage = Math.min(pageIndex, totalPages - 1);
+        List<AdminPlayerSummaryDto> players = fetchPlayerPage(
+            normalizedQuery,
+            normalizedSort,
+            boundedPage * ADMIN_PLAYERS_PAGE_SIZE
+        );
+        return new AdminPlayersPageDto(players, boundedPage, ADMIN_PLAYERS_PAGE_SIZE, totalPlayers, totalPages, normalizedSort);
     }
 
     public AdminPlayerDetailDto playerDetail(AppUser admin, String userId) {
@@ -204,15 +214,125 @@ public class AdminService {
         }
     }
 
-    private boolean matches(UserEntity user, String query) {
-        if (query == null || query.isBlank()) {
-            return true;
+    private long countPlayers(String query) {
+        return ((Number) entityManager
+            .createNativeQuery("""
+                SELECT COUNT(*)
+                FROM users u
+                WHERE :query = ''
+                   OR LOWER(u.id) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.email, '')) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.display_name, '')) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.nickname, '')) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.google_subject, '')) LIKE :query_pattern
+                """)
+            .setParameter("query", query)
+            .setParameter("query_pattern", "%" + query + "%")
+            .getSingleResult()).longValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<AdminPlayerSummaryDto> fetchPlayerPage(String query, String sort, int offset) {
+        return entityManager
+            .createNativeQuery("""
+                SELECT
+                  u.id,
+                  u.email,
+                  u.display_name,
+                  u.nickname,
+                  u.profile_emoji,
+                  (u.google_subject IS NOT NULL) AS authenticated,
+                  (a.user_id IS NOT NULL) AS admin,
+                  COALESCE(u.star_available, false) AS star_available,
+                  u.star_awarded_at,
+                  u.star_used_at,
+                  CAST(COUNT(g.id) AS integer) AS games_started,
+                  CAST(COUNT(g.id) FILTER (WHERE g.status = 'WON') AS integer) AS won,
+                  CAST(COUNT(g.id) FILTER (WHERE g.status = 'LOST') AS integer) AS lost,
+                  COALESCE(MAX(g.updated_at), u.created_at) AS last_activity_at
+                FROM users u
+                LEFT JOIN games g ON g.user_id = u.id
+                LEFT JOIN admin_users a ON a.user_id = u.id
+                WHERE :query = ''
+                   OR LOWER(u.id) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.email, '')) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.display_name, '')) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.nickname, '')) LIKE :query_pattern
+                   OR LOWER(COALESCE(u.google_subject, '')) LIKE :query_pattern
+                GROUP BY
+                  u.id,
+                  u.email,
+                  u.display_name,
+                  u.nickname,
+                  u.profile_emoji,
+                  u.google_subject,
+                  a.user_id,
+                  u.star_available,
+                  u.star_awarded_at,
+                  u.star_used_at,
+                  u.created_at
+                ORDER BY
+                """ + playerOrderBy(sort) + """
+                """)
+            .setParameter("query", query)
+            .setParameter("query_pattern", "%" + query + "%")
+            .setMaxResults(ADMIN_PLAYERS_PAGE_SIZE)
+            .setFirstResult(offset)
+            .getResultStream()
+            .map(row -> summaryRow((Object[]) row))
+            .toList();
+    }
+
+    private String playerOrderBy(String sort) {
+        String alphabetical = "LOWER(COALESCE(u.display_name, '')), LOWER(COALESCE(u.nickname, '')), u.id";
+        if (SORT_RECENT_GAME.equals(sort)) {
+            return "CASE WHEN COUNT(g.id) > 0 THEN 0 ELSE 1 END, COALESCE(MAX(g.updated_at), u.created_at) DESC, " + alphabetical;
         }
-        return safeLower(user.id).contains(query) ||
-            safeLower(user.email).contains(query) ||
-            safeLower(user.displayName).contains(query) ||
-            safeLower(user.nickname).contains(query) ||
-            safeLower(user.googleSubject).contains(query);
+        if (SORT_GAMES_PLAYED.equals(sort)) {
+            return "COUNT(g.id) DESC, " + alphabetical;
+        }
+        return alphabetical;
+    }
+
+    private AdminPlayerSummaryDto summaryRow(Object[] row) {
+        int gamesStarted = intValue(row[10]);
+        int won = intValue(row[11]);
+        int lost = intValue(row[12]);
+        int completed = won + lost;
+        int winRate = completed == 0 ? 0 : Math.toIntExact(Math.round((won * 100.0) / completed));
+        return new AdminPlayerSummaryDto(
+            (String) row[0],
+            (String) row[1],
+            (String) row[2],
+            (String) row[3],
+            (String) row[4],
+            booleanValue(row[5]),
+            booleanValue(row[6]),
+            booleanValue(row[7]),
+            (String) row[8],
+            (String) row[9],
+            gamesStarted,
+            completed,
+            won,
+            lost,
+            winRate,
+            (String) row[13]
+        );
+    }
+
+    private String normalizeSort(String sort) {
+        if (SORT_RECENT_GAME.equals(sort) || SORT_GAMES_PLAYED.equals(sort)) {
+            return sort;
+        }
+        return SORT_ALPHABETICAL;
+    }
+
+    private int intValue(Object value) {
+        return ((Number) value).intValue();
+    }
+
+    private boolean booleanValue(Object value) {
+        return Boolean.TRUE.equals(value);
     }
 
     private String safeLower(String value) {
@@ -240,6 +360,16 @@ public class AdminService {
         int lost,
         int winRate,
         String lastActivityAt
+    ) {
+    }
+
+    public record AdminPlayersPageDto(
+        List<AdminPlayerSummaryDto> players,
+        int page,
+        int pageSize,
+        int totalPlayers,
+        int totalPages,
+        String sort
     ) {
     }
 

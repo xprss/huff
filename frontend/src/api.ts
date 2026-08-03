@@ -3,6 +3,7 @@ import type {
   ApiErrorDto,
   HttpMethod,
   GameMode,
+  AdminPlayerSortDto,
   AdminPlayerUpdateDto,
   ProfileUpdateDto,
   PushSubscriptionDto,
@@ -65,7 +66,11 @@ export type ApiClient = {
     "DELETE",
     [subscription: PushSubscriptionDto]
   >;
-  readonly adminPlayers: EndpointHandler<"/api/admin/players", "GET", [query?: string]>;
+  readonly adminPlayers: EndpointHandler<
+    "/api/admin/players",
+    "GET",
+    [query?: string, sort?: AdminPlayerSortDto, page?: number]
+  >;
   readonly adminPlayer: EndpointHandler<"/api/admin/players/:userId", "GET", [userId: string]>;
   readonly updateAdminPlayer: EndpointHandler<
     "/api/admin/players/:userId",
@@ -146,9 +151,15 @@ export const api = {
       method: "DELETE",
       body: subscription
     }),
-  adminPlayers: (query?: string) => {
+  adminPlayers: (query?: string, sort?: AdminPlayerSortDto, page?: number) => {
     const search = query?.trim();
-    return request(search ? (`/api/admin/players?q=${encodeURIComponent(search)}` as "/api/admin/players") : "/api/admin/players", {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (sort) params.set("sort", sort);
+    if (page && page > 0) params.set("page", String(page));
+    const queryString = params.toString();
+    const path = queryString ? (`/api/admin/players?${queryString}` as "/api/admin/players") : "/api/admin/players";
+    return request(path, {
       method: "GET"
     });
   },

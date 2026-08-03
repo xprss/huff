@@ -24,12 +24,17 @@ public class AdminResource {
 
     @GET
     @Path("/players")
-    public Response players(@CookieParam("huff_session") String sessionId, @QueryParam("q") String query) {
+    public Response players(
+        @CookieParam("huff_session") String sessionId,
+        @QueryParam("q") String query,
+        @QueryParam("sort") String sort,
+        @QueryParam("page") Integer page
+    ) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
             return unauthorized(resolvedUser.loginUrl());
         }
-        Response.ResponseBuilder response = Response.ok(adminService.listPlayers(resolvedUser.user(), query));
+        Response.ResponseBuilder response = Response.ok(adminService.listPlayers(resolvedUser.user(), query, sort, page));
         setCookie(response, resolvedUser);
         return response.build();
     }

@@ -379,7 +379,8 @@ h1 {
 .profile-action-button:focus-visible,
 .emoji-choice:focus-visible,
 .admin-player-card:focus-visible,
-.admin-search:focus-within {
+.admin-search:focus-within,
+.admin-sort:focus-within {
   outline: 3px solid var(--color-focus-ring);
   outline-offset: 3px;
 }
@@ -891,8 +892,17 @@ h1 {
   font-weight: 760;
 }
 
+.admin-controls {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 1 1 auto;
+}
+
 .admin-search {
-  width: min(210px, 52%);
+  width: min(210px, 100%);
   min-height: 40px;
   border: 1px solid var(--color-button-border);
   border-radius: var(--control-radius);
@@ -913,6 +923,35 @@ h1 {
   font: inherit;
   font-size: 0.86rem;
   font-weight: 760;
+  outline: 0;
+}
+
+.admin-sort {
+  min-height: 40px;
+  border: 1px solid var(--color-button-border);
+  border-radius: var(--control-radius);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  background: var(--color-button);
+  color: var(--color-muted);
+}
+
+.admin-sort span {
+  font-size: 0.68rem;
+  font-weight: 880;
+  text-transform: uppercase;
+}
+
+.admin-sort select {
+  min-width: 128px;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
   outline: 0;
 }
 
@@ -1031,6 +1070,21 @@ h1 {
   font-size: 0.86rem;
   font-weight: 760;
   text-align: center;
+}
+
+.admin-pagination {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-pagination > span {
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 820;
+  white-space: nowrap;
 }
 
 .admin-modal {
@@ -2323,6 +2377,37 @@ h1 {
 
   .login-button {
     min-width: min(100%, 230px);
+  }
+
+  .admin-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-controls {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .admin-search,
+  .admin-sort {
+    flex: 1 1 100%;
+  }
+
+  .admin-sort select {
+    width: 100%;
+  }
+
+  .admin-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .admin-pagination > span {
+    order: -1;
+    width: 100%;
+    text-align: center;
   }
 
   .login-decor-tile {

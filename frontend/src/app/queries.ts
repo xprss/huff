@@ -1,12 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
+import type { AdminPlayerSortDto } from "../types";
 
 export const queryKeys = {
   me: ["me"] as const,
   today: ["game", "today"] as const,
   stats: ["stats", "personal"] as const,
   globalStats: ["stats", "global"] as const,
-  adminPlayers: (query: string) => ["admin", "players", query] as const,
+  adminPlayers: (query: string, sort: AdminPlayerSortDto, page: number) => ["admin", "players", query, sort, page] as const,
   adminPlayer: (userId: string) => ["admin", "players", "detail", userId] as const
 };
 
@@ -40,10 +41,10 @@ export const globalStatsQueryOptions = () =>
     queryFn: api.globalStats
   });
 
-export const adminPlayersQueryOptions = (query: string) =>
+export const adminPlayersQueryOptions = (query: string, sort: AdminPlayerSortDto, page: number) =>
   queryOptions({
-    queryKey: queryKeys.adminPlayers(query),
-    queryFn: () => api.adminPlayers(query)
+    queryKey: queryKeys.adminPlayers(query, sort, page),
+    queryFn: () => api.adminPlayers(query, sort, page)
   });
 
 export const adminPlayerQueryOptions = (userId: string) =>

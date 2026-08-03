@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Eye, EyeOff, Search, Save, Trash2, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Eye, EyeOff, Search, Save, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api";
 import { PROFILE_EMOJIS } from "../../app/constants";
@@ -7,9 +7,22 @@ import { adminPlayerQueryOptions, adminPlayersQueryOptions } from "../../app/que
 import { Distribution } from "../../shared/components/Distribution";
 import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
 import { Metric } from "../../shared/components/Metric";
-import type { AdminGameDto, AdminPlayerDetailDto, AdminPlayerSummaryDto, AdminPlayerUpdateDto } from "../../types";
+import type {
+  AdminGameDto,
+  AdminPlayerDetailDto,
+  AdminPlayerSortDto,
+  AdminPlayerSummaryDto,
+  AdminPlayerUpdateDto
+} from "../../types";
 
 type ConfirmAction = { readonly kind: "save" } | { readonly kind: "delete"; readonly typedValue: string };
+
+const adminPlayerSortOptions: readonly { readonly value: AdminPlayerSortDto; readonly label: string }[] = [
+  { value: "alphabetical", label: "Alfabetico" },
+  { value: "recent-game", label: "Partita più recente" },
+  { value: "games-played", label: "Più partite giocate" }
+];
+const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
   canManagePlayers,
@@ -23,10 +36,13 @@ export function AdminView({
   onError: (message: string) => void;
 }) {
   const queryClient = useQueryClient();
+  const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
+  const [playerSort, setPlayerSort] = React.useState<AdminPlayerSortDto>("alphabetical");
+  const [page, setPage] = React.useState(0);
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(null);
   const [confirmAction, setConfirmAction] = React.useState<ConfirmAction | null>(null);
-  const playersQuery = useQuery(adminPlayersQueryOptions(search));
+  const playersQuery = useQuery(adminPlayersQueryOptions(search, playerSort, page));
   const detailQuery = useQuery({
     ...adminPlayerQueryOptions(selectedUserId ?? ""),
     enabled: Boolean(selectedUserId)
@@ -78,6 +94,20 @@ export function AdminView({
     setConfirmAction(null);
   }, [detail]);
 
+  React.useEffect(() => {
+    if (!playersQuery.data || playersQuery.data.page === page) return;
+    setPage(playersQuery.data.page);
+  }, [page, playersQuery.data]);
+
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(0);
+    }, ADMIN_SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
+
   function openPlayer(player: AdminPlayerSummaryDto) {
     setSelectedUserId(player.id);
     setConfirmAction(null);
@@ -107,25 +137,50 @@ export function AdminView({
     await deleteMutation.mutateAsync(detail.player.id);
   }
 
-  const players = playersQuery.data ?? [];
+  const playersPage = playersQuery.data ?? null;
+  const players = playersPage?.players ?? [];
+  const totalPlayers = playersPage?.totalPlayers ?? 0;
+  const totalPages = playersPage?.totalPages ?? 1;
+  const currentPage = playersPage?.page ?? page;
 
   return (
     <section className="admin-view" aria-label="Admin">
       <div className="admin-toolbar">
         <div>
           <h2>Admin</h2>
-          <p>{players.length} giocatori</p>
+          <p>{totalPlayers} giocatori</p>
         </div>
-        <label className="admin-search">
-          <Search size={17} />
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Cerca"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </label>
+        <div className="admin-controls">
+          <label className="admin-search">
+            <Search size={17} />
+            <input
+              value={searchInput}
+              onChange={(event) => {
+                setSearchInput(event.target.value);
+              }}
+              placeholder="Cerca"
+              autoComplete="off"
+              spellCheck={false}
+            />
+          </label>
+          <label className="admin-sort">
+            <span>Ordina</span>
+            <select
+              value={playerSort}
+              onChange={(event) => {
+                setPlayerSort(event.target.value as AdminPlayerSortDto);
+                setPage(0);
+              }}
+              aria-label="Ordina giocatori"
+            >
+              {adminPlayerSortOptions.map((option) => (
+                <option value={option.value} key={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {playersQuery.isPending ? (
@@ -133,27 +188,52 @@ export function AdminView({
           <LoadingSpinner />
         </div>
       ) : (
-        <div className="admin-card-grid">
-          {players.map((player) => (
-            <button className="admin-player-card" type="button" key={player.id} onClick={() => openPlayer(player)}>
-              <span className="admin-player-emoji">{player.profileEmoji}</span>
-              <span className="admin-player-main">
-                <strong>{player.displayName ?? "Giocatore"}</strong>
-                <span>{player.nickname}</span>
-              </span>
-              <span className="admin-player-meta">
-                <span>{player.completed}/{player.gamesStarted} concluse</span>
-                <span>{player.winRate}% vittorie</span>
-              </span>
-              <span className="admin-player-badges">
-                {player.admin ? <span>Admin</span> : null}
-                {player.starAvailable ? <span>Stella</span> : null}
-                <span>{player.authenticated ? "Google" : "Anon"}</span>
-              </span>
-            </button>
-          ))}
-          {players.length === 0 ? <p className="admin-empty">Nessun giocatore trovato.</p> : null}
-        </div>
+        <>
+          <div className="admin-card-grid">
+            {players.map((player) => (
+              <button className="admin-player-card" type="button" key={player.id} onClick={() => openPlayer(player)}>
+                <span className="admin-player-emoji">{player.profileEmoji}</span>
+                <span className="admin-player-main">
+                  <strong>{player.displayName ?? "Giocatore"}</strong>
+                  <span>{player.nickname}</span>
+                </span>
+                <span className="admin-player-meta">
+                  <span>{player.completed}/{player.gamesStarted} concluse</span>
+                  <span>{player.winRate}% vittorie</span>
+                </span>
+                <span className="admin-player-badges">
+                  {player.admin ? <span>Admin</span> : null}
+                  {player.starAvailable ? <span>Stella</span> : null}
+                  <span>{player.authenticated ? "Google" : "Anon"}</span>
+                </span>
+              </button>
+            ))}
+            {players.length === 0 ? <p className="admin-empty">Nessun giocatore trovato.</p> : null}
+          </div>
+          {totalPages > 1 ? (
+            <nav className="admin-pagination" aria-label="Paginazione giocatori">
+              <button
+                className="profile-action-button"
+                type="button"
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
+                disabled={currentPage <= 0 || playersQuery.isFetching}
+              >
+                <ChevronLeft size={17} />
+                <span>Precedente</span>
+              </button>
+              <span>Pagina {currentPage + 1} di {totalPages}</span>
+              <button
+                className="profile-action-button"
+                type="button"
+                onClick={() => setPage((current) => current + 1)}
+                disabled={currentPage + 1 >= totalPages || playersQuery.isFetching}
+              >
+                <span>Successiva</span>
+                <ChevronRight size={17} />
+              </button>
+            </nav>
+          ) : null}
+        </>
       )}
 
       {selectedUserId ? (

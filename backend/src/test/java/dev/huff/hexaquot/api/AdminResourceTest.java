@@ -13,6 +13,7 @@ import java.util.UUID;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasSize;
 
 @QuarkusTest
 class AdminResourceTest {
@@ -59,7 +60,8 @@ class AdminResourceTest {
             .when().get("/api/admin/players")
             .then()
             .statusCode(200)
-            .body("size()", greaterThanOrEqualTo(1));
+            .body("players.size()", greaterThanOrEqualTo(1))
+            .body("pageSize", equalTo(10));
 
         given()
             .header("Cookie", cookie(adminSessionId))
@@ -105,6 +107,70 @@ class AdminResourceTest {
             .when().get("/api/admin/players/{userId}", targetId)
             .then()
             .statusCode(404);
+    }
+
+    @Test
+    void listsPlayersWithBackendSortingAndPagination() {
+        String adminSessionId = UUID.randomUUID().toString();
+        String adminId = UserIds.anonymous(adminSessionId);
+        grantAdmin(adminId);
+
+        String lowGamesId = createUser("Admin Sort Low", "@admin-sort-low");
+        createCompletedGame(lowGamesId, "2099-01-02", "2099-01-02T12:00:00Z");
+
+        String highGamesId = createUser("Admin Sort High", "@admin-sort-high");
+        createCompletedGame(highGamesId, "2099-01-03", "2099-01-03T12:00:00Z");
+        createCompletedGame(highGamesId, "2099-01-04", "2099-01-04T12:00:00Z");
+
+        String recentId = createUser("Admin Sort Recent", "@admin-sort-recent");
+        createCompletedGame(recentId, "2099-01-05", "2099-01-05T12:00:00Z");
+
+        for (int index = 0; index < 11; index++) {
+            createUser(String.format("Admin Page %02d", index), String.format("@admin-page-%02d", index));
+        }
+
+        given()
+            .header("Cookie", cookie(adminSessionId))
+            .queryParam("q", "admin-page")
+            .queryParam("page", 0)
+            .when().get("/api/admin/players")
+            .then()
+            .statusCode(200)
+            .body("players", hasSize(10))
+            .body("page", equalTo(0))
+            .body("pageSize", equalTo(10))
+            .body("totalPlayers", equalTo(11))
+            .body("totalPages", equalTo(2));
+
+        given()
+            .header("Cookie", cookie(adminSessionId))
+            .queryParam("q", "admin-page")
+            .queryParam("page", 1)
+            .when().get("/api/admin/players")
+            .then()
+            .statusCode(200)
+            .body("players", hasSize(1))
+            .body("page", equalTo(1));
+
+        given()
+            .header("Cookie", cookie(adminSessionId))
+            .queryParam("q", "admin-sort")
+            .queryParam("sort", "games-played")
+            .when().get("/api/admin/players")
+            .then()
+            .statusCode(200)
+            .body("sort", equalTo("games-played"))
+            .body("players[0].id", equalTo(highGamesId));
+
+        given()
+            .header("Cookie", cookie(adminSessionId))
+            .queryParam("q", "admin-sort")
+            .queryParam("sort", "recent-game")
+            .when().get("/api/admin/players")
+            .then()
+            .statusCode(200)
+            .body("sort", equalTo("recent-game"))
+            .body("players[0].id", equalTo(recentId));
     }
 
     private void grantAdmin(String userId) {
@@ -159,6 +225,47 @@ class AdminResourceTest {
                 .setParameter(4, now)
                 .executeUpdate();
         });
+    }
+
+    private String createUser(String displayName, String nickname) {
+        String userId = UserIds.anonymous("admin-test-" + UUID.randomUUID());
+        QuarkusTransaction.requiringNew().run(() -> entityManager
+            .createNativeQuery(
+                "INSERT INTO users "
+                    + "(id, email, display_name, nickname, profile_emoji, created_at, star_available) "
+                    + "VALUES (?1, null, ?2, ?3, '🙂', ?4, false)"
+            )
+            .setParameter(1, userId)
+            .setParameter(2, displayName)
+            .setParameter(3, nickname)
+            .setParameter(4, Instant.now().toString())
+            .executeUpdate());
+        return userId;
+    }
+
+    private void createCompletedGame(String userId, String puzzleDate, String timestamp) {
+        QuarkusTransaction.requiringNew().run(() -> entityManager
+            .createNativeQuery(
+                "INSERT INTO games "
+                    + "(id, user_id, puzzle_date, mode, solution, guesses_json, status, mouse_revealed, "
+                    + "kitten_unlocked, created_at, updated_at, completed_at) "
+                    + "VALUES (?1, ?2, ?3, 'CLASSIC', 'abbaco', ?4, 'WON', true, false, ?5, ?5, ?5)"
+            )
+            .setParameter(1, UUID.randomUUID().toString())
+            .setParameter(2, userId)
+            .setParameter(3, puzzleDate)
+            .setParameter(4, """
+                [{"word":"abbaco","tiles":[
+                  {"letter":"a","state":"CORRECT"},
+                  {"letter":"b","state":"CORRECT"},
+                  {"letter":"b","state":"CORRECT"},
+                  {"letter":"a","state":"CORRECT"},
+                  {"letter":"c","state":"CORRECT"},
+                  {"letter":"o","state":"CORRECT"}
+                ]}]
+                """)
+            .setParameter(5, timestamp)
+            .executeUpdate());
     }
 
     private String cookie(String sessionId) {
