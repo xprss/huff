@@ -306,19 +306,23 @@ export function AdminView({
                   <label>
                     <span>Stella assegnata</span>
                     <input
-                      value={draft.starAwardedAt ?? ""}
-                      onChange={(event) => setDraft({ ...draft, starAwardedAt: event.target.value || null })}
+                      type="datetime-local"
+                      value={dateTimeInputValue(draft.starAwardedAt)}
+                      onChange={(event) =>
+                        setDraft({ ...draft, starAwardedAt: dateTimeInputToIso(event.target.value) })
+                      }
                       disabled={!canManagePlayers || updateMutation.isPending}
-                      placeholder="ISO timestamp"
+                      step={60}
                     />
                   </label>
                   <label>
                     <span>Stella usata</span>
                     <input
-                      value={draft.starUsedAt ?? ""}
-                      onChange={(event) => setDraft({ ...draft, starUsedAt: event.target.value || null })}
+                      type="datetime-local"
+                      value={dateTimeInputValue(draft.starUsedAt)}
+                      onChange={(event) => setDraft({ ...draft, starUsedAt: dateTimeInputToIso(event.target.value) })}
                       disabled={!canManagePlayers || updateMutation.isPending}
-                      placeholder="ISO timestamp"
+                      step={60}
                     />
                   </label>
                   <div className="admin-actions">
@@ -540,6 +544,25 @@ function maskedSolution(solution: string) {
 
 function deleteConfirmationValue(player: AdminPlayerSummaryDto) {
   return player.nickname || player.id;
+}
+
+function dateTimeInputValue(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${padDatePart(date.getMonth() + 1)}-${padDatePart(date.getDate())}T${padDatePart(
+    date.getHours()
+  )}:${padDatePart(date.getMinutes())}`;
+}
+
+function dateTimeInputToIso(value: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, "0");
 }
 
 function formatDateTime(value: string | null | undefined) {
