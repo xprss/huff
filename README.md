@@ -33,13 +33,8 @@ are retained for the next run. Use `--no-build` to reuse the existing image.
 
 ## Configuration
 
-Copy `.env.example` to `.env` for Docker deployments. Authentication is disabled by default:
-
-```bash
-AUTH_ENABLED=false
-```
-
-To enable Google OAuth:
+The Quarkus development profile runs anonymously by default for local work. Docker and
+production builds instead fail closed and require Google OAuth:
 
 ```bash
 AUTH_ENABLED=true
@@ -47,6 +42,7 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 COOKIE_SECURE=true
 OIDC_SESSION_AGE_EXTENSION=30D
+OIDC_REFRESH_TOKEN_CACHE_TIME_TO_LIVE=5S
 ```
 
 In the Google OAuth client, use the `Web application` application type.
@@ -70,6 +66,11 @@ Google OAuth is requested with offline access so Quarkus can refresh expired
 tokens without forcing a new interactive login on returning users. The first
 login after enabling this setting can show Google's consent prompt once, so that
 Google issues the refresh token.
+
+The production and staging deployment scripts refuse to start when authentication,
+secure cookies, or Google credentials are missing. Private API calls also require a
+verified Google identity at the server boundary; an expired browser session is sent
+straight back through the login flow and is never downgraded to an anonymous player.
 
 Push notifications use standard Web Push with VAPID keys. Generate a stable key pair and put it in `.env` before deploying:
 

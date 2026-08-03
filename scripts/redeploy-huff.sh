@@ -100,6 +100,21 @@ if [[ -f "${ENV_FILE}" ]]; then
   set +a
 fi
 
+AUTH_ENABLED="${AUTH_ENABLED:-true}"
+COOKIE_SECURE="${COOKIE_SECURE:-true}"
+if [[ "${AUTH_ENABLED}" != "true" ]]; then
+  echo "Production deployment refused: AUTH_ENABLED must be true." >&2
+  exit 1
+fi
+if [[ "${COOKIE_SECURE}" != "true" ]]; then
+  echo "Production deployment refused: COOKIE_SECURE must be true." >&2
+  exit 1
+fi
+if [[ -z "${GOOGLE_CLIENT_ID:-}" || -z "${GOOGLE_CLIENT_SECRET:-}" ]]; then
+  echo "Production deployment refused: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required." >&2
+  exit 1
+fi
+
 IMAGE_NAME="${IMAGE_NAME:-huff-italian-hexaquot}"
 CONTAINER_NAME="${CONTAINER_NAME:-huff-hexaquot}"
 HOST_PORT="${HOST_PORT:-8083}"
@@ -204,6 +219,8 @@ docker run -d \
   --restart unless-stopped \
   --network "${DOCKER_NETWORK}" \
   "${ENV_ARGS[@]}" \
+  -e "AUTH_ENABLED=${AUTH_ENABLED}" \
+  -e "COOKIE_SECURE=${COOKIE_SECURE}" \
   -e "PORT=${CONTAINER_PORT}" \
   -e "POSTGRES_HOST=${POSTGRES_CONTAINER_NAME}" \
   -e "POSTGRES_PORT=${POSTGRES_PORT}" \

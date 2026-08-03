@@ -23,7 +23,7 @@ FROM eclipse-temurin:17-jre-alpine AS runtime
 WORKDIR /app
 
 ENV PORT=8080
-ENV AUTH_ENABLED=false
+ENV AUTH_ENABLED=true
 ENV POSTGRES_HOST=huff-postgres
 ENV POSTGRES_PORT=5432
 ENV POSTGRES_DB=huff_hexaquot

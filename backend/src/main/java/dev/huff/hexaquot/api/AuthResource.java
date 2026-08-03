@@ -19,7 +19,8 @@ public class AuthResource {
     public Response me(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return Response.ok(new MeDto(false, null, resolvedUser.loginUrl(), null, userService.authEnabled()))
+            return Response.status(Response.Status.UNAUTHORIZED)
+                .entity(new ErrorDto("auth_required", "Accesso Google richiesto.", resolvedUser.loginUrl()))
                 .build();
         }
 

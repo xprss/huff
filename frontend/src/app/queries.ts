@@ -17,6 +17,8 @@ export const meQueryOptions = () =>
     refetchOnMount: "always",
     refetchOnReconnect: "always",
     refetchOnWindowFocus: "always",
+    refetchInterval: 4 * 60 * 1000,
+    refetchIntervalInBackground: true,
     staleTime: 0
   });
 

@@ -68,8 +68,21 @@ POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 POSTGRES_HOST_BIND="${POSTGRES_HOST_BIND:-127.0.0.1}"
 POSTGRES_HOST_PORT="${POSTGRES_HOST_PORT:-}"
 COOKIE_SECURE="${COOKIE_SECURE:-true}"
-AUTH_ENABLED="${AUTH_ENABLED:-false}"
+AUTH_ENABLED="${AUTH_ENABLED:-true}"
 VAPID_SUBJECT="${VAPID_SUBJECT:-mailto:notifications@staging.huff.ottonovembre.it}"
+
+if [[ "${AUTH_ENABLED}" != "true" ]]; then
+  echo "Staging deployment refused: AUTH_ENABLED must be true." >&2
+  exit 1
+fi
+if [[ "${COOKIE_SECURE}" != "true" ]]; then
+  echo "Staging deployment refused: COOKIE_SECURE must be true." >&2
+  exit 1
+fi
+if [[ -z "${GOOGLE_CLIENT_ID:-}" || -z "${GOOGLE_CLIENT_SECRET:-}" ]]; then
+  echo "Staging deployment refused: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required." >&2
+  exit 1
+fi
 
 POSTGRES_PORT_ARGS=()
 if [[ -n "${POSTGRES_HOST_PORT}" ]]; then
