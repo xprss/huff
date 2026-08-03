@@ -773,6 +773,7 @@ h1 {
 }
 
 .profile-form input,
+.profile-form textarea,
 .profile-nickname-field {
   width: 100%;
   min-height: 38px;
@@ -785,6 +786,13 @@ h1 {
   font-size: 0.94rem;
   font-weight: 820;
   outline: 0;
+}
+
+.profile-form textarea {
+  min-height: 78px;
+  padding: 9px 10px;
+  line-height: 1.28;
+  resize: vertical;
 }
 
 .profile-nickname-field {
@@ -812,6 +820,7 @@ h1 {
 }
 
 .profile-form input:focus,
+.profile-form textarea:focus,
 .profile-nickname-field:focus-within {
   border-color: var(--color-hover-border);
   box-shadow: 0 0 0 3px var(--color-focus-ring);
@@ -859,6 +868,21 @@ h1 {
 .profile-action-button:disabled {
   cursor: default;
   opacity: 0.66;
+}
+
+.profile-bio,
+.admin-player-bio {
+  margin: 2px 0 0;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 620;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.admin-player-bio {
+  grid-column: 1 / -1;
 }
 
 .admin-view {
@@ -1151,6 +1175,7 @@ h1 {
 }
 
 .admin-edit-panel input,
+.admin-edit-panel textarea,
 .admin-edit-panel select,
 .admin-confirm-panel input {
   width: 100%;
@@ -1166,11 +1191,34 @@ h1 {
   outline: 0;
 }
 
+.admin-edit-panel textarea {
+  min-height: 78px;
+  padding: 9px 10px;
+  line-height: 1.28;
+  resize: vertical;
+}
+
 .admin-edit-panel input:focus,
+.admin-edit-panel textarea:focus,
 .admin-edit-panel select:focus,
 .admin-confirm-panel input:focus {
   border-color: var(--color-hover-border);
   box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.admin-edit-panel .profile-nickname-field input {
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+.admin-edit-panel .profile-nickname-field input:focus {
+  box-shadow: none;
 }
 
 .admin-check {

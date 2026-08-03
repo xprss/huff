@@ -31,6 +31,7 @@ public class UserService {
     );
     private static final Pattern NICKNAME_PATTERN = Pattern.compile("@[a-z0-9._-]+");
     private static final int MAX_NICKNAME_LENGTH = 30;
+    private static final int MAX_BIO_LENGTH = 200;
 
     @ConfigProperty(name = "app.auth.enabled")
     boolean authEnabled;
@@ -130,7 +131,14 @@ public class UserService {
     }
 
     @Transactional
-    public AppUser updateProfile(String userId, String displayName, String nickname, String profileEmoji, boolean authenticated) {
+    public AppUser updateProfile(
+        String userId,
+        String displayName,
+        String nickname,
+        String profileEmoji,
+        String bio,
+        boolean authenticated
+    ) {
         UserEntity user = UserEntity.findById(userId);
         if (user == null) {
             throw new NotAuthorizedException("Utente non trovato.");
@@ -139,6 +147,7 @@ public class UserService {
         String normalizedDisplayName = normalizeDisplayName(displayName);
         String normalizedNickname = normalizeNickname(nickname);
         String normalizedProfileEmoji = normalizeProfileEmoji(profileEmoji);
+        String normalizedBio = normalizeBio(bio);
         UserEntity nicknameOwner = UserEntity.<UserEntity>find("nickname", normalizedNickname).firstResult();
         if (nicknameOwner != null && !nicknameOwner.id.equals(userId)) {
             throw new WebApplicationException("Nickname già in uso.", Response.Status.CONFLICT);
@@ -147,6 +156,7 @@ public class UserService {
         user.displayName = normalizedDisplayName;
         user.nickname = normalizedNickname;
         user.profileEmoji = normalizedProfileEmoji;
+        user.bio = normalizedBio;
         return user.toAppUser(authenticated, adminPrivileges(userId));
     }
 
@@ -199,6 +209,17 @@ public class UserService {
             throw new BadRequestException("Emoji profilo non ammessa.");
         }
         return profileEmoji;
+    }
+
+    private String normalizeBio(String bio) {
+        if (isBlank(bio)) {
+            return null;
+        }
+        String normalized = bio.trim();
+        if (normalized.length() > MAX_BIO_LENGTH) {
+            throw new BadRequestException("La bio può avere al massimo 200 caratteri.");
+        }
+        return normalized;
     }
 
     private String slugify(String value) {

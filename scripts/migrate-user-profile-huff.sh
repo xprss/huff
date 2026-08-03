@@ -8,6 +8,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 "${PROJECT_ROOT}/scripts/db-huff.sh" query "
 ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname varchar(30);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_emoji varchar(16);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio varchar(200);
 
 UPDATE users
 SET display_name = COALESCE(NULLIF(trim(display_name), ''), 'Giocatore');

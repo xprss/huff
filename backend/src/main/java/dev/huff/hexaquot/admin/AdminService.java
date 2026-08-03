@@ -85,6 +85,7 @@ public class AdminService {
                 user.displayName,
                 user.nickname,
                 user.profileEmoji,
+                user.bio,
                 user.googleSubject != null
             )),
             games
@@ -103,6 +104,7 @@ public class AdminService {
             request.displayName(),
             request.nickname(),
             request.profileEmoji(),
+            request.bio(),
             user.googleSubject != null
         );
 
@@ -172,6 +174,7 @@ public class AdminService {
             user.displayName,
             user.nickname,
             user.profileEmoji,
+            user.bio,
             user.googleSubject != null,
             AdminUserEntity.findById(user.id) != null,
             Boolean.TRUE.equals(user.starAvailable),
@@ -241,6 +244,7 @@ public class AdminService {
                   u.display_name,
                   u.nickname,
                   u.profile_emoji,
+                  u.bio,
                   (u.google_subject IS NOT NULL) AS authenticated,
                   (a.user_id IS NOT NULL) AS admin,
                   COALESCE(u.star_available, false) AS star_available,
@@ -265,6 +269,7 @@ public class AdminService {
                   u.display_name,
                   u.nickname,
                   u.profile_emoji,
+                  u.bio,
                   u.google_subject,
                   a.user_id,
                   u.star_available,
@@ -295,9 +300,9 @@ public class AdminService {
     }
 
     private AdminPlayerSummaryDto summaryRow(Object[] row) {
-        int gamesStarted = intValue(row[10]);
-        int won = intValue(row[11]);
-        int lost = intValue(row[12]);
+        int gamesStarted = intValue(row[11]);
+        int won = intValue(row[12]);
+        int lost = intValue(row[13]);
         int completed = won + lost;
         int winRate = completed == 0 ? 0 : Math.toIntExact(Math.round((won * 100.0) / completed));
         return new AdminPlayerSummaryDto(
@@ -306,17 +311,18 @@ public class AdminService {
             (String) row[2],
             (String) row[3],
             (String) row[4],
-            booleanValue(row[5]),
+            (String) row[5],
             booleanValue(row[6]),
             booleanValue(row[7]),
-            (String) row[8],
+            booleanValue(row[8]),
             (String) row[9],
+            (String) row[10],
             gamesStarted,
             completed,
             won,
             lost,
             winRate,
-            (String) row[13]
+            (String) row[14]
         );
     }
 
@@ -349,6 +355,7 @@ public class AdminService {
         String displayName,
         String nickname,
         String profileEmoji,
+        String bio,
         boolean authenticated,
         boolean admin,
         boolean starAvailable,
@@ -405,6 +412,7 @@ public class AdminService {
         String displayName,
         String nickname,
         String profileEmoji,
+        String bio,
         Boolean starAvailable,
         String starAwardedAt,
         String starUsedAt

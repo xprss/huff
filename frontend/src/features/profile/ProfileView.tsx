@@ -26,6 +26,7 @@ export function ProfileView({
 }) {
   const [displayName, setDisplayName] = React.useState(user.displayName ?? "");
   const [nicknameHandle, setNicknameHandle] = React.useState(toEditableNickname(user.nickname));
+  const [bio, setBio] = React.useState(user.bio ?? "");
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const winRate = stats && stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
@@ -33,11 +34,13 @@ export function ProfileView({
   React.useEffect(() => {
     setDisplayName(user.displayName ?? "");
     setNicknameHandle(toEditableNickname(user.nickname));
-  }, [user.displayName, user.nickname]);
+    setBio(user.bio ?? "");
+  }, [user.bio, user.displayName, user.nickname]);
 
   function cancelEdit() {
     setDisplayName(user.displayName ?? "");
     setNicknameHandle(toEditableNickname(user.nickname));
+    setBio(user.bio ?? "");
     onEditingChange(false);
   }
 
@@ -47,6 +50,7 @@ export function ProfileView({
       const updated = await onSave(profile);
       setDisplayName(updated.displayName ?? "");
       setNicknameHandle(toEditableNickname(updated.nickname));
+      setBio(updated.bio ?? "");
       onEditingChange(false);
       setShowEmojiPicker(false);
       onSuccess(successMessage);
@@ -63,7 +67,8 @@ export function ProfileView({
       {
         displayName,
         nickname: `@${nicknameHandle}`,
-        profileEmoji: user.profileEmoji
+        profileEmoji: user.profileEmoji,
+        bio
       },
       "Profilo aggiornato."
     );
@@ -117,6 +122,16 @@ export function ProfileView({
                     />
                   </div>
                 </label>
+                <label>
+                  <span>Bio</span>
+                  <textarea
+                    value={bio}
+                    onChange={(event) => setBio(event.target.value)}
+                    maxLength={200}
+                    disabled={saving}
+                    rows={3}
+                  />
+                </label>
                 <div className="profile-form-actions">
                   <button className="profile-action-button primary" type="submit" disabled={saving}>
                     <Check size={17} />
@@ -132,6 +147,7 @@ export function ProfileView({
               <>
                 <strong>{user.displayName}</strong>
                 <span>{user.nickname}</span>
+                {user.bio ? <p className="profile-bio">{user.bio}</p> : null}
               </>
             )}
           </div>
@@ -178,7 +194,8 @@ export function ProfileView({
                       {
                         displayName: user.displayName ?? "",
                         nickname: user.nickname,
-                        profileEmoji: emoji
+                        profileEmoji: emoji,
+                        bio: user.bio
                       },
                       "Emoji aggiornata."
                     )

@@ -87,6 +87,7 @@ export function AdminView({
       displayName: detail.player.displayName ?? "",
       nickname: detail.player.nickname,
       profileEmoji: detail.player.profileEmoji,
+      bio: detail.player.bio,
       starAvailable: detail.player.starAvailable,
       starAwardedAt: detail.player.starAwardedAt,
       starUsedAt: detail.player.starUsedAt
@@ -273,12 +274,18 @@ export function AdminView({
                   </label>
                   <label>
                     <span>Nickname</span>
-                    <input
-                      value={draft.nickname}
-                      onChange={(event) => setDraft({ ...draft, nickname: event.target.value })}
-                      disabled={!canManagePlayers || updateMutation.isPending}
-                      spellCheck={false}
-                    />
+                    <div className="profile-nickname-field">
+                      <span className="profile-nickname-prefix" aria-hidden="true">
+                        @
+                      </span>
+                      <input
+                        value={toEditableHandle(draft.nickname)}
+                        onChange={(event) => setDraft({ ...draft, nickname: `@${toEditableHandle(event.target.value)}` })}
+                        maxLength={29}
+                        disabled={!canManagePlayers || updateMutation.isPending}
+                        spellCheck={false}
+                      />
+                    </div>
                   </label>
                   <label>
                     <span>Emoji</span>
@@ -293,6 +300,16 @@ export function AdminView({
                         </option>
                       ))}
                     </select>
+                  </label>
+                  <label>
+                    <span>Bio</span>
+                    <textarea
+                      value={draft.bio ?? ""}
+                      onChange={(event) => setDraft({ ...draft, bio: event.target.value })}
+                      maxLength={200}
+                      disabled={!canManagePlayers || updateMutation.isPending}
+                      rows={3}
+                    />
                   </label>
                   <label className="admin-check">
                     <input
@@ -372,6 +389,7 @@ function PlayerIdentity({ detail }: { detail: AdminPlayerDetailDto }) {
         <strong>{detail.player.displayName ?? "Giocatore"}</strong>
         <span>{detail.player.nickname}</span>
       </div>
+      {detail.player.bio ? <p className="admin-player-bio">{detail.player.bio}</p> : null}
       <div className="admin-facts">
         <span>ID: {detail.player.id}</span>
         <span>Email: {detail.player.email ?? "n/d"}</span>
@@ -544,6 +562,10 @@ function maskedSolution(solution: string) {
 
 function deleteConfirmationValue(player: AdminPlayerSummaryDto) {
   return player.nickname || player.id;
+}
+
+function toEditableHandle(handle: string | null) {
+  return (handle ?? "").replace(/@/g, "");
 }
 
 function dateTimeInputValue(value: string | null | undefined) {

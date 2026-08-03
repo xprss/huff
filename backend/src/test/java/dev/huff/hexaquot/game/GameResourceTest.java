@@ -23,6 +23,7 @@ class GameResourceTest {
             .body("user.displayName", equalTo("Giocatore"))
             .body("user.nickname", startsWith("@giocatore-"))
             .body("user.profileEmoji", equalTo("😀"))
+            .body("user.bio", equalTo(null))
             .body("loginUrl", equalTo(null))
             .body("logoutUrl", equalTo(null));
     }
@@ -37,14 +38,22 @@ class GameResourceTest {
 
         given()
             .header("Cookie", cookie)
-            .body("{\"displayName\":\"Nome Profilo\",\"nickname\":\"Profilo.Test\",\"profileEmoji\":\"😎\"}")
+            .body("""
+                {
+                  "displayName": "Nome Profilo",
+                  "nickname": "Profilo.Test",
+                  "profileEmoji": "😎",
+                  "bio": "Bio profilo breve"
+                }
+                """)
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()
             .statusCode(200)
             .body("displayName", equalTo("Nome Profilo"))
             .body("nickname", equalTo("@profilo.test"))
-            .body("profileEmoji", equalTo("😎"));
+            .body("profileEmoji", equalTo("😎"))
+            .body("bio", equalTo("Bio profilo breve"));
 
         given()
             .header("Cookie", cookie)
@@ -53,7 +62,8 @@ class GameResourceTest {
             .statusCode(200)
             .body("user.displayName", equalTo("Nome Profilo"))
             .body("user.nickname", equalTo("@profilo.test"))
-            .body("user.profileEmoji", equalTo("😎"));
+            .body("user.profileEmoji", equalTo("😎"))
+            .body("user.bio", equalTo("Bio profilo breve"));
     }
 
     @Test
@@ -130,6 +140,16 @@ class GameResourceTest {
             .then()
             .statusCode(400)
             .body("code", equalTo("bad_request"));
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@valido\",\"profileEmoji\":\"😀\",\"bio\":\"" + "a".repeat(201) + "\"}")
+            .contentType("application/json")
+            .when().put("/api/me/profile")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"));
+
     }
 
     @Test

@@ -64,6 +64,7 @@ class DailyGameServiceTest {
             "Mouse",
             "@mouse",
             "😀",
+            null,
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
@@ -94,6 +95,7 @@ class DailyGameServiceTest {
             "First Guess Kitten",
             "@first-guess-kitten",
             "😀",
+            null,
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
@@ -113,6 +115,7 @@ class DailyGameServiceTest {
             "Repeated Mouse Guess",
             "@repeated-mouse-guess",
             "😀",
+            null,
             false
         );
         String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
@@ -254,7 +257,7 @@ class DailyGameServiceTest {
         user.createdAt = now;
         user.starAvailable = false;
         user.persist();
-        return new AppUser(user.id, null, user.displayName, user.nickname, user.profileEmoji, false);
+        return new AppUser(user.id, null, user.displayName, user.nickname, user.profileEmoji, null, false);
     }
 
     private void createCompletedGame(AppUser user, LocalDate date, GameStatus status) throws Exception {

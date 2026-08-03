@@ -52,6 +52,7 @@ public class AuthResource {
             request == null ? null : request.displayName(),
             request == null ? null : request.nickname(),
             request == null ? null : request.profileEmoji(),
+            request == null ? null : request.bio(),
             resolvedUser.user().authenticated()
         );
         Response.ResponseBuilder response = Response.ok(UserDto.from(updatedUser));
@@ -69,6 +70,7 @@ public class AuthResource {
         String displayName,
         String nickname,
         String profileEmoji,
+        String bio,
         boolean authenticated,
         AdminPrivileges admin
     ) {
@@ -78,13 +80,14 @@ public class AuthResource {
                 user.displayName(),
                 user.nickname(),
                 user.profileEmoji(),
+                user.bio(),
                 user.authenticated(),
                 user.admin()
             );
         }
     }
 
-    public record ProfileRequest(String displayName, String nickname, String profileEmoji) {
+    public record ProfileRequest(String displayName, String nickname, String profileEmoji, String bio) {
     }
 
     public record ErrorDto(String code, String message, String loginUrl) {

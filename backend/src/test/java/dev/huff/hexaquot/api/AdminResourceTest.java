@@ -80,6 +80,7 @@ class AdminResourceTest {
                   "displayName": "Admin Updated",
                   "nickname": "@admin-updated",
                   "profileEmoji": "😎",
+                  "bio": "Bio aggiornata da admin",
                   "starAvailable": true,
                   "starAwardedAt": "2099-01-01T00:00:00Z",
                   "starUsedAt": null
@@ -91,6 +92,7 @@ class AdminResourceTest {
             .body("player.displayName", equalTo("Admin Updated"))
             .body("player.nickname", equalTo("@admin-updated"))
             .body("player.profileEmoji", equalTo("😎"))
+            .body("player.bio", equalTo("Bio aggiornata da admin"))
             .body("player.starAvailable", equalTo(true));
 
         given()

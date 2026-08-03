@@ -102,6 +102,7 @@ export interface UserDto {
   readonly displayName: string | null;
   readonly nickname: string;
   readonly profileEmoji: string;
+  readonly bio: string | null;
   readonly authenticated: boolean;
   readonly admin: AdminPrivilegesDto | null;
 }
@@ -110,6 +111,7 @@ export interface ProfileUpdateDto {
   readonly displayName: string;
   readonly nickname: string;
   readonly profileEmoji: string;
+  readonly bio: string | null;
 }
 
 export interface ModeRequestDto {
@@ -141,6 +143,7 @@ export interface AdminPlayerSummaryDto {
   readonly displayName: string | null;
   readonly nickname: string;
   readonly profileEmoji: string;
+  readonly bio: string | null;
   readonly authenticated: boolean;
   readonly admin: boolean;
   readonly starAvailable: boolean;
@@ -195,6 +198,7 @@ export interface AdminPlayerUpdateDto {
   readonly displayName: string;
   readonly nickname: string;
   readonly profileEmoji: string;
+  readonly bio: string | null;
   readonly starAvailable: boolean;
   readonly starAwardedAt: string | null;
   readonly starUsedAt: string | null;
