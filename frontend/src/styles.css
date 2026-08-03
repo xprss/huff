@@ -1190,6 +1190,48 @@ h1 {
   line-height: 1.28;
 }
 
+.admin-solution-row {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+  font-weight: 760;
+  line-height: 1.28;
+}
+
+.admin-solution-row span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-eye-button {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  border: 1px solid var(--color-button-border);
+  border-radius: var(--compact-radius);
+  display: inline-grid;
+  place-items: center;
+  background: var(--color-button);
+  color: var(--color-accent);
+  cursor: pointer;
+}
+
+.admin-eye-button:focus-visible {
+  outline: 3px solid var(--color-focus-ring);
+  outline-offset: 3px;
+}
+
+.admin-eye-button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
 .admin-guesses {
   display: grid;
   gap: 6px;

@@ -1,5 +1,5 @@
 import React from "react";
-import { Check, Search, Save, Trash2, X } from "lucide-react";
+import { Check, Eye, EyeOff, Search, Save, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api";
 import { PROFILE_EMOJIS } from "../../app/constants";
@@ -385,41 +385,77 @@ function ConfirmPanel({
 }
 
 function GameHistory({ games }: { games: readonly AdminGameDto[] }) {
+  const [revealedSolutions, setRevealedSolutions] = React.useState<ReadonlySet<string>>(() => new Set());
+
+  React.useEffect(() => {
+    setRevealedSolutions(new Set());
+  }, [games]);
+
+  function toggleSolution(gameId: string) {
+    setRevealedSolutions((current) => {
+      const next = new Set(current);
+      if (next.has(gameId)) {
+        next.delete(gameId);
+      } else {
+        next.add(gameId);
+      }
+      return next;
+    });
+  }
+
   return (
     <section className="admin-games-panel" aria-label="Partite">
       <h3>Partite</h3>
-      {games.map((game) => (
-        <article className="admin-game-row" key={game.id}>
-          <header>
-            <strong>{game.puzzleDate}</strong>
-            <span>{game.status}</span>
-            <span>{game.modeLabel}</span>
-          </header>
-          <p>Soluzione: {game.solution.toUpperCase()}</p>
-          <p>
-            Tentativi: {game.guesses.length} · Creata {formatDateTime(game.createdAt)} · Aggiornata{" "}
-            {formatDateTime(game.updatedAt)}
-          </p>
-          {game.completedAt ? <p>Completata {formatDateTime(game.completedAt)}</p> : null}
-          <div className="admin-guesses">
-            {game.guesses.map((guess, index) => (
-              <div className="admin-guess" key={`${game.id}-${index}`}>
-                <span>{guess.word.toUpperCase()}</span>
-                <span>
-                  {guess.tiles.map((tile, tileIndex) => (
-                    <i className={`admin-tile ${tile.state.toLowerCase()}`} key={`${guess.word}-${tileIndex}`}>
-                      {tile.letter.toUpperCase()}
-                    </i>
-                  ))}
-                </span>
-              </div>
-            ))}
-          </div>
-        </article>
-      ))}
+      {games.map((game) => {
+        const solutionRevealed = revealedSolutions.has(game.id);
+        return (
+          <article className="admin-game-row" key={game.id}>
+            <header>
+              <strong>{game.puzzleDate}</strong>
+              <span>{game.status}</span>
+              <span>{game.modeLabel}</span>
+            </header>
+            <div className="admin-solution-row">
+              <span>Soluzione: {solutionRevealed ? game.solution.toUpperCase() : maskedSolution(game.solution)}</span>
+              <button
+                className="admin-eye-button"
+                type="button"
+                onClick={() => toggleSolution(game.id)}
+                aria-label={solutionRevealed ? "Nascondi soluzione" : "Rivela soluzione"}
+                title={solutionRevealed ? "Nascondi soluzione" : "Rivela soluzione"}
+              >
+                {solutionRevealed ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <p>
+              Tentativi: {game.guesses.length} · Creata {formatDateTime(game.createdAt)} · Aggiornata{" "}
+              {formatDateTime(game.updatedAt)}
+            </p>
+            {game.completedAt ? <p>Completata {formatDateTime(game.completedAt)}</p> : null}
+            <div className="admin-guesses">
+              {game.guesses.map((guess, index) => (
+                <div className="admin-guess" key={`${game.id}-${index}`}>
+                  <span>{guess.word.toUpperCase()}</span>
+                  <span>
+                    {guess.tiles.map((tile, tileIndex) => (
+                      <i className={`admin-tile ${tile.state.toLowerCase()}`} key={`${guess.word}-${tileIndex}`}>
+                        {tile.letter.toUpperCase()}
+                      </i>
+                    ))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </article>
+        );
+      })}
       {games.length === 0 ? <p className="admin-empty">Nessuna partita.</p> : null}
     </section>
   );
+}
+
+function maskedSolution(solution: string) {
+  return "*".repeat(solution.length || 6);
 }
 
 function deleteConfirmationValue(player: AdminPlayerSummaryDto) {
