@@ -44,6 +44,7 @@ export interface GameDto {
   readonly guesses: readonly GuessResult[];
   readonly solution: string | null;
   readonly canChangeMode: boolean;
+  readonly firstGuessSuggestion: string | null;
   readonly kitten: KittenDto;
   readonly star: StarDto;
 }

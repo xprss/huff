@@ -12,6 +12,7 @@ public record GameDto(
     List<GuessResult> guesses,
     String solution,
     boolean canChangeMode,
+    String firstGuessSuggestion,
     KittenDto kitten,
     StarDto star
 ) {

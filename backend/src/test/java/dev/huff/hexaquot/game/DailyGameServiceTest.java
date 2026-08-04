@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -241,6 +242,51 @@ class DailyGameServiceTest {
         assertEquals("Prova un tentativo prima di usare la stella.", error.getMessage());
     }
 
+    @Test
+    @TestTransaction
+    void suggestsFirstGuessUsedAtLeastThreeTimesInPreviousTenGames() throws Exception {
+        AppUser user = createPersistedUser("first-guess-suggestion");
+        LocalDate today = LocalDate.now(ZoneId.of("Europe/Rome"));
+        createCompletedGame(user, today.minusDays(1), GameStatus.LOST, "abachi");
+        createCompletedGame(user, today.minusDays(2), GameStatus.LOST, "abbada");
+        createCompletedGame(user, today.minusDays(3), GameStatus.LOST, "abachi");
+        createCompletedGame(user, today.minusDays(4), GameStatus.LOST, "abeteo");
+        createCompletedGame(user, today.minusDays(5), GameStatus.LOST, "abachi");
+        createCompletedGame(user, today.minusDays(6), GameStatus.LOST, "adagio");
+        gameRepository.create(user.id(), today.toString(), "abbaco", GameMode.CLASSIC);
+
+        GameDto todayGame = dailyGameService.today(user).game();
+        GameDto afterFirstGuess = dailyGameService.guess(user, "abachi");
+
+        assertEquals("abachi", todayGame.firstGuessSuggestion());
+        assertNull(afterFirstGuess.firstGuessSuggestion());
+    }
+
+    @Test
+    @TestTransaction
+    void ignoresFirstGuessUsesOutsidePreviousTenGames() throws Exception {
+        AppUser user = createPersistedUser("old-first-guess-suggestion");
+        LocalDate today = LocalDate.now(ZoneId.of("Europe/Rome"));
+        createCompletedGame(user, today.minusDays(1), GameStatus.LOST, "abbada");
+        createCompletedGame(user, today.minusDays(2), GameStatus.LOST, "abeteo");
+        createCompletedGame(user, today.minusDays(3), GameStatus.LOST, "adagio");
+        createCompletedGame(user, today.minusDays(4), GameStatus.LOST, "acerbo");
+        createCompletedGame(user, today.minusDays(5), GameStatus.LOST, "acervo");
+        createCompletedGame(user, today.minusDays(6), GameStatus.LOST, "anfora");
+        createCompletedGame(user, today.minusDays(7), GameStatus.LOST, "asfiss");
+        createCompletedGame(user, today.minusDays(8), GameStatus.LOST, "avviso");
+        createCompletedGame(user, today.minusDays(9), GameStatus.LOST, "azione");
+        createCompletedGame(user, today.minusDays(10), GameStatus.LOST, "barche");
+        createCompletedGame(user, today.minusDays(11), GameStatus.LOST, "abachi");
+        createCompletedGame(user, today.minusDays(12), GameStatus.LOST, "abachi");
+        createCompletedGame(user, today.minusDays(13), GameStatus.LOST, "abachi");
+        gameRepository.create(user.id(), today.toString(), "abbaco", GameMode.CLASSIC);
+
+        GameDto todayGame = dailyGameService.today(user).game();
+
+        assertNull(todayGame.firstGuessSuggestion());
+    }
+
     private int countTiles(GuessResult guess, TileState state) {
         return (int) guess.tiles().stream()
             .filter(tile -> tile.state() == state)
@@ -261,6 +307,10 @@ class DailyGameServiceTest {
     }
 
     private void createCompletedGame(AppUser user, LocalDate date, GameStatus status) throws Exception {
+        createCompletedGame(user, date, status, null);
+    }
+
+    private void createCompletedGame(AppUser user, LocalDate date, GameStatus status, String firstGuess) throws Exception {
         GameRecord record = gameRepository.create(user.id(), date.toString(), "abbaco", GameMode.CLASSIC);
         String completedAt = Instant.now().toString();
         gameRepository.update(new GameRecord(
@@ -269,7 +319,7 @@ class DailyGameServiceTest {
             record.puzzleDate(),
             record.mode(),
             record.solution(),
-            objectMapper.writeValueAsString(completedGuesses(status)),
+            objectMapper.writeValueAsString(completedGuesses(status, firstGuess)),
             status,
             record.mouseTileIndex(),
             record.mouseRevealed(),
@@ -281,12 +331,12 @@ class DailyGameServiceTest {
         ));
     }
 
-    private List<GuessResult> completedGuesses(GameStatus status) {
+    private List<GuessResult> completedGuesses(GameStatus status, String firstGuess) {
         if (status == GameStatus.WON) {
-            return List.of(guess("abbaco", TileState.CORRECT));
+            return List.of(guess(firstGuess == null ? "abbaco" : firstGuess, TileState.CORRECT));
         }
         return List.of(
-            guess("abachi", TileState.ABSENT),
+            guess(firstGuess == null ? "abachi" : firstGuess, TileState.ABSENT),
             guess("abbada", TileState.PRESENT),
             guess("abeteo", TileState.ABSENT),
             guess("adagio", TileState.PRESENT),

@@ -1,6 +1,7 @@
 package dev.huff.hexaquot.game;
 
 import dev.huff.hexaquot.persistence.GameEntity;
+import io.quarkus.panache.common.Page;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
@@ -66,6 +67,19 @@ public class GameRepository {
                 userId,
                 List.of(GameStatus.WON, GameStatus.LOST)
             )
+            .stream()
+            .map(GameEntity::toRecord)
+            .toList();
+    }
+
+    public List<GameRecord> findRecentByUserBeforeDate(String userId, String puzzleDate, int limit) {
+        return GameEntity.<GameEntity>find(
+                "userId = ?1 and puzzleDate < ?2 order by puzzleDate desc",
+                userId,
+                puzzleDate
+            )
+            .page(Page.ofSize(limit))
+            .list()
             .stream()
             .map(GameEntity::toRecord)
             .toList();

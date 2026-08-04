@@ -371,6 +371,8 @@ h1 {
 .icon-button:focus-visible,
 .icon-link:focus-visible,
 .key:focus-visible,
+.first-guess-chip:focus-visible,
+.first-guess-dismiss:focus-visible,
 .menu-item:focus-visible,
 .login-button:focus-visible,
 .share-button:focus-visible,
@@ -1885,6 +1887,91 @@ h1 {
   white-space: nowrap;
 }
 
+.keyboard-zone {
+  width: 100%;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.first-guess-suggestion {
+  width: 100%;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px 0 8px;
+  color: var(--color-muted);
+  font-size: 0.74rem;
+  font-weight: 780;
+  line-height: 1;
+}
+
+.first-guess-suggestion span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.first-guess-chip {
+  min-height: 28px;
+  border: 1px solid var(--color-button-border);
+  border-radius: var(--compact-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 9px;
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  transition:
+    transform var(--motion-fast) var(--ease-press),
+    border-color var(--motion-fast) var(--ease-out),
+    background var(--motion-fast) var(--ease-out);
+}
+
+.first-guess-chip:hover {
+  border-color: var(--color-hover-border);
+}
+
+.first-guess-chip:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.first-guess-dismiss {
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  flex: 0 0 28px;
+  border: 1px solid var(--color-transparent);
+  border-radius: var(--compact-radius);
+  display: inline-grid;
+  place-items: center;
+  background: var(--color-transparent);
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) var(--ease-press),
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out);
+}
+
+.first-guess-dismiss:hover {
+  background: var(--color-surface-strong);
+  color: var(--color-text);
+}
+
+.first-guess-dismiss:active {
+  transform: translateY(1px) scale(0.96);
+}
+
 .keyboard {
   --letter-key-width: min(42px, calc((100vw - (var(--viewport-padding) * 2) - (var(--keyboard-gap) * 9)) / 10));
   --wide-key-width: calc(var(--letter-key-width) * 1.45);
@@ -2481,6 +2568,29 @@ h1 {
   .feedback-stack {
     height: clamp(54px, calc(var(--app-vh) * 14), 104px);
     gap: 4px;
+  }
+
+  .keyboard-zone {
+    gap: 4px;
+  }
+
+  .first-guess-suggestion {
+    min-height: 28px;
+    gap: 6px;
+    padding: 0 2px 0 6px;
+    font-size: 0.7rem;
+  }
+
+  .first-guess-chip {
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 0.74rem;
+  }
+
+  .first-guess-dismiss {
+    width: 26px;
+    height: 26px;
+    flex-basis: 26px;
   }
 
   .key-row {

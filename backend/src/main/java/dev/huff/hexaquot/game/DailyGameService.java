@@ -27,6 +27,8 @@ import java.util.Map;
 @ApplicationScoped
 public class DailyGameService {
     public static final int MAX_ATTEMPTS = 6;
+    private static final int FIRST_GUESS_SUGGESTION_HISTORY_LIMIT = 10;
+    private static final int FIRST_GUESS_SUGGESTION_MIN_USES = 3;
 
     @ConfigProperty(name = "app.game.timezone")
     String timezone;
@@ -368,9 +370,55 @@ public class DailyGameService {
             guesses,
             revealSolution || record.status() != GameStatus.IN_PROGRESS ? record.solution() : null,
             guesses.isEmpty() && record.status() == GameStatus.IN_PROGRESS,
+            firstGuessSuggestion(record, guesses),
             kittenDto(record),
             starDto(record, guesses, starJustAwarded)
         );
+    }
+
+    private String firstGuessSuggestion(GameRecord record, List<GuessResult> currentGuesses) {
+        if (!currentGuesses.isEmpty() || record.status() != GameStatus.IN_PROGRESS) {
+            return null;
+        }
+
+        Map<String, Integer> counts = new HashMap<>();
+        Map<String, Integer> latestIndexes = new HashMap<>();
+        List<GameRecord> recentRecords = gameRepository.findRecentByUserBeforeDate(
+            record.userId(),
+            record.puzzleDate(),
+            FIRST_GUESS_SUGGESTION_HISTORY_LIMIT
+        );
+
+        for (int index = 0; index < recentRecords.size(); index++) {
+            List<GuessResult> guesses = readGuesses(recentRecords.get(index));
+            if (guesses.isEmpty()) {
+                continue;
+            }
+
+            String word = guesses.get(0).word();
+            counts.put(word, counts.getOrDefault(word, 0) + 1);
+            latestIndexes.putIfAbsent(word, index);
+        }
+
+        String bestWord = null;
+        int bestCount = 0;
+        int bestLatestIndex = Integer.MAX_VALUE;
+        for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+            String word = entry.getKey();
+            int count = entry.getValue();
+            int latestIndex = latestIndexes.getOrDefault(word, Integer.MAX_VALUE);
+            if (
+                count > bestCount ||
+                    (count == bestCount && latestIndex < bestLatestIndex) ||
+                    (count == bestCount && latestIndex == bestLatestIndex && (bestWord == null || word.compareTo(bestWord) < 0))
+            ) {
+                bestWord = word;
+                bestCount = count;
+                bestLatestIndex = latestIndex;
+            }
+        }
+
+        return bestCount >= FIRST_GUESS_SUGGESTION_MIN_USES ? bestWord : null;
     }
 
     private KittenDto kittenDto(GameRecord record) {

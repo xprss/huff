@@ -1,6 +1,6 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Heart } from "lucide-react";
+import { Heart, X } from "lucide-react";
 import { api, isAuthRequiredError } from "../api";
 import { AppThemeProvider } from "../theme";
 import type {
@@ -65,6 +65,9 @@ export function App() {
   const [toast, setToast] = React.useState<ToastMessage | null>(null);
   const [showActionsMenu, setShowActionsMenu] = React.useState(false);
   const [refreshingChallenge, setRefreshingChallenge] = React.useState(false);
+  const [dismissedFirstGuessSuggestionPuzzleDate, setDismissedFirstGuessSuggestionPuzzleDate] = React.useState<
+    string | null
+  >(null);
   const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(() => areGameNotificationsEnabled());
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
@@ -315,6 +318,14 @@ export function App() {
     game?.status === "WON" || game?.status === "LOST" ? game.solution ?? lastGuess?.word ?? null : null;
   const terminalValue = completedSolution ?? currentGuess;
   const terminalResult = completedSolution ? (game?.status === "WON" ? "won" : "lost") : null;
+  const firstGuessSuggestion = game?.firstGuessSuggestion ?? null;
+  const showFirstGuessSuggestion = Boolean(
+    canPlay &&
+      game &&
+      game.guesses.length === 0 &&
+      firstGuessSuggestion &&
+      dismissedFirstGuessSuggestionPuzzleDate !== game.puzzleDate
+  );
 
   React.useEffect(() => {
     if (!canUseGameActions || !notificationsEnabled) return;
@@ -496,6 +507,12 @@ export function App() {
     }
   }
 
+  function autofillFirstGuessSuggestion() {
+    if (!firstGuessSuggestion || !game || game.status !== "IN_PROGRESS" || game.guesses.length > 0) return;
+    clearToast();
+    setCurrentGuess(firstGuessSuggestion.toUpperCase());
+  }
+
   return (
     <AppThemeProvider conditions={themeConditions}>
       <main className="app-shell">
@@ -591,14 +608,39 @@ export function App() {
                 />
               </div>
 
-              <GameKeyboard
-                canPlay={canPlay}
-                keyStates={keyStates}
-                shouldHideKeyboardHints={shouldHideKeyboardHints}
-                onAddLetter={addLetter}
-                onSubmit={() => void submitGuess()}
-                onBackspace={() => setCurrentGuess((value) => value.slice(0, -1))}
-              />
+              <div className="keyboard-zone">
+                {showFirstGuessSuggestion && game && firstGuessSuggestion ? (
+                  <div className="first-guess-suggestion">
+                    <span>Di solito inizi con</span>
+                    <button
+                      className="first-guess-chip"
+                      type="button"
+                      onClick={autofillFirstGuessSuggestion}
+                      aria-label={`Compila ${firstGuessSuggestion.toUpperCase()}`}
+                    >
+                      {firstGuessSuggestion.toUpperCase()}
+                    </button>
+                    <button
+                      className="first-guess-dismiss"
+                      type="button"
+                      onClick={() => setDismissedFirstGuessSuggestionPuzzleDate(game.puzzleDate)}
+                      aria-label="Chiudi suggerimento"
+                      title="Chiudi"
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ) : null}
+
+                <GameKeyboard
+                  canPlay={canPlay}
+                  keyStates={keyStates}
+                  shouldHideKeyboardHints={shouldHideKeyboardHints}
+                  onAddLetter={addLetter}
+                  onSubmit={() => void submitGuess()}
+                  onBackspace={() => setCurrentGuess((value) => value.slice(0, -1))}
+                />
+              </div>
             </>
           )}
         </section>
