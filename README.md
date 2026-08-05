@@ -116,6 +116,14 @@ scripts/logs-huff.sh
 
 Use `TAIL_LINES=500 scripts/logs-huff.sh` to change how many existing log lines are shown before following new output.
 
+Every `/api/*` call produces an `API_REQUEST_STARTED` and an
+`API_REQUEST_COMPLETED` entry. Match the two with `requestId`; the completion
+entry includes HTTP status, outcome, elapsed time and response length. API logs
+include only safe diagnostic metadata (method, path, query parameter names,
+content metadata, forwarded client IP, origin and user agent): never cookies,
+authorization headers, request bodies or query values. The request identifier
+is used only to correlate the two container-log entries.
+
 ## Database
 
 The backend uses Hibernate ORM/Panache with PostgreSQL. The live database runs in the `POSTGRES_CONTAINER_NAME` container and persists data in `POSTGRES_DATA_DIR`.

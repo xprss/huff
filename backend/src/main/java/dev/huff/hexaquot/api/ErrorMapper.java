@@ -6,9 +6,12 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+import org.jboss.logging.Logger;
 
 @Provider
 public class ErrorMapper implements ExceptionMapper<Throwable> {
+    private static final Logger LOG = Logger.getLogger(ErrorMapper.class);
+
     @Override
     public Response toResponse(Throwable error) {
         if (error instanceof BadRequestException) {
@@ -27,6 +30,7 @@ public class ErrorMapper implements ExceptionMapper<Throwable> {
                 .entity(new ErrorDto("request_failed", error.getMessage()))
                 .build();
         }
+        LOG.error("Unhandled API exception", error);
         return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
             .entity(new ErrorDto("server_error", "Errore interno."))
             .build();
