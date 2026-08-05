@@ -54,10 +54,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -f "${ENV_FILE}" ]]; then
-  set -a
-  # shellcheck source=/dev/null
-  . "${ENV_FILE}"
-  set +a
+  # shellcheck source=load-env-file.sh
+  . "${SCRIPT_DIR}/load-env-file.sh"
+  load_env_file "${ENV_FILE}"
 fi
 
 POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME:-huff-postgres-staging}"

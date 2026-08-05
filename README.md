@@ -51,6 +51,8 @@ Authorized JavaScript origins:
 ```text
 https://huff.ottonovembre.it
 https://www.huff.ottonovembre.it
+https://staging.huff.ottonovembre.it
+https://www.staging.huff.ottonovembre.it
 ```
 
 Authorized redirect URIs:
@@ -58,6 +60,8 @@ Authorized redirect URIs:
 ```text
 https://huff.ottonovembre.it/auth/callback
 https://www.huff.ottonovembre.it/auth/callback
+https://staging.huff.ottonovembre.it/auth/callback
+https://www.staging.huff.ottonovembre.it/auth/callback
 ```
 
 Login starts at `/api/login`; local logout uses `/api/logout`.
@@ -99,7 +103,8 @@ The script builds the Docker image, creates the Docker network if needed, starts
 
 ## Staging Deploy
 
-Copy `.env.staging.example` to `.env.staging` to override staging defaults, then run:
+Copy `.env.staging.example` to `.env.staging`, set `GOOGLE_CLIENT_ID` and
+`GOOGLE_CLIENT_SECRET` (and the remaining staging secrets), then run:
 
 ```bash
 scripts/redeploy-huff-staging.sh

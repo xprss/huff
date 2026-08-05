@@ -7,10 +7,9 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${ENV_FILE:-${PROJECT_ROOT}/.env}"
 
 if [[ -f "${ENV_FILE}" ]]; then
-  set -a
-  # shellcheck source=/dev/null
-  . "${ENV_FILE}"
-  set +a
+  # shellcheck source=load-env-file.sh
+  . "${SCRIPT_DIR}/load-env-file.sh"
+  load_env_file "${ENV_FILE}"
 fi
 
 DATA_DIR="${DATA_DIR:-${PROJECT_ROOT}/data}"
