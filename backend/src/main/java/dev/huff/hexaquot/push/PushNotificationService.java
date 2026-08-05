@@ -175,6 +175,7 @@ public class PushNotificationService {
     private boolean sendNotification(PushSubscriptionEntity subscription, NotificationPayload payload, int ttlSeconds) {
         try {
             String payloadJson = objectMapper.writeValueAsString(payload);
+            PushService pushService = service();
             Notification notification = new Notification(
                 subscription.endpoint,
                 subscription.p256dh,
@@ -182,7 +183,7 @@ public class PushNotificationService {
                 payloadJson.getBytes(StandardCharsets.UTF_8),
                 ttlSeconds
             );
-            HttpResponse response = service().send(notification);
+            HttpResponse response = pushService.send(notification);
             int status = response.getStatusLine().getStatusCode();
             if (status >= 200 && status < 300) {
                 return true;
