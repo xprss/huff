@@ -42,7 +42,6 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 COOKIE_SECURE=true
 OIDC_SESSION_AGE_EXTENSION=30D
-OIDC_REFRESH_TOKEN_CACHE_TIME_TO_LIVE=5S
 ```
 
 In the Google OAuth client, use the `Web application` application type.

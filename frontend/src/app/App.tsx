@@ -80,7 +80,14 @@ export function App() {
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
   const isLoggedIn = Boolean(me?.loggedIn);
-  const globalStatsQuery = useQuery(globalStatsQueryOptions());
+  // An OIDC session refresh rotates the encrypted session cookie.  Do not send
+  // another request while /api/me is restoring that cookie: even public API
+  // endpoints are evaluated by OIDC when the browser has a session cookie.
+  // Concurrent refresh attempts can invalidate a single-use refresh token.
+  const globalStatsQuery = useQuery({
+    ...globalStatsQueryOptions(),
+    enabled: isLoggedIn
+  });
   const todayQuery = useQuery({
     ...todayQueryOptions(),
     enabled: isLoggedIn

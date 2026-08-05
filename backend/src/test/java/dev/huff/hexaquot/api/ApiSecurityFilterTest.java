@@ -34,6 +34,18 @@ class ApiSecurityFilterTest {
     }
 
     @Test
+    void rejectsAStaleAnonymousCookieInsteadOfRestoringAnAnonymousUser() {
+        given()
+            .header("Cookie", "huff_session=4c8d7d25-2680-4d48-b7c3-3245274ff20b")
+            .when().get("/api/me")
+            .then()
+            .statusCode(401)
+            .header("Set-Cookie", org.hamcrest.Matchers.nullValue())
+            .body("code", equalTo("auth_required"))
+            .body("loginUrl", equalTo("/api/login"));
+    }
+
+    @Test
     void keepsOnlyExplicitAggregateAndBootstrapReadsPublic() {
         given()
             .when().get("/api/stats/global")
