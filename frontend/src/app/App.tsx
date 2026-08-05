@@ -732,6 +732,13 @@ function findPreviousFilledCell(cells: readonly string[], startIndex: number) {
   for (let index = Math.min(startIndex - 1, cells.length - 1); index >= 0; index -= 1) {
     if (cells[index]) return index;
   }
+
+  // The cursor can wrap to an earlier empty cell after a user fills a later one.
+  // Continue from the end so Backspace still removes the character just entered.
+  for (let index = cells.length - 1; index >= startIndex; index -= 1) {
+    if (cells[index]) return index;
+  }
+
   return null;
 }
 
