@@ -115,6 +115,8 @@ scripts/logs-huff.sh
 ```
 
 Use `TAIL_LINES=500 scripts/logs-huff.sh` to change how many existing log lines are shown before following new output.
+Console colors are forced on, including when the output is read through Docker,
+so `INFO`, `WARN`, `ERROR` and stack traces remain visually distinct.
 
 Every `/api/*` call produces an `API_REQUEST_STARTED` and an
 `API_REQUEST_COMPLETED` entry. Match the two with `requestId`; the completion
