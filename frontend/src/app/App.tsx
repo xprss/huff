@@ -56,7 +56,8 @@ import {
 
 export function App() {
   const queryClient = useQueryClient();
-  const [currentGuess, setCurrentGuess] = React.useState("");
+  const [currentGuess, setCurrentGuess] = React.useState<string[]>([]);
+  const [selectedCellIndex, setSelectedCellIndex] = React.useState<number | null>(0);
   const [showStats, setShowStats] = React.useState(false);
   const [showInfo, setShowInfo] = React.useState(false);
   const [activeRoute, setActiveRoute] = useAppRoute();
@@ -122,7 +123,8 @@ export function App() {
     mutationFn: api.selectMode,
     onSuccess: (updated) => {
       setTodayGame(updated);
-      setCurrentGuess("");
+      setCurrentGuess([]);
+      setSelectedCellIndex(0);
     }
   });
 
@@ -173,7 +175,8 @@ export function App() {
     queryClient.removeQueries({ queryKey: queryKeys.today });
     queryClient.removeQueries({ queryKey: queryKeys.stats });
     queryClient.removeQueries({ queryKey: ["admin"] });
-    setCurrentGuess("");
+    setCurrentGuess([]);
+    setSelectedCellIndex(0);
     setShowStats(false);
     setShowInfo(false);
     setProfileEditing(false);
@@ -198,7 +201,8 @@ export function App() {
     queryClient.removeQueries({ queryKey: queryKeys.today });
     queryClient.removeQueries({ queryKey: queryKeys.stats });
     queryClient.removeQueries({ queryKey: ["admin"] });
-    setCurrentGuess("");
+    setCurrentGuess([]);
+    setSelectedCellIndex(0);
     setShowStats(false);
     setShowInfo(false);
     setProfileEditing(false);
@@ -246,7 +250,7 @@ export function App() {
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
-        setCurrentGuess((value) => value.slice(0, -1));
+        removeLetter();
       } else if (/^[a-zA-Z]$/.test(event.key)) {
         addLetter(event.key);
       }
@@ -316,7 +320,7 @@ export function App() {
   const lastGuess = game?.guesses[game.guesses.length - 1];
   const completedSolution =
     game?.status === "WON" || game?.status === "LOST" ? game.solution ?? lastGuess?.word ?? null : null;
-  const terminalValue = completedSolution ?? currentGuess;
+  const terminalCells = completedSolution ? completedSolution.split("") : currentGuess;
   const terminalResult = completedSolution ? (game?.status === "WON" ? "won" : "lost") : null;
   const firstGuessSuggestion = game?.firstGuessSuggestion ?? null;
   const showFirstGuessSuggestion = Boolean(
@@ -372,24 +376,55 @@ export function App() {
     if (!game || game.status !== "IN_PROGRESS") return;
     if (!shouldHideKeyboardHints && keyStates.get(letter.toUpperCase()) === "ABSENT") return;
     clearToast();
-    setCurrentGuess((value) => (value.length >= game.answerLength ? value : value + letter.toUpperCase()));
+    setCurrentGuess((value) => {
+      const cells = normalizeGuessCells(value, game.answerLength);
+      const index = selectedCellIndex ?? cells.findIndex((cell) => !cell);
+      if (index < 0) return cells;
+
+      cells[index] = letter.toUpperCase();
+      setSelectedCellIndex(findNextEmptyCell(cells, index + 1));
+      return cells;
+    });
+  }
+
+  function removeLetter() {
+    if (!game || game.status !== "IN_PROGRESS") return;
+    clearToast();
+    setCurrentGuess((value) => {
+      const cells = normalizeGuessCells(value, game.answerLength);
+      const startIndex = selectedCellIndex ?? game.answerLength;
+      const index = findPreviousFilledCell(cells, startIndex);
+      if (index === null) return cells;
+
+      cells[index] = "";
+      setSelectedCellIndex(index);
+      return cells;
+    });
+  }
+
+  function selectGuessCell(index: number) {
+    if (!game || game.status !== "IN_PROGRESS") return;
+    clearToast();
+    setSelectedCellIndex(index);
   }
 
   async function submitGuess() {
     if (!game || game.status !== "IN_PROGRESS") return;
-    if (currentGuess.length !== game.answerLength) {
-      showToast("Servono 6 lettere.", "warning");
+    if (currentGuess.length !== game.answerLength || currentGuess.some((cell) => !cell)) {
+      showToast(`Completa tutte e ${game.answerLength} le caselle.`, "warning");
       return;
     }
-    if (game.mode === "MISCHIEVOUS_MOUSE" && hasAlreadyGuessed(game, currentGuess)) {
+    const guess = currentGuess.join("");
+    if (game.mode === "MISCHIEVOUS_MOUSE" && hasAlreadyGuessed(game, guess)) {
       showToast("Hai già inserito questa parola.", "warning");
       return;
     }
 
     try {
-      const updated = await guessMutation.mutateAsync(currentGuess);
+      const updated = await guessMutation.mutateAsync(guess);
       setTodayGame(updated);
-      setCurrentGuess("");
+      setCurrentGuess([]);
+      setSelectedCellIndex(0);
       if (updated.star.justAwarded) {
         showToast("Hai conquistato una stella.", "success");
       }
@@ -510,7 +545,8 @@ export function App() {
   function autofillFirstGuessSuggestion() {
     if (!firstGuessSuggestion || !game || game.status !== "IN_PROGRESS" || game.guesses.length > 0) return;
     clearToast();
-    setCurrentGuess(firstGuessSuggestion.toUpperCase());
+    setCurrentGuess(firstGuessSuggestion.toUpperCase().split(""));
+    setSelectedCellIndex(null);
   }
 
   return (
@@ -596,15 +632,17 @@ export function App() {
                   game={game}
                   modes={modes}
                   columns={columns}
-                  terminalValue={terminalValue}
+                  terminalCells={terminalCells}
                   answerLength={answerLength}
                   canPlay={canPlay}
                   terminalResult={terminalResult}
+                  selectedCellIndex={selectedCellIndex}
                   completedSolution={completedSolution}
                   nextChallengeCountdown={nextChallengeCountdown}
                   onSelectMode={(mode) => void selectGameMode(mode)}
                   onUseKitten={() => void useKitten()}
                   onShareResult={() => void shareResult()}
+                  onSelectCell={selectGuessCell}
                 />
               </div>
 
@@ -638,7 +676,7 @@ export function App() {
                   shouldHideKeyboardHints={shouldHideKeyboardHints}
                   onAddLetter={addLetter}
                   onSubmit={() => void submitGuess()}
-                  onBackspace={() => setCurrentGuess((value) => value.slice(0, -1))}
+                  onBackspace={removeLetter}
                 />
               </div>
             </>
@@ -667,6 +705,27 @@ export function App() {
       </main>
     </AppThemeProvider>
   );
+}
+
+function normalizeGuessCells(cells: readonly string[], answerLength: number) {
+  return Array.from({ length: answerLength }, (_, index) => cells[index] ?? "");
+}
+
+function findNextEmptyCell(cells: readonly string[], startIndex: number) {
+  for (let index = startIndex; index < cells.length; index += 1) {
+    if (!cells[index]) return index;
+  }
+  for (let index = 0; index < startIndex; index += 1) {
+    if (!cells[index]) return index;
+  }
+  return null;
+}
+
+function findPreviousFilledCell(cells: readonly string[], startIndex: number) {
+  for (let index = Math.min(startIndex - 1, cells.length - 1); index >= 0; index -= 1) {
+    if (cells[index]) return index;
+  }
+  return null;
 }
 
 function redirectToLogin(loginUrl: string | null | undefined) {

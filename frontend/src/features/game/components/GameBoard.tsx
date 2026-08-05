@@ -8,28 +8,32 @@ export function GameBoard({
   game,
   modes,
   columns,
-  terminalValue,
+  terminalCells,
   answerLength,
   canPlay,
   terminalResult,
+  selectedCellIndex,
   completedSolution,
   nextChallengeCountdown,
   onSelectMode,
   onUseKitten,
-  onShareResult
+  onShareResult,
+  onSelectCell
 }: {
   game: GameDto;
   modes: readonly GameModeDto[];
   columns: readonly BoardColumn[];
-  terminalValue: string;
+  terminalCells: readonly string[];
   answerLength: number;
   canPlay: boolean;
   terminalResult: "won" | "lost" | null;
+  selectedCellIndex: number | null;
   completedSolution: string | null;
   nextChallengeCountdown: string;
   onSelectMode: (mode: GameMode) => void;
   onUseKitten: () => void;
   onShareResult: () => void;
+  onSelectCell: (index: number) => void;
 }) {
   return (
     <div className="game-board-wrap">
@@ -50,7 +54,14 @@ export function GameBoard({
         </button>
       ) : null}
       <div className="board" aria-label="Griglia tentativi">
-        <TerminalInput value={terminalValue} answerLength={answerLength} canPlay={canPlay} result={terminalResult} />
+        <TerminalInput
+          cells={terminalCells}
+          answerLength={answerLength}
+          canPlay={canPlay}
+          result={terminalResult}
+          selectedCellIndex={selectedCellIndex}
+          onSelectCell={onSelectCell}
+        />
         <div className="feedback-board">
           {columns.map((column, columnIndex) => (
             <div className="board-column" key={columnIndex}>

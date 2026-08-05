@@ -206,6 +206,27 @@ class GameResourceTest {
     }
 
     @Test
+    void rejectsGuessWithAnEmptyCell() {
+        String cookie = given()
+            .body("{\"mode\":\"CLASSIC\"}")
+            .contentType("application/json")
+            .when().post("/api/game/today/mode")
+            .then()
+            .statusCode(200)
+            .extract().header("Set-Cookie");
+
+        given()
+            .header("Cookie", cookie)
+            .body("{\"guess\":\"ab  de\"}")
+            .contentType("application/json")
+            .when().post("/api/game/today/guesses")
+            .then()
+            .statusCode(400)
+            .body("code", equalTo("bad_request"))
+            .body("message", equalTo("Completa tutte e 6 le caselle."));
+    }
+
+    @Test
     void exposesGlobalStats() {
         String cookie = given()
             .body("{\"mode\":\"CLASSIC\"}")

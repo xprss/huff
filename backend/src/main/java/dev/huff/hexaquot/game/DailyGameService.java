@@ -101,8 +101,8 @@ public class DailyGameService {
     @Transactional
     public GameDto guess(AppUser user, String rawGuess) {
         String guess = wordsProvider.normalize(rawGuess);
-        if (guess.length() != WordsProvider.WORD_LENGTH) {
-            throw new BadRequestException("La parola deve essere di 6 lettere.");
+        if (!guess.matches("[a-z]{" + WordsProvider.WORD_LENGTH + "}")) {
+            throw new BadRequestException("Completa tutte e 6 le caselle.");
         }
         if (!wordsProvider.contains(guess)) {
             throw new BadRequestException("Parola non presente nella lista.");

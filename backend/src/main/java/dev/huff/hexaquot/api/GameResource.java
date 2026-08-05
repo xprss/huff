@@ -58,7 +58,7 @@ public class GameResource {
         if (resolvedUser.user() == null) {
             return unauthorized(resolvedUser.loginUrl());
         }
-        Response.ResponseBuilder response = Response.ok(dailyGameService.guess(resolvedUser.user(), request.guess()));
+        Response.ResponseBuilder response = Response.ok(dailyGameService.guess(resolvedUser.user(), request == null ? null : request.guess()));
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }
