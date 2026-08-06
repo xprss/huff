@@ -399,8 +399,12 @@ export function App() {
     clearToast();
     setCurrentGuess((value) => {
       const cells = normalizeGuessCells(value, game.answerLength);
-      const startIndex = selectedCellIndex ?? game.answerLength;
-      const index = findPreviousFilledCell(cells, startIndex);
+      // A manually selected filled cell is the explicit deletion target.  When
+      // the cursor is on an empty cell, retain the usual Backspace behavior.
+      const index =
+        selectedCellIndex !== null && cells[selectedCellIndex]
+          ? selectedCellIndex
+          : findPreviousFilledCell(cells, selectedCellIndex ?? game.answerLength);
       if (index === null) return cells;
 
       cells[index] = "";
