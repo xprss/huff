@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Edit3, Info, LogOut, Menu, Moon, Shield, Star, Sun, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Edit3, Info, LogOut, Menu, Moon, Shield, Star, Sun, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { ToastMessage } from "../shared/toast";
 
@@ -22,6 +22,7 @@ export function AppHeader({
   onToggleMenu,
   onOpenProfile,
   onOpenStats,
+  onOpenLeaderboard,
   onOpenAdmin,
   onOpenInfo,
   onToggleNotifications,
@@ -47,6 +48,7 @@ export function AppHeader({
   onToggleMenu: () => void;
   onOpenProfile: () => void;
   onOpenStats: () => void;
+  onOpenLeaderboard: () => void;
   onOpenAdmin: () => void;
   onOpenInfo: () => void;
   onToggleNotifications: () => void;
@@ -107,6 +109,10 @@ export function AppHeader({
                   <button className="menu-item" type="button" role="menuitem" onClick={onOpenStats}>
                     <BarChart3 size={18} />
                     <span>Statistiche</span>
+                  </button>
+                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenLeaderboard}>
+                    <Trophy size={18} />
+                    <span>Leaderboard</span>
                   </button>
                   {showAdmin ? (
                     <button className="menu-item" type="button" role="menuitem" onClick={onOpenAdmin}>

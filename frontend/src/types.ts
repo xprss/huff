@@ -103,6 +103,43 @@ export interface UserDto {
   readonly bio: string | null;
   readonly authenticated: boolean;
   readonly admin: AdminPrivilegesDto | null;
+  readonly medals: MedalCountsDto;
+}
+
+export interface MedalCountsDto {
+  readonly gold: number;
+  readonly silver: number;
+  readonly bronze: number;
+}
+
+export interface LeaderboardEntryDto {
+  readonly rank: number;
+  readonly displayName: string;
+  readonly nickname: string;
+  readonly profileEmoji: string;
+  readonly wins: number;
+}
+
+export interface LeaderboardPeriodDto {
+  readonly startDate: IsoDateString | null;
+  readonly endDate: IsoDateString | null;
+  readonly entries: readonly LeaderboardEntryDto[];
+}
+
+export interface LeaderboardsDto {
+  readonly allTime: LeaderboardPeriodDto;
+  readonly yearly: LeaderboardPeriodDto;
+  readonly monthly: LeaderboardPeriodDto;
+  readonly weekly: LeaderboardPeriodDto;
+}
+
+export interface PublicPlayerProfileDto {
+  readonly displayName: string;
+  readonly nickname: string;
+  readonly profileEmoji: string;
+  readonly bio: string | null;
+  readonly stats: StatsDto;
+  readonly medals: MedalCountsDto;
 }
 
 export interface ProfileUpdateDto {
@@ -258,6 +295,16 @@ export type ApiEndpointMap = {
   "/api/stats/global": {
     GET: {
       response: GlobalStatsDto;
+    };
+  };
+  "/api/leaderboards": {
+    GET: {
+      response: LeaderboardsDto;
+    };
+  };
+  "/api/player/:nickname": {
+    GET: {
+      response: PublicPlayerProfileDto;
     };
   };
   "/api/push/settings": {

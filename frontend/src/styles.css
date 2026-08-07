@@ -743,6 +743,14 @@ h1 {
   opacity: 0.86;
 }
 
+.profile-emoji.readonly {
+  cursor: default;
+}
+
+.profile-emoji.readonly:hover {
+  opacity: 1;
+}
+
 .profile-emoji:active {
   transform: translateY(1px) scale(0.98);
 }
@@ -1442,6 +1450,208 @@ h1 {
 .profile-stats .stat-grid + .stat-grid {
   margin-top: 8px;
 }
+
+.medal-counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.medal-count {
+  min-width: 0;
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--compact-radius);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 5px;
+  padding: 7px 8px;
+  background: var(--color-surface-soft);
+}
+
+.medal-count > span {
+  grid-row: span 2;
+  font-size: 1.2rem;
+}
+
+.medal-count strong {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.medal-count small {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: 0.67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-view {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--surface-gap);
+  overflow: hidden;
+}
+
+.leaderboard-head {
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--control-radius);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface-soft));
+  box-shadow: 0 14px 38px var(--color-board-shadow);
+}
+
+.leaderboard-head h2 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 1.08rem;
+}
+
+.leaderboard-head h2 svg {
+  color: var(--color-accent);
+}
+
+.leaderboard-head p {
+  margin: 2px 0 0;
+  color: var(--color-muted);
+  font-size: 0.76rem;
+}
+
+.leaderboard-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.leaderboard-tabs button {
+  min-height: 37px;
+  border: 1px solid var(--color-button-border);
+  border-radius: var(--compact-radius);
+  background: var(--color-button);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.77rem;
+  font-weight: 750;
+}
+
+.leaderboard-tabs button.selected {
+  border-color: var(--color-primary);
+  background: var(--color-surface-strong);
+  color: var(--color-primary);
+}
+
+.leaderboard-list {
+  min-height: 0;
+  margin: 0;
+  padding: 0 2px 12px;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 7px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.leaderboard-list li {
+  flex: 0 0 auto;
+}
+
+.leaderboard-list button {
+  width: 100%;
+  min-height: 59px;
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--compact-radius);
+  display: grid;
+  grid-template-columns: 28px 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.leaderboard-list button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-surface-strong);
+}
+
+.leaderboard-rank {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  place-items: center;
+  background: var(--color-surface-raised);
+  color: var(--color-muted-strong);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.leaderboard-rank.rank-1 { color: #ae7900; }
+.leaderboard-rank.rank-2 { color: #66717a; }
+.leaderboard-rank.rank-3 { color: #9b5a28; }
+
+.leaderboard-emoji {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.leaderboard-player {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.leaderboard-player strong,
+.leaderboard-player small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-player strong { font-size: 0.86rem; }
+.leaderboard-player small { color: var(--color-muted); font-size: 0.7rem; }
+
+.leaderboard-wins {
+  display: grid;
+  gap: 1px;
+  color: var(--color-muted);
+  font-size: 0.67rem;
+  text-align: right;
+}
+
+.leaderboard-wins strong {
+  color: var(--color-text);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.leaderboard-empty {
+  min-height: 160px;
+  border: 1px dashed var(--color-surface-border);
+  border-radius: var(--control-radius);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.leaderboard-empty p { margin: 0; }
 
 .emoji-modal {
   width: min(100%, 360px);

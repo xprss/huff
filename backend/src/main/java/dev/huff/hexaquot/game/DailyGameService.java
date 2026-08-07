@@ -236,7 +236,11 @@ public class DailyGameService {
     }
 
     public StatsDto stats(AppUser user) {
-        List<GameRecord> records = gameRepository.findCompletedByUser(user.id());
+        return statsForUserId(user.id());
+    }
+
+    public StatsDto statsForUserId(String userId) {
+        List<GameRecord> records = gameRepository.findCompletedByUser(userId);
         int won = 0;
         Map<Integer, Integer> distribution = new LinkedHashMap<>();
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
