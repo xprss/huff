@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.m2,sharing=locked mvn -B dependency:go-offl
 
 COPY backend ./
 COPY --from=frontend-build /workspace/frontend/dist ./src/main/resources/META-INF/resources
-RUN --mount=type=cache,target=/root/.m2,sharing=locked mvn -B package -DskipTests
+RUN --mount=type=cache,target=/root/.m2,sharing=locked mvn -B package -Dmaven.test.skip=true
 
 FROM eclipse-temurin:17-jre-alpine AS runtime
 WORKDIR /app
