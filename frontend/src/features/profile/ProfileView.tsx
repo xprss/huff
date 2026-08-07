@@ -3,6 +3,7 @@ import { Check, ChevronLeft, Edit3, X } from "lucide-react";
 import { PROFILE_EMOJIS } from "../../app/constants";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
+import { MedalCounts } from "../../shared/components/MedalCounts";
 import type { ProfileUpdateDto, StatsDto, UserDto } from "../../types";
 
 export function ProfileView({
@@ -155,6 +156,7 @@ export function ProfileView({
       </div>
 
       <div className="profile-stats" aria-label="Statistiche personali">
+        <MedalCounts medals={user.medals} />
         <div className="stat-grid">
           <Metric label="Giocate" value={stats?.played ?? 0} />
           <Metric label="Vinte" value={stats?.won ?? 0} />

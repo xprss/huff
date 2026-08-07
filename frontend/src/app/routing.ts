@@ -1,15 +1,33 @@
 import React from "react";
 
-export type AppRoute = "game" | "profile" | "admin";
+export type AppRoute = "game" | "profile" | "admin" | "leaderboard" | "player";
 
 function routeFromHash(hash: string): AppRoute {
+  if (hash.startsWith("#/leaderboard/player/")) return "player";
+  if (hash === "#/leaderboard") return "leaderboard";
   if (hash === "#/admin") return "admin";
   return hash === "#/profile" ? "profile" : "game";
 }
 
 function hashFromRoute(route: AppRoute) {
+  if (route === "leaderboard" || route === "player") return "#/leaderboard";
   if (route === "admin") return "#/admin";
   return route === "profile" ? "#/profile" : "#/";
+}
+
+export function playerNicknameFromHash(hash: string): string | null {
+  const prefix = "#/leaderboard/player/";
+  if (!hash.startsWith(prefix)) return null;
+  try {
+    const nickname = decodeURIComponent(hash.slice(prefix.length));
+    return nickname || null;
+  } catch {
+    return null;
+  }
+}
+
+export function playerHash(nickname: string) {
+  return `#/leaderboard/player/${encodeURIComponent(nickname)}`;
 }
 
 export function useAppRoute() {

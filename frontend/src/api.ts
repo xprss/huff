@@ -6,7 +6,7 @@ import type {
   AdminPlayerSortDto,
   AdminPlayerUpdateDto,
   ProfileUpdateDto,
-  PushSubscriptionDto,
+  PushSubscriptionDto
 } from "./types";
 
 type ApiPath = keyof ApiEndpointMap;
@@ -75,6 +75,8 @@ export type ApiClient = {
   readonly stats: EndpointHandler<"/api/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
+  readonly leaderboards: EndpointHandler<"/api/leaderboards", "GET">;
+  readonly publicPlayer: EndpointHandler<"/api/player/:nickname", "GET", [nickname: string]>;
   readonly pushSettings: EndpointHandler<"/api/push/settings", "GET">;
   readonly savePushSubscription: EndpointHandler<"/api/push/subscriptions", "POST", [subscription: PushSubscriptionDto]>;
   readonly deletePushSubscription: EndpointHandler<
@@ -160,6 +162,9 @@ export const api = {
       body: profile
     }),
   globalStats: () => request("/api/stats/global", { method: "GET" }),
+  leaderboards: () => request("/api/leaderboards", { method: "GET" }),
+  publicPlayer: (nickname: string) =>
+    request(`/api/player/${encodeURIComponent(nickname)}` as "/api/player/:nickname", { method: "GET" }),
   pushSettings: () => request("/api/push/settings", { method: "GET" }),
   savePushSubscription: (subscription: PushSubscriptionDto) =>
     request("/api/push/subscriptions", {

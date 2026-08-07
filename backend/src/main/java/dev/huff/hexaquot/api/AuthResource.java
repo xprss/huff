@@ -3,6 +3,8 @@ package dev.huff.hexaquot.api;
 import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.auth.AdminPrivileges;
+import dev.huff.hexaquot.leaderboard.LeaderboardService;
+import dev.huff.hexaquot.leaderboard.MedalCountsDto;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;
@@ -15,6 +17,9 @@ public class AuthResource {
     @Inject
     UserService userService;
 
+    @Inject
+    LeaderboardService leaderboardService;
+
     @GET
     public Response me(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
@@ -26,7 +31,7 @@ public class AuthResource {
 
         Response.ResponseBuilder response = Response.ok(new MeDto(
             true,
-            UserDto.from(resolvedUser.user()),
+            UserDto.from(resolvedUser.user(), leaderboardService.medalCounts(resolvedUser.user().id())),
             userService.authEnabled()
         ));
         if (resolvedUser.setCookieHeader() != null) {
@@ -53,7 +58,9 @@ public class AuthResource {
             request == null ? null : request.bio(),
             resolvedUser.user().authenticated()
         );
-        Response.ResponseBuilder response = Response.ok(UserDto.from(updatedUser));
+        Response.ResponseBuilder response = Response.ok(
+            UserDto.from(updatedUser, leaderboardService.medalCounts(updatedUser.id()))
+        );
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }
@@ -70,9 +77,10 @@ public class AuthResource {
         String profileEmoji,
         String bio,
         boolean authenticated,
-        AdminPrivileges admin
+        AdminPrivileges admin,
+        MedalCountsDto medals
     ) {
-        static UserDto from(dev.huff.hexaquot.auth.AppUser user) {
+        static UserDto from(dev.huff.hexaquot.auth.AppUser user, MedalCountsDto medals) {
             return new UserDto(
                 user.email(),
                 user.displayName(),
@@ -80,7 +88,8 @@ public class AuthResource {
                 user.profileEmoji(),
                 user.bio(),
                 user.authenticated(),
-                user.admin()
+                user.admin(),
+                medals
             );
         }
     }

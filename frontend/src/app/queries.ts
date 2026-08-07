@@ -7,6 +7,8 @@ export const queryKeys = {
   today: ["game", "today"] as const,
   stats: ["stats", "personal"] as const,
   globalStats: ["stats", "global"] as const,
+  leaderboards: ["leaderboards"] as const,
+  publicPlayer: (nickname: string) => ["player", nickname] as const,
   adminPlayers: (query: string, sort: AdminPlayerSortDto, page: number) => ["admin", "players", query, sort, page] as const,
   adminPlayer: (userId: string) => ["admin", "players", "detail", userId] as const
 };
@@ -39,6 +41,18 @@ export const globalStatsQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.globalStats,
     queryFn: api.globalStats
+  });
+
+export const leaderboardsQueryOptions = () =>
+  queryOptions({
+    queryKey: queryKeys.leaderboards,
+    queryFn: api.leaderboards
+  });
+
+export const publicPlayerQueryOptions = (nickname: string) =>
+  queryOptions({
+    queryKey: queryKeys.publicPlayer(nickname),
+    queryFn: () => api.publicPlayer(nickname)
   });
 
 export const adminPlayersQueryOptions = (query: string, sort: AdminPlayerSortDto, page: number) =>

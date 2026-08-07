@@ -76,6 +76,7 @@ VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:notifications@huff.ottonovembre.it
 PUSH_NEW_GAME_CRON=0 2 0 * * ?
 PUSH_DAILY_REMINDER_CRON=0 0 23 * * ?
+LEADERBOARD_WEEKLY_AWARDS_CRON=0 5 0 ? * MON
 ```
 
 The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification per subscribed browser for each new daily puzzle. `PUSH_DAILY_REMINDER_CRON` reminds subscribed browsers whose user has not submitted any guess for the current puzzle date.
@@ -176,7 +177,14 @@ Schema updates that add game or user bonus columns can be applied with:
 scripts/migrate-game-modes-huff.sh
 scripts/migrate-user-stars-huff.sh
 scripts/migrate-user-profile-huff.sh
+scripts/migrate-leaderboards-huff.sh
+scripts/migrate-leaderboard-medal-backfill-huff.sh
 ```
+
+`migrate-leaderboards-huff.sh` creates the leaderboard medal tables and indexes.
+`migrate-leaderboard-medal-backfill-huff.sh` assigns medals for every already
+closed historical ISO week. It is idempotent, uses `GAME_TIMEZONE`, and never
+awards the current week before it closes.
 
 User profile nicknames can be changed directly in PostgreSQL when needed. The command is a dry-run by default and only writes with `--yes`:
 
