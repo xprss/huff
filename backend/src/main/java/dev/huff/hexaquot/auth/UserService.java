@@ -19,7 +19,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -54,15 +53,21 @@ public class UserService {
                 return new ResolvedUser(null, null);
             }
             UserInfo verifiedUserInfo = userInfo.isResolvable() ? userInfo.get() : null;
-            String subject = verifiedUserInfo == null
-                ? securityIdentity.getPrincipal().getName()
-                : verifiedUserInfo.getSubject();
-            String email = verifiedUserInfo == null
-                ? Optional.ofNullable(securityIdentity.<String>getAttribute("email")).orElse(subject)
-                : verifiedUserInfo.getEmail();
-            String name = verifiedUserInfo == null
-                ? Optional.ofNullable(securityIdentity.<String>getAttribute("name")).orElse(email)
-                : verifiedUserInfo.getName();
+            // In service mode UserInfo can be injected even when its payload is
+            // empty. The SecurityIdentity is built only after Quarkus has
+            // validated the Bearer token, and its principal is the stable OIDC
+            // subject. Never derive a user id from an optional UserInfo claim.
+            String subject = requireSubject(securityIdentity.getPrincipal().getName());
+            String email = firstNonBlank(
+                verifiedUserInfo == null ? null : verifiedUserInfo.getEmail(),
+                securityIdentity.getAttribute("email"),
+                subject
+            );
+            String name = firstNonBlank(
+                verifiedUserInfo == null ? null : verifiedUserInfo.getName(),
+                securityIdentity.getAttribute("name"),
+                email
+            );
             return new ResolvedUser(upsertGoogleUser(subject, email, name), null);
         }
 
@@ -90,6 +95,22 @@ public class UserService {
         } catch (IllegalArgumentException error) {
             return false;
         }
+    }
+
+    private String requireSubject(String subject) {
+        if (isBlank(subject) || "null".equalsIgnoreCase(subject.trim())) {
+            throw new NotAuthorizedException("Token Google senza subject valido.");
+        }
+        return subject.trim();
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private AppUser upsertAnonymousUser(String sessionId) {

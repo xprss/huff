@@ -4,6 +4,9 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.Method;
+import dev.huff.hexaquot.auth.UserIds;
+import dev.huff.hexaquot.persistence.UserEntity;
+import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -14,6 +17,8 @@ import java.util.stream.Stream;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @QuarkusTest
 @TestProfile(AuthEnabledTestProfile.class)
@@ -61,6 +66,7 @@ class ApiSecurityFilterTest {
 
     @Test
     @TestSecurity(user = "verified-google-subject")
+    @Transactional
     void allowsVerifiedIdentityToReadPrivateEndpoints() {
         given()
             .when().get("/api/me")
@@ -68,6 +74,9 @@ class ApiSecurityFilterTest {
             .statusCode(200)
             .body("loggedIn", equalTo(true))
             .body("user.authenticated", equalTo(true));
+
+        assertNotNull(UserEntity.findById(UserIds.google("verified-google-subject")));
+        assertNull(UserEntity.findById(UserIds.google("null")));
     }
 
     @Test
