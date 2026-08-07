@@ -17,7 +17,6 @@ export function AppHeader({
   notificationMenuLabel,
   darkMode,
   showLogout,
-  logoutUrl,
   onUseStar,
   onEditProfile,
   onToggleMenu,
@@ -27,6 +26,7 @@ export function AppHeader({
   onOpenInfo,
   onToggleNotifications,
   onToggleTheme,
+  onLogout,
   onCloseMenu
 }: {
   puzzleDate: string;
@@ -42,7 +42,6 @@ export function AppHeader({
   notificationMenuLabel: string;
   darkMode: boolean;
   showLogout: boolean;
-  logoutUrl: string;
   onUseStar: () => void;
   onEditProfile: () => void;
   onToggleMenu: () => void;
@@ -52,6 +51,7 @@ export function AppHeader({
   onOpenInfo: () => void;
   onToggleNotifications: () => void;
   onToggleTheme: () => void;
+  onLogout: () => void;
   onCloseMenu: () => void;
 }) {
   return (
@@ -131,10 +131,10 @@ export function AppHeader({
               {showLogout ? (
                 <>
                   <div className="menu-divider" role="separator" />
-                  <a className="menu-item danger" href={logoutUrl} role="menuitem" onClick={onCloseMenu}>
+                  <button className="menu-item danger" type="button" role="menuitem" onClick={onLogout}>
                     <LogOut size={18} />
                     <span>Esci</span>
-                  </a>
+                  </button>
                 </>
               ) : null}
             </div>

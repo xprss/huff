@@ -12,15 +12,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
 
 @QuarkusTest
 @TestProfile(AuthEnabledTestProfile.class)
 class ApiSecurityFilterTest {
-    @ParameterizedTest(name = "{0} {1} requires a verified identity")
+    @ParameterizedTest(name = "{0} {1} requires a Bearer-authenticated identity")
     @MethodSource("privateEndpoints")
-    void rejectsEveryPrivateEndpointWithoutGoogleIdentity(Method method, String path) {
+    void rejectsEveryApiEndpointWithoutBearerIdentity(Method method, String path) {
         given()
             .contentType("application/json")
             .body("{}")
@@ -29,8 +29,8 @@ class ApiSecurityFilterTest {
             .statusCode(401)
             .header("Cache-Control", equalTo("no-store"))
             .header("X-Content-Type-Options", equalTo("nosniff"))
-            .body("code", equalTo("auth_required"))
-            .body("loginUrl", equalTo("/api/login"));
+            .header("WWW-Authenticate", equalTo("Bearer"))
+            .body("code", equalTo("token_required"));
     }
 
     @Test
@@ -40,24 +40,23 @@ class ApiSecurityFilterTest {
             .when().get("/api/me")
             .then()
             .statusCode(401)
-            .header("Set-Cookie", org.hamcrest.Matchers.nullValue())
-            .body("code", equalTo("auth_required"))
-            .body("loginUrl", equalTo("/api/login"));
+            .header("Set-Cookie", containsString("huff_session=;"))
+            .body("code", equalTo("token_required"));
     }
 
     @Test
-    void keepsOnlyExplicitAggregateAndBootstrapReadsPublic() {
+    void rejectsAggregateAndBootstrapReadsWithoutAnIdentity() {
         given()
             .when().get("/api/stats/global")
             .then()
-            .statusCode(200)
-            .body("players", notNullValue());
+            .statusCode(401)
+            .body("code", equalTo("token_required"));
 
         given()
             .when().get("/api/push/settings")
             .then()
-            .statusCode(200)
-            .body("supported", equalTo(false));
+            .statusCode(401)
+            .body("code", equalTo("token_required"));
     }
 
     @Test
@@ -73,21 +72,21 @@ class ApiSecurityFilterTest {
 
     @Test
     @TestSecurity(user = "verified-google-subject")
-    void rejectsMutationWithoutSameOriginApplicationHeader() {
+    void allowsBearerAuthenticatedMutationWithoutCsrfHeader() {
         given()
             .contentType("application/json")
             .body("{\"mode\":\"CLASSIC\"}")
             .when().post("/api/game/today/mode")
             .then()
-            .statusCode(403)
-            .body("code", equalTo("csrf_rejected"));
+            .statusCode(200)
+            .body("mode", equalTo("CLASSIC"));
     }
 
     @Test
     @TestSecurity(user = "verified-google-subject")
-    void allowsMutationWithSameOriginApplicationHeader() {
+    void acceptsBearerAuthorizationHeader() {
         given()
-            .header(ApiSecurityFilter.REQUEST_HEADER, ApiSecurityFilter.REQUEST_HEADER_VALUE)
+            .header("Authorization", "Bearer verified-access-token")
             .contentType("application/json")
             .body("{\"mode\":\"CLASSIC\"}")
             .when().post("/api/game/today/mode")

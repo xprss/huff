@@ -494,7 +494,7 @@ h1 {
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 28px;
+  gap: 18px;
   padding: 22px 0;
   overflow: hidden;
   text-align: center;
@@ -580,10 +580,53 @@ h1 {
   color: var(--color-title-text);
 }
 
+.login-game-title {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 8px;
+  color: var(--color-title-text);
+  font-family: var(--font-title);
+  font-size: clamp(3.6rem, 14vw, 6.8rem);
+  font-weight: 400;
+  line-height: 0.85;
+  letter-spacing: 0.015em;
+  text-shadow:
+    0 1px 0 var(--color-title-glow-soft),
+    0 10px 30px var(--color-title-glow-medium),
+    0 20px 60px var(--color-title-glow-wide);
+}
+
+.login-box {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  width: min(100%, 390px);
+  padding: 28px;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 24px;
+  background: linear-gradient(180deg, var(--color-surface-glass), var(--color-surface));
+  box-shadow: 0 22px 56px var(--color-board-shadow);
+}
+
 .login-copy p {
   margin: 0;
   color: var(--color-muted);
   font-weight: 750;
+}
+
+.google-login-button {
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+}
+
+.google-login-error {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--color-muted);
 }
 
 .login-button {

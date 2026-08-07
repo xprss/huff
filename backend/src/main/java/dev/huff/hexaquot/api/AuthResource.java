@@ -20,15 +20,13 @@ public class AuthResource {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(new ErrorDto("auth_required", "Accesso Google richiesto.", resolvedUser.loginUrl()))
+                .entity(new ErrorDto("token_required", "Token Bearer valido richiesto."))
                 .build();
         }
 
         Response.ResponseBuilder response = Response.ok(new MeDto(
             true,
             UserDto.from(resolvedUser.user()),
-            resolvedUser.loginUrl(),
-            userService.authEnabled() ? "/api/logout" : null,
             userService.authEnabled()
         ));
         if (resolvedUser.setCookieHeader() != null) {
@@ -43,7 +41,7 @@ public class AuthResource {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
             return Response.status(Response.Status.UNAUTHORIZED)
-                .entity(new ErrorDto("auth_required", "Accesso Google richiesto.", resolvedUser.loginUrl()))
+                .entity(new ErrorDto("token_required", "Token Bearer valido richiesto."))
                 .build();
         }
 
@@ -62,7 +60,7 @@ public class AuthResource {
         return response.build();
     }
 
-    public record MeDto(boolean loggedIn, UserDto user, String loginUrl, String logoutUrl, boolean authEnabled) {
+    public record MeDto(boolean loggedIn, UserDto user, boolean authEnabled) {
     }
 
     public record UserDto(
@@ -90,6 +88,6 @@ public class AuthResource {
     public record ProfileRequest(String displayName, String nickname, String profileEmoji, String bio) {
     }
 
-    public record ErrorDto(String code, String message, String loginUrl) {
+    public record ErrorDto(String code, String message) {
     }
 }

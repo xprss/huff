@@ -106,12 +106,8 @@ if [[ "${AUTH_ENABLED}" != "true" ]]; then
   echo "Production deployment refused: AUTH_ENABLED must be true." >&2
   exit 1
 fi
-if [[ "${COOKIE_SECURE}" != "true" ]]; then
-  echo "Production deployment refused: COOKIE_SECURE must be true." >&2
-  exit 1
-fi
-if [[ -z "${GOOGLE_CLIENT_ID:-}" || -z "${GOOGLE_CLIENT_SECRET:-}" ]]; then
-  echo "Production deployment refused: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required." >&2
+if [[ -z "${GOOGLE_CLIENT_ID:-}" ]]; then
+  echo "Production deployment refused: GOOGLE_CLIENT_ID is required." >&2
   exit 1
 fi
 
@@ -200,7 +196,7 @@ if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
   PREVIOUS_IMAGE_ID="$(docker inspect --format '{{.Image}}' "${CONTAINER_NAME}")"
 fi
 
-DOCKER_BUILDKIT=1 docker build -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 NEW_IMAGE_ID="$(docker image inspect --format '{{.Id}}' "${IMAGE_NAME}:latest")"
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then

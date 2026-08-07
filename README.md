@@ -34,46 +34,35 @@ are retained for the next run. Use `--no-build` to reuse the existing image.
 ## Configuration
 
 The Quarkus development profile runs anonymously by default for local work. Docker and
-production builds instead fail closed and require Google OAuth:
+production builds instead fail closed and require an OIDC provider configuration:
 
 ```bash
 AUTH_ENABLED=true
 GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-COOKIE_SECURE=true
-OIDC_SESSION_AGE_EXTENSION=30D
 ```
 
-In the Google OAuth client, use the `Web application` application type.
-
-Authorized JavaScript origins:
+Quarkus OIDC runs in `service` mode: every `/api/*` endpoint accepts only a
+token issued by the configured OIDC provider:
 
 ```text
-https://huff.ottonovembre.it
-https://www.huff.ottonovembre.it
-https://staging.huff.ottonovembre.it
-https://www.staging.huff.ottonovembre.it
+Authorization: Bearer <token>
 ```
 
-Authorized redirect URIs:
+Quarkus validates the token before the request reaches the API. No authorization
+code flow, OIDC session, or cookie fallback is enabled. A missing or invalid
+token returns `401`, a `WWW-Authenticate: Bearer` challenge, and clears legacy
+session cookies. The web client uses Google OAuth to obtain an access token,
+keeps it only in `sessionStorage`, adds it to every request, and removes it
+automatically after `401`. Quarkus validates this opaque Google token through
+Google UserInfo. Configure the Google client as a **Web application** and add
+each site origin to its Authorized JavaScript
+origins. For `npm run dev`, configure the
+same public value as `VITE_GOOGLE_CLIENT_ID` in `frontend/.env.local`; the
+Docker deployment scripts pass `GOOGLE_CLIENT_ID` to the frontend build.
 
-```text
-https://huff.ottonovembre.it/auth/callback
-https://www.huff.ottonovembre.it/auth/callback
-https://staging.huff.ottonovembre.it/auth/callback
-https://www.staging.huff.ottonovembre.it/auth/callback
-```
-
-Login starts at `/api/login`; local logout uses `/api/logout`.
-Google OAuth is requested with offline access so Quarkus can refresh expired
-tokens without forcing a new interactive login on returning users. The first
-login after enabling this setting can show Google's consent prompt once, so that
-Google issues the refresh token.
-
-The production and staging deployment scripts refuse to start when authentication,
-secure cookies, or Google credentials are missing. Private API calls also require a
-verified Google identity at the server boundary; an expired browser session is sent
-straight back through the login flow and is never downgraded to an anonymous player.
+The production and staging deployment scripts refuse to start when authentication
+or OIDC configuration is missing. Every `/api/*` call requires a verified Bearer
+identity at the server boundary and is never downgraded to an anonymous player.
 
 Push notifications use standard Web Push with VAPID keys. Generate a stable key pair and put it in `.env` before deploying:
 
@@ -103,8 +92,8 @@ The script builds the Docker image, creates the Docker network if needed, starts
 
 ## Staging Deploy
 
-Copy `.env.staging.example` to `.env.staging`, set `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` (and the remaining staging secrets), then run:
+Copy `.env.staging.example` to `.env.staging`, set `GOOGLE_CLIENT_ID` (and the
+remaining staging secrets), then run:
 
 ```bash
 scripts/redeploy-huff-staging.sh

@@ -8,7 +8,6 @@ export type GuessDistributionDto = Partial<Record<GuessAttempt, number>>;
 export interface ApiErrorDto {
   readonly code?: string;
   readonly message?: string;
-  readonly loginUrl?: string | null;
 }
 
 export interface TileResult {
@@ -86,8 +85,6 @@ export interface GlobalStatsDto {
 export interface MeDto {
   readonly loggedIn: boolean;
   readonly user: UserDto | null;
-  readonly loginUrl: string | null;
-  readonly logoutUrl: string | null;
   readonly authEnabled: boolean;
 }
 

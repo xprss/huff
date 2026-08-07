@@ -31,22 +31,38 @@ type EndpointHandler<Path extends ApiPath, Method extends ApiMethod<Path>, Args 
   ...args: Args
 ) => Promise<ApiResponse<Path, Method>>;
 
+const ACCESS_TOKEN_STORAGE_KEY = "huff.access-token";
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | null;
-  readonly loginUrl: string | null;
 
-  constructor(message: string, status: number, code?: string | null, loginUrl?: string | null) {
+  constructor(message: string, status: number, code?: string | null) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.code = code ?? null;
-    this.loginUrl = loginUrl ?? null;
   }
 }
 
 export function isAuthRequiredError(error: unknown): error is ApiError {
-  return error instanceof ApiError && (error.status === 401 || error.code === "auth_required");
+  return error instanceof ApiError && (error.status === 401 || error.code === "token_required");
+}
+
+export function accessToken(): string | null {
+  const value = sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY)?.trim();
+  return value || null;
+}
+
+export function storeAccessToken(value: string) {
+  const token = value.trim().replace(/^Bearer\s+/i, "");
+  if (token) {
+    sessionStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  }
+}
+
+export function clearAccessToken() {
+  sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
 export type ApiClient = {
@@ -86,11 +102,13 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
 ): Promise<ApiResponse<Path, Method>> {
   const { body, headers, ...requestInit } = init;
   const isMutation = init.method !== "GET";
+  const token = accessToken();
   const response = await fetch(path, {
-    credentials: "include",
+    credentials: "omit",
     headers: {
       "Content-Type": "application/json",
       ...(isMutation ? { "X-Huff-Request": "1" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers ?? {})
     },
     ...requestInit,
@@ -99,11 +117,13 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
 
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as ApiErrorDto | null;
+    if (response.status === 401) {
+      clearAccessToken();
+    }
     throw new ApiError(
-      errorBody?.message ?? (response.status === 401 ? "Accesso Google richiesto." : "Richiesta non riuscita"),
+      errorBody?.message ?? (response.status === 401 ? "Token Bearer valido richiesto." : "Richiesta non riuscita"),
       response.status,
-      errorBody?.code,
-      errorBody?.loginUrl
+      errorBody?.code
     );
   }
   if (response.status === 204) {

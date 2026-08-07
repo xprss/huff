@@ -32,7 +32,7 @@ public class AdminResource {
     ) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(adminService.listPlayers(resolvedUser.user(), query, sort, page));
         setCookie(response, resolvedUser);
@@ -44,7 +44,7 @@ public class AdminResource {
     public Response player(@CookieParam("huff_session") String sessionId, @PathParam("userId") String userId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(adminService.playerDetail(resolvedUser.user(), userId));
         setCookie(response, resolvedUser);
@@ -60,7 +60,7 @@ public class AdminResource {
     ) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(adminService.updatePlayer(resolvedUser.user(), userId, request));
         setCookie(response, resolvedUser);
@@ -72,16 +72,16 @@ public class AdminResource {
     public Response deletePlayer(@CookieParam("huff_session") String sessionId, @PathParam("userId") String userId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(adminService.deletePlayer(resolvedUser.user(), userId));
         setCookie(response, resolvedUser);
         return response.build();
     }
 
-    private Response unauthorized(String loginUrl) {
+    private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(new GameResource.ErrorDto("auth_required", "Accesso Google richiesto.", loginUrl))
+            .entity(new GameResource.ErrorDto("token_required", "Token Bearer valido richiesto."))
             .build();
     }
 

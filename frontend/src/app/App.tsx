@@ -1,7 +1,7 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, X } from "lucide-react";
-import { api, isAuthRequiredError } from "../api";
+import { accessToken, api, clearAccessToken, isAuthRequiredError, storeAccessToken } from "../api";
 import { AppThemeProvider } from "../theme";
 import type {
   GameDto,
@@ -42,6 +42,7 @@ import {
 import { ProfileView } from "../features/profile/ProfileView";
 import { StatsModal } from "../features/stats/StatsModal";
 import { AdminView } from "../features/admin/AdminView";
+import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
 import { useAppViewportHeight } from "../shared/hooks/useAppViewportHeight";
 import { usePreventZoom } from "../shared/hooks/usePreventZoom";
@@ -74,16 +75,13 @@ export function App() {
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
     getNotificationPermission
   );
+  const [activeAccessToken, setActiveAccessToken] = React.useState(accessToken);
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
   const isLoggedIn = Boolean(me?.loggedIn);
-  // An OIDC session refresh rotates the encrypted session cookie.  Do not send
-  // another request while /api/me is restoring that cookie: even public API
-  // endpoints are evaluated by OIDC when the browser has a session cookie.
-  // Concurrent refresh attempts can invalidate a single-use refresh token.
   const globalStatsQuery = useQuery({
     ...globalStatsQueryOptions(),
     enabled: isLoggedIn
@@ -190,7 +188,8 @@ export function App() {
     setShowActionsMenu(false);
     setActiveRoute("game");
     setStarReveal(null);
-    redirectToLogin(error.loginUrl);
+    clearAccessToken();
+    setActiveAccessToken(null);
     return true;
   }
 
@@ -201,23 +200,6 @@ export function App() {
 
     showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
   }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error]);
-
-  React.useEffect(() => {
-    if (!me?.authEnabled || me.loggedIn) return;
-
-    queryClient.removeQueries({ queryKey: queryKeys.today });
-    queryClient.removeQueries({ queryKey: queryKeys.stats });
-    queryClient.removeQueries({ queryKey: ["admin"] });
-    setCurrentGuess([]);
-    setSelectedCellIndex(0);
-    setShowStats(false);
-    setShowInfo(false);
-    setProfileEditing(false);
-    setShowActionsMenu(false);
-    setStarReveal(null);
-    setActiveRoute("game");
-    redirectToLogin(me.loginUrl);
-  }, [me?.authEnabled, me?.loggedIn, queryClient, setActiveRoute]);
 
   React.useEffect(() => {
     localStorage.setItem("darkMode", String(darkMode));
@@ -560,6 +542,22 @@ export function App() {
     setSelectedCellIndex(null);
   }
 
+  if (!activeAccessToken && (me?.authEnabled || isAuthRequiredError(meQuery.error))) {
+    return (
+      <AppThemeProvider conditions={themeConditions}>
+        <main className="app-shell">
+          <GoogleLoginScreen
+            onAccessToken={(token) => {
+              storeAccessToken(token);
+              setActiveAccessToken(accessToken());
+              window.location.reload();
+            }}
+          />
+        </main>
+      </AppThemeProvider>
+    );
+  }
+
   return (
     <AppThemeProvider conditions={themeConditions}>
       <main className="app-shell">
@@ -578,7 +576,11 @@ export function App() {
             notificationMenuLabel={notificationMenuLabel}
             darkMode={darkMode}
             showLogout={Boolean(me?.authEnabled && me.loggedIn)}
-            logoutUrl={me?.logoutUrl ?? "/api/logout"}
+            onLogout={() => {
+              clearAccessToken();
+              setActiveAccessToken(null);
+              queryClient.clear();
+            }}
             onUseStar={() => void useStar()}
             onEditProfile={() => setProfileEditing(true)}
             onToggleMenu={() => setShowActionsMenu((value) => !value)}
@@ -744,11 +746,4 @@ function findPreviousFilledCell(cells: readonly string[], startIndex: number) {
   }
 
   return null;
-}
-
-function redirectToLogin(loginUrl: string | null | undefined) {
-  const fallback = new URL("/api/login", window.location.origin);
-  const requested = new URL(loginUrl ?? fallback.href, window.location.origin);
-  const target = requested.origin === window.location.origin ? requested : fallback;
-  window.location.replace(target.href);
 }

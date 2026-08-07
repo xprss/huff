@@ -2,8 +2,10 @@ package dev.huff.hexaquot.auth;
 
 import dev.huff.hexaquot.persistence.UserEntity;
 import dev.huff.hexaquot.persistence.AdminUserEntity;
+import io.quarkus.oidc.UserInfo;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
@@ -42,22 +44,32 @@ public class UserService {
     @Inject
     SecurityIdentity securityIdentity;
 
+    @Inject
+    Instance<UserInfo> userInfo;
+
     @Transactional
     public ResolvedUser resolve(String anonymousSessionId) {
         if (authEnabled) {
             if (securityIdentity == null || securityIdentity.isAnonymous()) {
-                return new ResolvedUser(null, null, "/api/login");
+                return new ResolvedUser(null, null);
             }
-            String subject = securityIdentity.getPrincipal().getName();
-            String email = Optional.ofNullable(securityIdentity.<String>getAttribute("email")).orElse(subject);
-            String name = Optional.ofNullable(securityIdentity.<String>getAttribute("name")).orElse(email);
-            return new ResolvedUser(upsertGoogleUser(subject, email, name), null, null);
+            UserInfo verifiedUserInfo = userInfo.isResolvable() ? userInfo.get() : null;
+            String subject = verifiedUserInfo == null
+                ? securityIdentity.getPrincipal().getName()
+                : verifiedUserInfo.getSubject();
+            String email = verifiedUserInfo == null
+                ? Optional.ofNullable(securityIdentity.<String>getAttribute("email")).orElse(subject)
+                : verifiedUserInfo.getEmail();
+            String name = verifiedUserInfo == null
+                ? Optional.ofNullable(securityIdentity.<String>getAttribute("name")).orElse(email)
+                : verifiedUserInfo.getName();
+            return new ResolvedUser(upsertGoogleUser(subject, email, name), null);
         }
 
         String sessionId = validSessionId(anonymousSessionId) ? anonymousSessionId : UUID.randomUUID().toString();
         AppUser user = upsertAnonymousUser(sessionId);
         String cookie = sessionId.equals(anonymousSessionId) ? null : sessionCookie(sessionId);
-        return new ResolvedUser(user, cookie, null);
+        return new ResolvedUser(user, cookie);
     }
 
     public boolean authEnabled() {
