@@ -41,21 +41,21 @@ AUTH_ENABLED=true
 GOOGLE_CLIENT_ID=...
 ```
 
-Quarkus OIDC runs in `service` mode: every `/api/*` endpoint accepts only a
-token issued by the configured OIDC provider:
+Quarkus OIDC runs in `service` mode. At the first access, every `/api/*`
+endpoint accepts a token issued by the configured OIDC provider:
 
 ```text
 Authorization: Bearer <token>
 ```
 
-Quarkus validates the token before the request reaches the API. No authorization
-code flow, OIDC session, or cookie fallback is enabled. A missing or invalid
-token returns `401`, a `WWW-Authenticate: Bearer` challenge, and clears legacy
-session cookies. The web client uses Google OAuth to obtain an access token,
-keeps it only in `sessionStorage`, adds it to every request, and removes it
-automatically after `401`. Quarkus validates this opaque Google token through
-Google UserInfo. Configure the Google client as a **Web application** and add
-each site origin to its Authorized JavaScript
+Quarkus validates the token before the request reaches the API and creates an
+application session backed by the database. Its opaque identifier is stored in
+a persistent, `HttpOnly`, `Secure`, `SameSite=Lax` cookie, so closing and
+reopening the browser does not require another login. The session is revoked
+when the user selects logout (and expires after 30 days). The Google access
+token remains in `sessionStorage` and is used only to establish the session.
+Quarkus validates this opaque Google token through Google UserInfo. Configure
+the Google client as a **Web application** and add each site origin to its Authorized JavaScript
 origins. For `npm run dev`, configure the
 same public value as `VITE_GOOGLE_CLIENT_ID` in `frontend/.env.local`; the
 Docker deployment scripts pass `GOOGLE_CLIENT_ID` to the frontend build.

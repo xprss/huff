@@ -66,6 +66,7 @@ export function clearAccessToken() {
 }
 
 export type ApiClient = {
+  readonly logout: EndpointHandler<"/api/logout", "POST">;
   readonly me: EndpointHandler<"/api/me", "GET">;
   readonly today: EndpointHandler<"/api/game/today", "GET">;
   readonly selectMode: EndpointHandler<"/api/game/today/mode", "POST", [mode: GameMode]>;
@@ -106,7 +107,7 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
   const isMutation = init.method !== "GET";
   const token = accessToken();
   const response = await fetch(path, {
-    credentials: "omit",
+    credentials: "same-origin",
     headers: {
       "Content-Type": "application/json",
       ...(isMutation ? { "X-Huff-Request": "1" } : {}),
@@ -135,6 +136,7 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
 }
 
 export const api = {
+  logout: () => request("/api/logout", { method: "POST" }),
   me: () => request("/api/me", { method: "GET" }),
   today: () => request("/api/game/today", { method: "GET" }),
   selectMode: (mode: GameMode) =>

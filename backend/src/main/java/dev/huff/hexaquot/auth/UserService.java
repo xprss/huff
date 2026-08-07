@@ -2,6 +2,7 @@ package dev.huff.hexaquot.auth;
 
 import dev.huff.hexaquot.persistence.UserEntity;
 import dev.huff.hexaquot.persistence.AdminUserEntity;
+import dev.huff.hexaquot.persistence.AuthSessionEntity;
 import io.quarkus.oidc.UserInfo;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
 @ApplicationScoped
 public class UserService {
     private static final String SESSION_COOKIE = "huff_session";
+    private static final long SESSION_MAX_AGE_SECONDS = 30L * 24 * 60 * 60;
     public static final String DEFAULT_PROFILE_EMOJI = "😀";
     public static final Set<String> ALLOWED_PROFILE_EMOJIS = Set.of(
         "😀", "😄", "😎", "🤓", "🥳", "😇", "🤠", "😴", "😤", "😍", "🙃", "😌"
@@ -47,34 +49,56 @@ public class UserService {
     Instance<UserInfo> userInfo;
 
     @Transactional
-    public ResolvedUser resolve(String anonymousSessionId) {
+    public ResolvedUser resolve(String sessionId) {
         if (authEnabled) {
-            if (securityIdentity == null || securityIdentity.isAnonymous()) {
+            if (securityIdentity != null && !securityIdentity.isAnonymous()) {
+                AppUser user = authenticatedGoogleUser();
+                AuthSessionEntity session = activeSession(sessionId);
+                if (session != null && session.userId.equals(user.id())) {
+                    return new ResolvedUser(user, null);
+                }
+                String newSessionId = UUID.randomUUID().toString();
+                persistSession(newSessionId, user.id());
+                return new ResolvedUser(user, sessionCookie(newSessionId));
+            }
+            AuthSessionEntity session = activeSession(sessionId);
+            if (session == null) {
                 return new ResolvedUser(null, null);
             }
-            UserInfo verifiedUserInfo = userInfo.isResolvable() ? userInfo.get() : null;
-            // In service mode UserInfo can be injected even when its payload is
-            // empty. The SecurityIdentity is built only after Quarkus has
-            // validated the Bearer token, and its principal is the stable OIDC
-            // subject. Never derive a user id from an optional UserInfo claim.
-            String subject = requireSubject(securityIdentity.getPrincipal().getName());
-            String email = firstNonBlank(
-                verifiedUserInfo == null ? null : verifiedUserInfo.getEmail(),
-                securityIdentity.getAttribute("email"),
-                subject
-            );
-            String name = firstNonBlank(
-                verifiedUserInfo == null ? null : verifiedUserInfo.getName(),
-                securityIdentity.getAttribute("name"),
-                email
-            );
-            return new ResolvedUser(upsertGoogleUser(subject, email, name), null);
+            UserEntity user = UserEntity.findById(session.userId);
+            return user == null
+                ? new ResolvedUser(null, null)
+                : new ResolvedUser(user.toAppUser(true, adminPrivileges(user.id)), null);
         }
 
-        String sessionId = validSessionId(anonymousSessionId) ? anonymousSessionId : UUID.randomUUID().toString();
+        String anonymousSessionId = sessionId;
+        sessionId = validSessionId(anonymousSessionId) ? anonymousSessionId : UUID.randomUUID().toString();
         AppUser user = upsertAnonymousUser(sessionId);
         String cookie = sessionId.equals(anonymousSessionId) ? null : sessionCookie(sessionId);
         return new ResolvedUser(user, cookie);
+    }
+
+    @Transactional
+    public boolean hasAuthenticatedSession(String sessionId) {
+        if (!authEnabled) {
+            return false;
+        }
+        AuthSessionEntity session = activeSession(sessionId);
+        if (session == null) {
+            return false;
+        }
+        if (UserEntity.findById(session.userId) != null) {
+            return true;
+        }
+        session.delete();
+        return false;
+    }
+
+    @Transactional
+    public void logout(String sessionId) {
+        if (authEnabled && validSessionId(sessionId)) {
+            AuthSessionEntity.deleteById(sessionId);
+        }
     }
 
     public boolean authEnabled() {
@@ -83,6 +107,11 @@ public class UserService {
 
     public String sessionCookieName() {
         return SESSION_COOKIE;
+    }
+
+    public String clearSessionCookie() {
+        String secure = cookieSecure ? "; Secure" : "";
+        return SESSION_COOKIE + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" + secure;
     }
 
     private boolean validSessionId(String value) {
@@ -95,6 +124,49 @@ public class UserService {
         } catch (IllegalArgumentException error) {
             return false;
         }
+    }
+
+    private AppUser authenticatedGoogleUser() {
+        UserInfo verifiedUserInfo = userInfo.isResolvable() ? userInfo.get() : null;
+        // In service mode UserInfo can be injected even when its payload is
+        // empty. The SecurityIdentity is built only after Quarkus has
+        // validated the Bearer token, and its principal is the stable OIDC
+        // subject. Never derive a user id from an optional UserInfo claim.
+        String subject = requireSubject(securityIdentity.getPrincipal().getName());
+        String email = firstNonBlank(
+            verifiedUserInfo == null ? null : verifiedUserInfo.getEmail(),
+            securityIdentity.getAttribute("email"),
+            subject
+        );
+        String name = firstNonBlank(
+            verifiedUserInfo == null ? null : verifiedUserInfo.getName(),
+            securityIdentity.getAttribute("name"),
+            email
+        );
+        return upsertGoogleUser(subject, email, name);
+    }
+
+    private AuthSessionEntity activeSession(String sessionId) {
+        if (!validSessionId(sessionId)) {
+            return null;
+        }
+        AuthSessionEntity session = AuthSessionEntity.findById(sessionId);
+        if (session == null) {
+            return null;
+        }
+        if (Instant.now().isBefore(Instant.parse(session.expiresAt))) {
+            return session;
+        }
+        session.delete();
+        return null;
+    }
+
+    private void persistSession(String sessionId, String userId) {
+        AuthSessionEntity session = new AuthSessionEntity();
+        session.id = sessionId;
+        session.userId = userId;
+        session.expiresAt = Instant.now().plusSeconds(SESSION_MAX_AGE_SECONDS).toString();
+        session.persist();
     }
 
     private String requireSubject(String subject) {
@@ -287,7 +359,7 @@ public class UserService {
 
     private String sessionCookie(String sessionId) {
         String secure = cookieSecure ? "; Secure" : "";
-        return SESSION_COOKIE + "=" + sessionId + "; Path=/; Max-Age=31536000; HttpOnly; SameSite=Lax" + secure;
+        return SESSION_COOKIE + "=" + sessionId + "; Path=/; Max-Age=" + SESSION_MAX_AGE_SECONDS + "; HttpOnly; SameSite=Lax" + secure;
     }
 
     public void requireAuthenticatedOrCookie(ResolvedUser resolvedUser) {

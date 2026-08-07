@@ -249,6 +249,11 @@ export interface AdminDeleteResultDto {
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type ApiEndpointMap = {
+  "/api/logout": {
+    POST: {
+      response: void;
+    };
+  };
   "/api/me": {
     GET: {
       response: MeDto;

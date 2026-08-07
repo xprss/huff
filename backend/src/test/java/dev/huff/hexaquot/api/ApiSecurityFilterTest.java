@@ -5,6 +5,7 @@ import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.Method;
 import dev.huff.hexaquot.auth.UserIds;
+import dev.huff.hexaquot.persistence.AuthSessionEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
+import java.time.Instant;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
@@ -50,6 +53,55 @@ class ApiSecurityFilterTest {
     }
 
     @Test
+    @Transactional
+    void restoresAnAuthenticatedUserFromAPersistentSessionCookie() {
+        String userId = UserIds.google("persisted-google-subject");
+        UserEntity user = new UserEntity();
+        user.id = userId;
+        user.googleSubject = "persisted-google-subject";
+        user.email = "persisted@example.com";
+        user.displayName = "Persistente";
+        user.nickname = "@persistente";
+        user.profileEmoji = "😀";
+        user.createdAt = Instant.now().toString();
+        user.persist();
+
+        String sessionId = UUID.randomUUID().toString();
+        AuthSessionEntity session = new AuthSessionEntity();
+        session.id = sessionId;
+        session.userId = userId;
+        session.expiresAt = Instant.now().plusSeconds(60).toString();
+        session.persist();
+
+        given()
+            .header("Cookie", "huff_session=" + sessionId)
+            .when().get("/api/me")
+            .then()
+            .statusCode(200)
+            .body("loggedIn", equalTo(true))
+            .body("user.authenticated", equalTo(true));
+    }
+
+    @Test
+    @Transactional
+    void rejectsAndClearsAnExpiredPersistentSessionCookie() {
+        String sessionId = UUID.randomUUID().toString();
+        AuthSessionEntity session = new AuthSessionEntity();
+        session.id = sessionId;
+        session.userId = UserIds.google("expired-google-subject");
+        session.expiresAt = Instant.now().minusSeconds(1).toString();
+        session.persist();
+
+        given()
+            .header("Cookie", "huff_session=" + sessionId)
+            .when().get("/api/me")
+            .then()
+            .statusCode(401)
+            .header("Set-Cookie", containsString("huff_session=;"))
+            .body("code", equalTo("token_required"));
+    }
+
+    @Test
     void rejectsAggregateAndBootstrapReadsWithoutAnIdentity() {
         given()
             .when().get("/api/stats/global")
@@ -72,6 +124,7 @@ class ApiSecurityFilterTest {
             .when().get("/api/me")
             .then()
             .statusCode(200)
+            .header("Set-Cookie", containsString("Max-Age=2592000"))
             .body("loggedIn", equalTo(true))
             .body("user.authenticated", equalTo(true));
 
@@ -107,6 +160,7 @@ class ApiSecurityFilterTest {
     private static Stream<Arguments> privateEndpoints() {
         return Stream.of(
             Arguments.of(Method.GET, "/api/me"),
+            Arguments.of(Method.POST, "/api/logout"),
             Arguments.of(Method.PUT, "/api/me/profile"),
             Arguments.of(Method.GET, "/api/game/today"),
             Arguments.of(Method.POST, "/api/game/today/mode"),

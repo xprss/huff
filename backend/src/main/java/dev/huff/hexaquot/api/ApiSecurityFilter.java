@@ -1,5 +1,6 @@
 package dev.huff.hexaquot.api;
 
+import dev.huff.hexaquot.auth.UserService;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
@@ -30,6 +31,9 @@ public class ApiSecurityFilter implements ContainerRequestFilter, ContainerRespo
     @Inject
     SecurityIdentity securityIdentity;
 
+    @Inject
+    UserService userService;
+
     @Override
     public void filter(ContainerRequestContext request) {
         String path = normalizedPath(request);
@@ -41,7 +45,11 @@ public class ApiSecurityFilter implements ContainerRequestFilter, ContainerRespo
             return;
         }
 
-        if (securityIdentity == null || securityIdentity.isAnonymous()) {
+        boolean hasBearerIdentity = securityIdentity != null && !securityIdentity.isAnonymous();
+        String sessionId = request.getCookies().get(userService.sessionCookieName()) == null
+            ? null
+            : request.getCookies().get(userService.sessionCookieName()).getValue();
+        if (!hasBearerIdentity && !userService.hasAuthenticatedSession(sessionId)) {
             request.abortWith(error(
                 Response.Status.UNAUTHORIZED,
                 "token_required",
@@ -73,14 +81,9 @@ public class ApiSecurityFilter implements ContainerRequestFilter, ContainerRespo
             .entity(new SecurityErrorDto(code, message));
         if (status == Response.Status.UNAUTHORIZED) {
             response.header("WWW-Authenticate", "Bearer");
-            clearLegacySessionCookies(response);
+            response.header("Set-Cookie", userService.clearSessionCookie());
         }
         return response.build();
-    }
-
-    private void clearLegacySessionCookies(Response.ResponseBuilder response) {
-        response.header("Set-Cookie", "huff_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
-        response.header("Set-Cookie", "q_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
     }
 
     public record SecurityErrorDto(String code, String message) {

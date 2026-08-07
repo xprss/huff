@@ -1,7 +1,7 @@
 import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, X } from "lucide-react";
-import { accessToken, api, clearAccessToken, isAuthRequiredError, storeAccessToken } from "../api";
+import { api, clearAccessToken, isAuthRequiredError, storeAccessToken } from "../api";
 import { AppThemeProvider } from "../theme";
 import type {
   GameDto,
@@ -86,7 +86,6 @@ export function App() {
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
     getNotificationPermission
   );
-  const [activeAccessToken, setActiveAccessToken] = React.useState(accessToken);
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
@@ -212,7 +211,6 @@ export function App() {
     setActiveRoute("game");
     setStarReveal(null);
     clearAccessToken();
-    setActiveAccessToken(null);
     return true;
   }
 
@@ -571,14 +569,13 @@ export function App() {
     setSelectedCellIndex(null);
   }
 
-  if (!activeAccessToken && (me?.authEnabled || isAuthRequiredError(meQuery.error))) {
+  if ((me?.authEnabled === true && !me.loggedIn) || isAuthRequiredError(meQuery.error)) {
     return (
       <AppThemeProvider conditions={themeConditions}>
         <main className="app-shell">
           <GoogleLoginScreen
             onAccessToken={(token) => {
               storeAccessToken(token);
-              setActiveAccessToken(accessToken());
               window.location.reload();
             }}
           />
@@ -606,9 +603,15 @@ export function App() {
             darkMode={darkMode}
             showLogout={Boolean(me?.authEnabled && me.loggedIn)}
             onLogout={() => {
-              clearAccessToken();
-              setActiveAccessToken(null);
-              queryClient.clear();
+              void api
+                .logout()
+                .then(() => {
+                  clearAccessToken();
+                  queryClient.clear();
+                })
+                .catch((error: unknown) => {
+                  showToast(error instanceof Error ? error.message : "Impossibile effettuare il logout.", "error");
+                });
             }}
             onUseStar={() => void useStar()}
             onEditProfile={() => setProfileEditing(true)}
