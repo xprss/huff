@@ -26,7 +26,7 @@ public class GameResource {
     public Response today(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(dailyGameService.today(resolvedUser.user()));
         if (resolvedUser.setCookieHeader() != null) {
@@ -40,7 +40,7 @@ public class GameResource {
     public Response selectMode(@CookieParam("huff_session") String sessionId, ModeRequest request) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(
             dailyGameService.selectMode(resolvedUser.user(), request == null ? null : request.mode())
@@ -56,7 +56,7 @@ public class GameResource {
     public Response guess(@CookieParam("huff_session") String sessionId, GuessRequest request) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(dailyGameService.guess(resolvedUser.user(), request == null ? null : request.guess()));
         if (resolvedUser.setCookieHeader() != null) {
@@ -70,7 +70,7 @@ public class GameResource {
     public Response useKitten(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(dailyGameService.useKitten(resolvedUser.user()));
         if (resolvedUser.setCookieHeader() != null) {
@@ -84,7 +84,7 @@ public class GameResource {
     public Response useStar(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         StarRevealDto reveal = dailyGameService.useStar(resolvedUser.user());
         Response.ResponseBuilder response = Response.ok(reveal);
@@ -99,7 +99,7 @@ public class GameResource {
     public Response stats(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         Response.ResponseBuilder response = Response.ok(dailyGameService.stats(resolvedUser.user()));
         if (resolvedUser.setCookieHeader() != null) {
@@ -114,12 +114,12 @@ public class GameResource {
         return Response.ok(dailyGameService.globalStats()).build();
     }
 
-    private Response unauthorized(String loginUrl) {
+    private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(new ErrorDto("auth_required", "Accesso Google richiesto.", loginUrl))
+            .entity(new ErrorDto("token_required", "Token Bearer valido richiesto."))
             .build();
     }
 
-    public record ErrorDto(String code, String message, String loginUrl) {
+    public record ErrorDto(String code, String message) {
     }
 }

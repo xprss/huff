@@ -106,7 +106,7 @@ done
 
 if [[ "${BUILD_IMAGE}" == "true" ]]; then
   echo "Building ${IMAGE_NAME}:latest"
-  DOCKER_BUILDKIT=1 docker build -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 fi
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then

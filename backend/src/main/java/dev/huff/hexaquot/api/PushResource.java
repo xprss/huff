@@ -31,7 +31,7 @@ public class PushResource {
     public Response subscribe(@CookieParam("huff_session") String sessionId, PushSubscriptionRequest request) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         pushNotificationService.subscribe(resolvedUser.user().id(), request);
         Response.ResponseBuilder response = Response.noContent();
@@ -46,7 +46,7 @@ public class PushResource {
     public Response unsubscribe(@CookieParam("huff_session") String sessionId, PushSubscriptionRequest request) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
         if (resolvedUser.user() == null) {
-            return unauthorized(resolvedUser.loginUrl());
+            return unauthorized();
         }
         pushNotificationService.unsubscribe(resolvedUser.user().id(), request);
         Response.ResponseBuilder response = Response.noContent();
@@ -56,9 +56,9 @@ public class PushResource {
         return response.build();
     }
 
-    private Response unauthorized(String loginUrl) {
+    private Response unauthorized() {
         return Response.status(Response.Status.UNAUTHORIZED)
-            .entity(new GameResource.ErrorDto("auth_required", "Accesso Google richiesto.", loginUrl))
+            .entity(new GameResource.ErrorDto("token_required", "Token Bearer valido richiesto."))
             .build();
     }
 }

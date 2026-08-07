@@ -24,8 +24,7 @@ class GameResourceTest {
             .body("user.nickname", startsWith("@giocatore-"))
             .body("user.profileEmoji", equalTo("😀"))
             .body("user.bio", equalTo(null))
-            .body("loginUrl", equalTo(null))
-            .body("logoutUrl", equalTo(null));
+            .body("authEnabled", equalTo(false));
     }
 
     @Test

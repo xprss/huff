@@ -3,7 +3,6 @@ package dev.huff.hexaquot.api;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
-import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
@@ -14,25 +13,17 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Set;
-
 /**
  * Central, fail-closed protection for the JSON API.
  *
  * Resource-level checks remain in place as defense in depth. This filter makes
- * authentication the default for every current and future /api endpoint, with
- * only the explicitly listed read-only bootstrap endpoints left public.
+ * authentication the default for every current and future /api endpoint.
+ * Every endpoint is private, including read-only endpoints. In production the
+ * only accepted credential is a Bearer token validated by Quarkus OIDC.
  */
 @Provider
 @Priority(Priorities.AUTHORIZATION)
 public class ApiSecurityFilter implements ContainerRequestFilter, ContainerResponseFilter {
-    public static final String REQUEST_HEADER = "X-Huff-Request";
-    public static final String REQUEST_HEADER_VALUE = "1";
-
-    private static final Set<String> OIDC_ENDPOINTS = Set.of("api/login", "api/logout");
-    private static final Set<String> PUBLIC_GET_ENDPOINTS = Set.of("api/stats/global", "api/push/settings");
-    private static final Set<String> SAFE_METHODS = Set.of(HttpMethod.GET, HttpMethod.HEAD, HttpMethod.OPTIONS);
-
     @ConfigProperty(name = "app.auth.enabled")
     boolean authEnabled;
 
@@ -42,34 +33,23 @@ public class ApiSecurityFilter implements ContainerRequestFilter, ContainerRespo
     @Override
     public void filter(ContainerRequestContext request) {
         String path = normalizedPath(request);
-        if (!path.startsWith("api/") || OIDC_ENDPOINTS.contains(path)) {
+        if (!path.startsWith("api/")) {
             return;
         }
 
-        boolean publicRead = HttpMethod.GET.equals(request.getMethod()) && PUBLIC_GET_ENDPOINTS.contains(path);
-        if (!authEnabled || publicRead) {
+        if (!authEnabled) {
             return;
         }
 
         if (securityIdentity == null || securityIdentity.isAnonymous()) {
             request.abortWith(error(
                 Response.Status.UNAUTHORIZED,
-                "auth_required",
-                "Accesso Google richiesto.",
-                "/api/login"
+                "token_required",
+                "Token Bearer valido richiesto."
             ));
             return;
         }
 
-        if (!SAFE_METHODS.contains(request.getMethod())
-            && !REQUEST_HEADER_VALUE.equals(request.getHeaderString(REQUEST_HEADER))) {
-            request.abortWith(error(
-                Response.Status.FORBIDDEN,
-                "csrf_rejected",
-                "Richiesta non attendibile.",
-                null
-            ));
-        }
     }
 
     @Override
@@ -87,13 +67,22 @@ public class ApiSecurityFilter implements ContainerRequestFilter, ContainerRespo
         return path.startsWith("/") ? path.substring(1) : path;
     }
 
-    private Response error(Response.Status status, String code, String message, String loginUrl) {
-        return Response.status(status)
+    private Response error(Response.Status status, String code, String message) {
+        Response.ResponseBuilder response = Response.status(status)
             .type(MediaType.APPLICATION_JSON_TYPE)
-            .entity(new SecurityErrorDto(code, message, loginUrl))
-            .build();
+            .entity(new SecurityErrorDto(code, message));
+        if (status == Response.Status.UNAUTHORIZED) {
+            response.header("WWW-Authenticate", "Bearer");
+            clearLegacySessionCookies(response);
+        }
+        return response.build();
     }
 
-    public record SecurityErrorDto(String code, String message, String loginUrl) {
+    private void clearLegacySessionCookies(Response.ResponseBuilder response) {
+        response.header("Set-Cookie", "huff_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+        response.header("Set-Cookie", "q_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+    }
+
+    public record SecurityErrorDto(String code, String message) {
     }
 }
