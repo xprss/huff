@@ -6,6 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ENV_FILE="${ENV_FILE:-${PROJECT_ROOT}/.env}"
 
+if [[ -f "${ENV_FILE}" ]]; then
+  # shellcheck source=load-env-file.sh
+  . "${SCRIPT_DIR}/load-env-file.sh"
+  load_env_file "${ENV_FILE}"
+fi
+
 IMAGE_NAME="${LOCAL_IMAGE_NAME:-huff-local}"
 CONTAINER_NAME="${LOCAL_CONTAINER_NAME:-huff-local}"
 HOST_PORT="${LOCAL_HOST_PORT:-8080}"
@@ -17,7 +23,9 @@ POSTGRES_DB="${LOCAL_POSTGRES_DB:-huff_hexaquot}"
 POSTGRES_USER="${LOCAL_POSTGRES_USER:-huff}"
 POSTGRES_PASSWORD="${LOCAL_POSTGRES_PASSWORD:-huff}"
 POSTGRES_DATA_VOLUME="${LOCAL_POSTGRES_DATA_VOLUME:-huff-postgres-local-data}"
-LOCAL_AUTH_ENABLED="${LOCAL_AUTH_ENABLED:-false}"
+# Local Docker runs use the authentication configured in .env by default.
+# LOCAL_AUTH_ENABLED remains available for deliberately disabling it.
+LOCAL_AUTH_ENABLED="${LOCAL_AUTH_ENABLED:-${AUTH_ENABLED:-true}}"
 LOCAL_COOKIE_SECURE="${LOCAL_COOKIE_SECURE:-false}"
 
 usage() {
@@ -66,6 +74,16 @@ fi
 
 if ! docker info >/dev/null 2>&1; then
   echo "Docker is not running." >&2
+  exit 1
+fi
+
+if [[ "${LOCAL_AUTH_ENABLED}" != "true" && "${LOCAL_AUTH_ENABLED}" != "false" ]]; then
+  echo "LOCAL_AUTH_ENABLED must be true or false." >&2
+  exit 1
+fi
+
+if [[ "${LOCAL_AUTH_ENABLED}" == "true" && -z "${GOOGLE_CLIENT_ID:-}" ]]; then
+  echo "Local Docker run refused: GOOGLE_CLIENT_ID is required when authentication is enabled." >&2
   exit 1
 fi
 
