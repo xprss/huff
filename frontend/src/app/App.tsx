@@ -33,6 +33,7 @@ import {
 import { playerHash, playerNicknameFromHash, useAppRoute } from "./routing";
 import { GameBoard } from "../features/game/components/GameBoard";
 import { GameKeyboard } from "../features/game/components/GameKeyboard";
+import { LetterNavigator } from "../features/game/components/LetterNavigator";
 import { ModeSelection } from "../features/game/components/ModeSelection";
 import { StarRevealModal } from "../features/game/components/StarRevealModal";
 import { buildColumns, buildShareText, hasAlreadyGuessed } from "../features/game/gameUtils";
@@ -739,6 +740,16 @@ export function App() {
                       <X size={15} />
                     </button>
                   </div>
+                ) : null}
+
+                {me?.user && canPlay ? (
+                  <LetterNavigator
+                    answerLength={answerLength}
+                    canPlay={canPlay}
+                    hand={me.user.inputHandPreference}
+                    selectedCellIndex={selectedCellIndex}
+                    onSelectCell={selectGuessCell}
+                  />
                 ) : null}
 
                 <GameKeyboard
