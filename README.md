@@ -171,20 +171,17 @@ scripts/grant-staging-stars-huff.sh
 
 The script can be run again after testing to restore consumed stars.
 
-Schema updates that add game or user bonus columns can be applied with:
+Database schema changes are managed by Flyway. Versioned SQL migrations live in
+`backend/src/main/resources/db/migration` and run automatically before the
+application starts. Hibernate validates the migrated schema instead of changing
+it at runtime.
 
-```bash
-scripts/migrate-game-modes-huff.sh
-scripts/migrate-user-stars-huff.sh
-scripts/migrate-user-profile-huff.sh
-scripts/migrate-leaderboards-huff.sh
-scripts/migrate-leaderboard-medal-backfill-huff.sh
-```
-
-`migrate-leaderboards-huff.sh` creates the leaderboard medal tables and indexes.
-`migrate-leaderboard-medal-backfill-huff.sh` assigns medals for every already
-closed historical ISO week. It is idempotent, uses `GAME_TIMEZONE`, and never
-awards the current week before it closes.
+Existing deployments are baselined automatically and then receive the legacy,
+idempotent migrations once; no data reset is required. Add every new database
+change as a new `V<n>__description.sql` file in that directory—never edit a
+migration that has already been deployed. The legacy `scripts/migrate-*.sh`
+files are retained only for emergency/manual use and are no longer run during
+deployment.
 
 User profile nicknames can be changed directly in PostgreSQL when needed. The command is a dry-run by default and only writes with `--yes`:
 
