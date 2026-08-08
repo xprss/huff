@@ -56,6 +56,7 @@ public class AuthResource {
             request == null ? null : request.nickname(),
             request == null ? null : request.profileEmoji(),
             request == null ? null : request.bio(),
+            request == null ? null : request.inputHandPreference(),
             resolvedUser.user().authenticated()
         );
         Response.ResponseBuilder response = Response.ok(
@@ -76,6 +77,7 @@ public class AuthResource {
         String nickname,
         String profileEmoji,
         String bio,
+        String inputHandPreference,
         boolean authenticated,
         AdminPrivileges admin,
         MedalCountsDto medals
@@ -87,6 +89,7 @@ public class AuthResource {
                 user.nickname(),
                 user.profileEmoji(),
                 user.bio(),
+                user.inputHandPreference(),
                 user.authenticated(),
                 user.admin(),
                 medals
@@ -94,7 +97,7 @@ public class AuthResource {
         }
     }
 
-    public record ProfileRequest(String displayName, String nickname, String profileEmoji, String bio) {
+    public record ProfileRequest(String displayName, String nickname, String profileEmoji, String bio, String inputHandPreference) {
     }
 
     public record ErrorDto(String code, String message) {

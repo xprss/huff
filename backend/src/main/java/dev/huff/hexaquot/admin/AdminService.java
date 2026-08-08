@@ -105,6 +105,7 @@ public class AdminService {
             request.nickname(),
             request.profileEmoji(),
             request.bio(),
+            user.inputHandPreference,
             user.googleSubject != null
         );
 

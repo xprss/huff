@@ -32,6 +32,9 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "bio", length = 200)
     public String bio;
 
+    @Column(name = "input_hand_preference", length = 5)
+    public String inputHandPreference = "RIGHT";
+
     @Column(name = "created_at", nullable = false)
     public String createdAt;
 
@@ -49,6 +52,6 @@ public class UserEntity extends PanacheEntityBase {
     }
 
     public AppUser toAppUser(boolean authenticated, AdminPrivileges admin) {
-        return new AppUser(id, email, displayName, nickname, profileEmoji, bio, authenticated, admin);
+        return new AppUser(id, email, displayName, nickname, profileEmoji, bio, inputHandPreference, authenticated, admin);
     }
 }

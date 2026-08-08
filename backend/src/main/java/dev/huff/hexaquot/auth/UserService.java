@@ -29,6 +29,7 @@ public class UserService {
     private static final String SESSION_COOKIE = "huff_session";
     private static final long SESSION_MAX_AGE_SECONDS = 30L * 24 * 60 * 60;
     public static final String DEFAULT_PROFILE_EMOJI = "😀";
+    public static final String DEFAULT_INPUT_HAND_PREFERENCE = "RIGHT";
     public static final Set<String> ALLOWED_PROFILE_EMOJIS = Set.of(
         "😀", "😄", "😎", "🤓", "🥳", "😇", "🤠", "😴", "😤", "😍", "🙃", "😌"
     );
@@ -218,6 +219,7 @@ public class UserService {
             user.displayName = defaultDisplayName(displayName);
             user.nickname = defaultNickname(userId, user.displayName);
             user.profileEmoji = DEFAULT_PROFILE_EMOJI;
+            user.inputHandPreference = DEFAULT_INPUT_HAND_PREFERENCE;
             user.persist();
             return user.toAppUser(authenticated, adminPrivileges(userId));
         }
@@ -232,6 +234,9 @@ public class UserService {
         if (!ALLOWED_PROFILE_EMOJIS.contains(user.profileEmoji)) {
             user.profileEmoji = DEFAULT_PROFILE_EMOJI;
         }
+        if (!isValidInputHandPreference(user.inputHandPreference)) {
+            user.inputHandPreference = DEFAULT_INPUT_HAND_PREFERENCE;
+        }
         return user.toAppUser(authenticated, adminPrivileges(userId));
     }
 
@@ -242,6 +247,7 @@ public class UserService {
         String nickname,
         String profileEmoji,
         String bio,
+        String inputHandPreference,
         boolean authenticated
     ) {
         UserEntity user = UserEntity.findById(userId);
@@ -253,6 +259,7 @@ public class UserService {
         String normalizedNickname = normalizeNickname(nickname);
         String normalizedProfileEmoji = normalizeProfileEmoji(profileEmoji);
         String normalizedBio = normalizeBio(bio);
+        String normalizedInputHandPreference = normalizeInputHandPreference(inputHandPreference);
         UserEntity nicknameOwner = UserEntity.<UserEntity>find("nickname", normalizedNickname).firstResult();
         if (nicknameOwner != null && !nicknameOwner.id.equals(userId)) {
             throw new WebApplicationException("Nickname già in uso.", Response.Status.CONFLICT);
@@ -262,6 +269,7 @@ public class UserService {
         user.nickname = normalizedNickname;
         user.profileEmoji = normalizedProfileEmoji;
         user.bio = normalizedBio;
+        user.inputHandPreference = normalizedInputHandPreference;
         return user.toAppUser(authenticated, adminPrivileges(userId));
     }
 
@@ -325,6 +333,17 @@ public class UserService {
             throw new BadRequestException("La bio può avere al massimo 200 caratteri.");
         }
         return normalized;
+    }
+
+    private String normalizeInputHandPreference(String inputHandPreference) {
+        if (!isValidInputHandPreference(inputHandPreference)) {
+            throw new BadRequestException("Preferenza mano non ammessa.");
+        }
+        return inputHandPreference;
+    }
+
+    private boolean isValidInputHandPreference(String inputHandPreference) {
+        return "LEFT".equals(inputHandPreference) || "RIGHT".equals(inputHandPreference);
     }
 
     private String slugify(String value) {
