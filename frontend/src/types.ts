@@ -101,10 +101,13 @@ export interface UserDto {
   readonly nickname: string;
   readonly profileEmoji: string;
   readonly bio: string | null;
+  readonly inputHandPreference: InputHandPreference;
   readonly authenticated: boolean;
   readonly admin: AdminPrivilegesDto | null;
   readonly medals: MedalCountsDto;
 }
+
+export type InputHandPreference = "LEFT" | "RIGHT";
 
 export interface MedalCountsDto {
   readonly gold: number;
@@ -147,6 +150,7 @@ export interface ProfileUpdateDto {
   readonly nickname: string;
   readonly profileEmoji: string;
   readonly bio: string | null;
+  readonly inputHandPreference: InputHandPreference;
 }
 
 export interface ModeRequestDto {

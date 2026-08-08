@@ -4,7 +4,7 @@ import { PROFILE_EMOJIS } from "../../app/constants";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
 import { MedalCounts } from "../../shared/components/MedalCounts";
-import type { ProfileUpdateDto, StatsDto, UserDto } from "../../types";
+import type { InputHandPreference, ProfileUpdateDto, StatsDto, UserDto } from "../../types";
 
 export function ProfileView({
   user,
@@ -28,6 +28,7 @@ export function ProfileView({
   const [displayName, setDisplayName] = React.useState(user.displayName ?? "");
   const [nicknameHandle, setNicknameHandle] = React.useState(toEditableNickname(user.nickname));
   const [bio, setBio] = React.useState(user.bio ?? "");
+  const [inputHandPreference, setInputHandPreference] = React.useState<InputHandPreference>(user.inputHandPreference);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const winRate = stats && stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
@@ -36,12 +37,14 @@ export function ProfileView({
     setDisplayName(user.displayName ?? "");
     setNicknameHandle(toEditableNickname(user.nickname));
     setBio(user.bio ?? "");
-  }, [user.bio, user.displayName, user.nickname]);
+    setInputHandPreference(user.inputHandPreference);
+  }, [user.bio, user.displayName, user.inputHandPreference, user.nickname]);
 
   function cancelEdit() {
     setDisplayName(user.displayName ?? "");
     setNicknameHandle(toEditableNickname(user.nickname));
     setBio(user.bio ?? "");
+    setInputHandPreference(user.inputHandPreference);
     onEditingChange(false);
   }
 
@@ -69,7 +72,8 @@ export function ProfileView({
         displayName,
         nickname: `@${nicknameHandle}`,
         profileEmoji: user.profileEmoji,
-        bio
+        bio,
+        inputHandPreference
       },
       "Profilo aggiornato."
     );
@@ -133,6 +137,24 @@ export function ProfileView({
                     rows={3}
                   />
                 </label>
+                <fieldset className="profile-hand-preference" disabled={saving}>
+                  <legend>Joystick di navigazione</legend>
+                  <span>Mano di utilizzo</span>
+                  <div role="radiogroup" aria-label="Mano per il joystick">
+                    {(["LEFT", "RIGHT"] as const).map((hand) => (
+                      <button
+                        className={inputHandPreference === hand ? "selected" : ""}
+                        type="button"
+                        role="radio"
+                        aria-checked={inputHandPreference === hand}
+                        key={hand}
+                        onClick={() => setInputHandPreference(hand)}
+                      >
+                        {hand === "LEFT" ? "Sinistra" : "Destra"}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
                 <div className="profile-form-actions">
                   <button className="profile-action-button primary" type="submit" disabled={saving}>
                     <Check size={17} />
@@ -197,7 +219,8 @@ export function ProfileView({
                         displayName: user.displayName ?? "",
                         nickname: user.nickname,
                         profileEmoji: emoji,
-                        bio: user.bio
+                        bio: user.bio,
+                        inputHandPreference: user.inputHandPreference
                       },
                       "Emoji aggiornata."
                     )
