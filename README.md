@@ -33,13 +33,18 @@ are retained for the next run. Use `--no-build` to reuse the existing image.
 
 ## Configuration
 
-The Quarkus development profile runs anonymously by default for local work. Docker and
-production builds instead fail closed and require an OIDC provider configuration:
+The Quarkus development profile runs anonymously by default for local work. Docker local,
+staging, and production builds use the OIDC configuration in `.env` and require:
 
 ```bash
 AUTH_ENABLED=true
 GOOGLE_CLIENT_ID=...
 ```
+
+`scripts/run-docker-local.sh` loads `.env` before building the image, so the
+Google client ID is also embedded in the frontend build. It keeps cookies
+non-secure for `http://localhost`; set `LOCAL_AUTH_ENABLED=false` only when an
+anonymous local run is intentional.
 
 Quarkus OIDC runs in `service` mode. At the first access, every `/api/*`
 endpoint accepts a token issued by the configured OIDC provider:
