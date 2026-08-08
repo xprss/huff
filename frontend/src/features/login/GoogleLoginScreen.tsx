@@ -99,16 +99,30 @@ export function GoogleLoginScreen({ onAccessToken }: { onAccessToken: (token: st
       </div>
       <h1 className="login-game-title">{APP_NAME}</h1>
       <div className="login-box">
-        <div className="login-copy">
-          <h2 id="login-title">Accedi per giocare</h2>
-          <p>Usa il tuo account Google per ottenere automaticamente il token di accesso.</p>
-        </div>
         <button
           className="login-button"
           type="button"
           disabled={!ready}
           onClick={() => tokenClient.current?.requestAccessToken({ prompt: "select_account" })}
         >
+          <svg className="google-logo" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+            <path
+              fill="#EA4335"
+              d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.482h4.844a4.14 4.14 0 0 1-1.796 2.714v2.258h2.909c1.702-1.567 2.683-3.875 2.683-6.613Z"
+            />
+            <path
+              fill="#4285F4"
+              d="M9 18c2.43 0 4.47-.806 5.96-2.197l-2.909-2.258c-.806.54-1.837.86-3.051.86-2.345 0-4.332-1.585-5.041-3.713H.951v2.332A9 9 0 0 0 9 18Z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M3.959 10.692A5.41 5.41 0 0 1 3.677 9c0-.587.101-1.157.282-1.692V4.976H.951A9 9 0 0 0 0 9c0 1.453.348 2.829.951 4.024l3.008-2.332Z"
+            />
+            <path
+              fill="#34A853"
+              d="M9 3.595c1.321 0 2.507.455 3.441 1.348l2.583-2.583C13.466.91 11.427 0 9 0A9 9 0 0 0 .951 4.976l3.008 2.332C4.668 5.18 6.655 3.595 9 3.595Z"
+            />
+          </svg>
           {ready ? "Accedi con Google" : "Caricamento login Google…"}
         </button>
         {error ? <p className="google-login-error">{error}</p> : null}
