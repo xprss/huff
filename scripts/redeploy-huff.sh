@@ -226,7 +226,7 @@ docker run -d \
   -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" \
   "${IMAGE_NAME}:latest"
 
-echo "Waiting for application schema creation"
+echo "Waiting for Flyway database migrations"
 for attempt in $(seq 1 45); do
   if docker exec -i -e "PGPASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_CONTAINER_NAME}" \
     psql -X -q -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 -Atc \
@@ -234,25 +234,11 @@ for attempt in $(seq 1 45); do
     break
   fi
   if [[ "${attempt}" -eq 45 ]]; then
-    echo "Application did not create the database schema in time." >&2
+    echo "Flyway did not create the database schema in time." >&2
     exit 1
   fi
   sleep 1
 done
-
-echo "Running database migrations"
-export ENV_FILE
-export POSTGRES_CONTAINER_NAME
-export POSTGRES_DB
-export POSTGRES_USER
-export POSTGRES_PASSWORD
-export POSTGRES_PORT
-ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-game-modes-huff.sh"
-ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-user-stars-huff.sh"
-ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-user-profile-huff.sh"
-ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-admin-users-huff.sh"
-ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-leaderboards-huff.sh"
-ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-leaderboard-medal-backfill-huff.sh"
 
 if [[ -n "${PREVIOUS_IMAGE_ID}" && "${PREVIOUS_IMAGE_ID}" != "${NEW_IMAGE_ID}" ]]; then
   echo "Removing previously used image: ${PREVIOUS_IMAGE_ID}"

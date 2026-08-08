@@ -8,29 +8,24 @@ ENV_FILE="${ENV_FILE:-${PROJECT_ROOT}/.env.staging}"
 
 usage() {
   cat <<EOF
-Usage: scripts/redeploy-huff-staging.sh [--no-build] [--skip-migrations]
+Usage: scripts/redeploy-huff-staging.sh [--no-build]
 
 Build and deploy the staging Huff application with an isolated PostgreSQL container.
 
 Options:
-  --no-build          Reuse the existing staging Docker image
-  --skip-migrations  Do not run DB migration scripts after app startup
-  -h, --help         Show this help
+  --no-build  Reuse the existing staging Docker image
+  -h, --help  Show this help
 
 Staging defaults can be overridden in ${ENV_FILE}.
 EOF
 }
 
 BUILD_IMAGE="true"
-RUN_MIGRATIONS="true"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --no-build)
       BUILD_IMAGE="false"
-      ;;
-    --skip-migrations)
-      RUN_MIGRATIONS="false"
       ;;
     -h|--help)
       usage
@@ -188,7 +183,7 @@ docker run -d \
   -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" \
   "${IMAGE_NAME}:latest" >/dev/null
 
-echo "Waiting for application schema creation"
+echo "Waiting for Flyway database migrations"
 for attempt in $(seq 1 45); do
   if docker exec -i -e "PGPASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_CONTAINER_NAME}" \
     psql -X -q -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 -Atc \
@@ -196,27 +191,11 @@ for attempt in $(seq 1 45); do
     break
   fi
   if [[ "${attempt}" -eq 45 ]]; then
-    echo "Application did not create the database schema in time." >&2
+    echo "Flyway did not create the database schema in time." >&2
     exit 1
   fi
   sleep 1
 done
-
-if [[ "${RUN_MIGRATIONS}" == "true" ]]; then
-  echo "Running staging database migrations"
-  export ENV_FILE
-  export POSTGRES_CONTAINER_NAME
-  export POSTGRES_DB
-  export POSTGRES_USER
-  export POSTGRES_PASSWORD
-  export POSTGRES_PORT
-  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-game-modes-huff.sh"
-  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-user-stars-huff.sh"
-  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-user-profile-huff.sh"
-  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-admin-users-huff.sh"
-  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-leaderboards-huff.sh"
-  ENV_FILE="${ENV_FILE}" "${PROJECT_ROOT}/scripts/migrate-leaderboard-medal-backfill-huff.sh"
-fi
 
 NEW_IMAGE_ID="$(docker image inspect --format '{{.Id}}' "${IMAGE_NAME}:latest")"
 if [[ -n "${PREVIOUS_IMAGE_ID}" && "${PREVIOUS_IMAGE_ID}" != "${NEW_IMAGE_ID}" ]]; then
