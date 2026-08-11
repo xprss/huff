@@ -41,13 +41,16 @@ import { launchVictoryConfetti } from "../features/game/confetti";
 import { InfoModal } from "../features/info/InfoModal";
 import {
   areGameNotificationsEnabled,
+  dismissGameNotificationsPrompt,
   disableGameNotifications,
   enableGameNotifications,
   getNotificationMenuLabel,
   getNotificationPermission,
+  isGameNotificationsPromptDismissed,
   setGameNotificationsEnabled,
   syncPushSubscription
 } from "../features/notifications/pushNotifications";
+import { NotificationPromptModal } from "../features/notifications/NotificationPromptModal";
 import { ProfileView } from "../features/profile/ProfileView";
 import { PublicProfileView } from "../features/profile/PublicProfileView";
 import { LeaderboardView } from "../features/leaderboard/LeaderboardView";
@@ -87,8 +90,11 @@ export function App() {
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
     getNotificationPermission
   );
+  const [showNotificationPrompt, setShowNotificationPrompt] = React.useState(false);
+  const [enablingNotifications, setEnablingNotifications] = React.useState(false);
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const notificationPromptHandledRef = React.useRef(false);
   const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
@@ -248,6 +254,21 @@ export function App() {
   }, []);
 
   React.useEffect(() => {
+    if (
+      !isLoggedIn ||
+      notificationsEnabled ||
+      notificationPermission === "denied" ||
+      isGameNotificationsPromptDismissed() ||
+      notificationPromptHandledRef.current
+    ) {
+      return;
+    }
+
+    notificationPromptHandledRef.current = true;
+    setShowNotificationPrompt(true);
+  }, [isLoggedIn, notificationPermission, notificationsEnabled]);
+
+  React.useEffect(() => {
     if (!toast) return;
 
     const timer = window.setTimeout(() => setToast(null), TOAST_DURATION_MS);
@@ -263,7 +284,7 @@ export function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (activeRoute !== "game" || showStats || showInfo || starReveal) return;
+      if (activeRoute !== "game" || showStats || showInfo || starReveal || showNotificationPrompt) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -552,6 +573,26 @@ export function App() {
     }
   }
 
+  async function enableNotificationsFromPrompt() {
+    setEnablingNotifications(true);
+
+    try {
+      await enableGameNotifications();
+      setNotificationsEnabled(true);
+      setNotificationPermission(getNotificationPermission());
+      setShowNotificationPrompt(false);
+      showToast("Notifiche attive.", "success");
+    } catch (error) {
+      if (handleAuthRequired(error)) return;
+      setNotificationsEnabled(false);
+      setGameNotificationsEnabled(false);
+      setNotificationPermission(getNotificationPermission());
+      showToast(error instanceof Error ? error.message : "Impossibile attivare le notifiche.", "error");
+    } finally {
+      setEnablingNotifications(false);
+    }
+  }
+
   async function updateProfile(profile: ProfileUpdateDto) {
     try {
       return await updateProfileMutation.mutateAsync(profile);
@@ -770,6 +811,18 @@ export function App() {
         ) : null}
 
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
+
+        {showNotificationPrompt ? (
+          <NotificationPromptModal
+            isEnabling={enablingNotifications}
+            onEnable={() => void enableNotificationsFromPrompt()}
+            onNeverShow={() => {
+              dismissGameNotificationsPrompt();
+              setShowNotificationPrompt(false);
+            }}
+            onClose={() => setShowNotificationPrompt(false)}
+          />
+        ) : null}
 
         {starReveal ? (
           <StarRevealModal

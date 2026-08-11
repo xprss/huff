@@ -2,6 +2,7 @@ import { api } from "../../api";
 import type { PushSubscriptionDto } from "../../types";
 
 const GAME_NOTIFICATIONS_ENABLED_KEY = "huffGameNotificationsEnabled";
+const GAME_NOTIFICATIONS_PROMPT_DISMISSED_KEY = "huffGameNotificationsPromptDismissed";
 const PUSH_PUBLIC_KEY_KEY = "huffPushPublicKey";
 const SERVICE_WORKER_READY_TIMEOUT_MS = 2500;
 
@@ -20,6 +21,14 @@ export function setGameNotificationsEnabled(enabled: boolean) {
     localStorage.removeItem(GAME_NOTIFICATIONS_ENABLED_KEY);
     localStorage.removeItem(PUSH_PUBLIC_KEY_KEY);
   }
+}
+
+export function isGameNotificationsPromptDismissed() {
+  return localStorage.getItem(GAME_NOTIFICATIONS_PROMPT_DISMISSED_KEY) === "true";
+}
+
+export function dismissGameNotificationsPrompt() {
+  localStorage.setItem(GAME_NOTIFICATIONS_PROMPT_DISMISSED_KEY, "true");
 }
 
 export function getNotificationMenuLabel(enabled: boolean, permission: NotificationPermission) {
