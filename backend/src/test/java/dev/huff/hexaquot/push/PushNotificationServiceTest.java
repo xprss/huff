@@ -65,6 +65,23 @@ class PushNotificationServiceTest {
         assertTrue(subscriptionIds.contains(emptyGame.id));
     }
 
+    @Test
+    @TestTransaction
+    void findsSubscriptionsThatHaveNotReceivedTheWeeklyAwardsReminder() {
+        String reminderDate = "2099-02-09";
+        PushSubscriptionEntity pending = subscription("weekly-reminder-pending-" + UUID.randomUUID(), reminderDate, false);
+        PushSubscriptionEntity alreadyReminded = subscription("weekly-reminder-sent-" + UUID.randomUUID(), reminderDate, false);
+        alreadyReminded.lastWeeklyAwardsReminderDate = reminderDate;
+
+        List<String> subscriptionIds = pushNotificationService.findSubscriptionsForWeeklyAwardsReminder(reminderDate)
+            .stream()
+            .map(subscription -> subscription.id)
+            .toList();
+
+        assertTrue(subscriptionIds.contains(pending.id));
+        assertTrue(!subscriptionIds.contains(alreadyReminded.id));
+    }
+
     private PushSubscriptionEntity subscription(String userId, String puzzleDate, boolean alreadyReminded) {
         String now = Instant.now().toString();
         PushSubscriptionEntity entity = new PushSubscriptionEntity();

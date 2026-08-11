@@ -30,6 +30,7 @@ public class PushNotificationService {
     private static final Logger LOG = Logger.getLogger(PushNotificationService.class);
     private static final int NEW_GAME_PUSH_TTL_SECONDS = 24 * 60 * 60;
     private static final int DAILY_REMINDER_PUSH_TTL_SECONDS = 60 * 60;
+    private static final int WEEKLY_AWARDS_REMINDER_PUSH_TTL_SECONDS = 24 * 60 * 60;
 
     @ConfigProperty(name = "app.push.vapid.public-key")
     Optional<String> vapidPublicKey;
@@ -97,6 +98,15 @@ public class PushNotificationService {
         remindUnplayedDailyGame(dailyGameService.todayDate());
     }
 
+    @Scheduled(cron = "{app.push.weekly-awards-reminder.cron}", timeZone = "{app.game.timezone}")
+    void remindWeeklyAwards() {
+        if (!configured()) {
+            LOG.debug("Skipping weekly awards reminder push notifications because VAPID is not configured");
+            return;
+        }
+        remindWeeklyAwards(dailyGameService.todayDate());
+    }
+
     @Transactional
     public void notifyNewGame(String puzzleDate) {
         if (!configured()) {
@@ -125,6 +135,18 @@ public class PushNotificationService {
         }
     }
 
+    @Transactional
+    public void remindWeeklyAwards(String reminderDate) {
+        if (!configured()) {
+            return;
+        }
+
+        List<PushSubscriptionEntity> subscriptions = findSubscriptionsForWeeklyAwardsReminder(reminderDate);
+        for (PushSubscriptionEntity subscription : subscriptions) {
+            sendWeeklyAwardsReminderNotification(subscription, reminderDate);
+        }
+    }
+
     List<PushSubscriptionEntity> findSubscriptionsForDailyReminder(String puzzleDate) {
         return PushSubscriptionEntity.getEntityManager()
             .createQuery("""
@@ -141,6 +163,13 @@ public class PushNotificationService {
                 """, PushSubscriptionEntity.class)
             .setParameter("puzzleDate", puzzleDate)
             .getResultList();
+    }
+
+    List<PushSubscriptionEntity> findSubscriptionsForWeeklyAwardsReminder(String reminderDate) {
+        return PushSubscriptionEntity.list(
+            "lastWeeklyAwardsReminderDate is null or lastWeeklyAwardsReminderDate <> ?1",
+            reminderDate
+        );
     }
 
     private void sendNewGameNotification(PushSubscriptionEntity subscription, String puzzleDate) {
@@ -169,6 +198,21 @@ public class PushNotificationService {
         );
         if (sendNotification(subscription, payload, DAILY_REMINDER_PUSH_TTL_SECONDS)) {
             subscription.lastRemindedPuzzleDate = puzzleDate;
+            subscription.updatedAt = Instant.now().toString();
+        }
+    }
+
+    private void sendWeeklyAwardsReminderNotification(PushSubscriptionEntity subscription, String reminderDate) {
+        NotificationPayload payload = new NotificationPayload(
+            "weekly-awards-reminder",
+            "Le medaglie della settimana sono aggiornate",
+            "La settimana precedente è terminata: apri il tuo profilo per vedere le medaglie aggiornate.",
+            "/#/profile",
+            "/icons/huff-icon.svg",
+            "weekly-awards-reminder-" + reminderDate
+        );
+        if (sendNotification(subscription, payload, WEEKLY_AWARDS_REMINDER_PUSH_TTL_SECONDS)) {
+            subscription.lastWeeklyAwardsReminderDate = reminderDate;
             subscription.updatedAt = Instant.now().toString();
         }
     }
