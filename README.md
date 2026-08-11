@@ -81,10 +81,11 @@ VAPID_PRIVATE_KEY=...
 VAPID_SUBJECT=mailto:notifications@huff.ottonovembre.it
 PUSH_NEW_GAME_CRON=0 2 0 * * ?
 PUSH_DAILY_REMINDER_CRON=0 0 23 * * ?
+PUSH_WEEKLY_AWARDS_REMINDER_CRON=0 10 20 ? * MON
 LEADERBOARD_WEEKLY_AWARDS_CRON=0 5 0 ? * MON
 ```
 
-The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification per subscribed browser for each new daily puzzle. `PUSH_DAILY_REMINDER_CRON` reminds subscribed browsers whose user has not submitted any guess for the current puzzle date.
+The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification per subscribed browser for each new daily puzzle. `PUSH_DAILY_REMINDER_CRON` reminds subscribed browsers whose user has not submitted any guess for the current puzzle date. `PUSH_WEEKLY_AWARDS_REMINDER_CRON` sends every Monday at 20:10 a reminder that the previous week has ended; tapping it opens the user's profile to view the updated medals.
 
 The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 
