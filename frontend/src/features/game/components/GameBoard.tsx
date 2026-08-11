@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Share2 } from "lucide-react";
 import type { GameDto, GameMode, GameModeDto } from "../../../types";
 import type { BoardColumn } from "../gameUtils";
@@ -11,6 +12,7 @@ export function GameBoard({
   terminalCells,
   answerLength,
   canPlay,
+  isSubmitting,
   terminalResult,
   selectedCellIndex,
   completedSolution,
@@ -26,6 +28,7 @@ export function GameBoard({
   terminalCells: readonly string[];
   answerLength: number;
   canPlay: boolean;
+  isSubmitting: boolean;
   terminalResult: "won" | "lost" | null;
   selectedCellIndex: number | null;
   completedSolution: string | null;
@@ -35,6 +38,20 @@ export function GameBoard({
   onShareResult: () => void;
   onSelectCell: (index: number) => void;
 }) {
+  const previousGuessCountRef = useRef(game.guesses.length);
+  const [revealedAttemptIndex, setRevealedAttemptIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    const previousGuessCount = previousGuessCountRef.current;
+    previousGuessCountRef.current = game.guesses.length;
+
+    if (game.guesses.length <= previousGuessCount) return;
+
+    setRevealedAttemptIndex(game.guesses.length - 1);
+    const revealTimer = window.setTimeout(() => setRevealedAttemptIndex(null), 920);
+    return () => window.clearTimeout(revealTimer);
+  }, [game.guesses.length]);
+
   return (
     <div className="game-board-wrap">
       {game.canChangeMode ? (
@@ -53,7 +70,7 @@ export function GameBoard({
           <span>Condividi risultato</span>
         </button>
       ) : null}
-      <div className="board" aria-label="Griglia tentativi">
+      <div className={`board ${isSubmitting ? "is-submitting" : ""}`} aria-label="Griglia tentativi">
         <TerminalInput
           cells={terminalCells}
           answerLength={answerLength}
@@ -72,8 +89,13 @@ export function GameBoard({
                       state === "CORRECT" || state === "PRESENT" || state === "ABSENT" || state === "HIDDEN"
                         ? state.toLowerCase()
                         : "empty"
-                    }`}
+                    } ${attemptIndex === revealedAttemptIndex ? "just-revealed" : ""}`}
                     key={attemptIndex}
+                    style={
+                      attemptIndex === revealedAttemptIndex
+                        ? ({ "--feedback-reveal-delay": `${columnIndex * 78}ms` } as CSSProperties)
+                        : undefined
+                    }
                   >
                     {state === "HIDDEN" ? <span className="rat-in-guess">🐭</span> : null}
                   </span>

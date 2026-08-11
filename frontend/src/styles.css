@@ -1927,6 +1927,8 @@ h1 {
 }
 
 .board {
+  position: relative;
+  isolation: isolate;
   width: 100%;
   display: grid;
   grid-template-rows: auto auto auto;
@@ -1938,6 +1940,34 @@ h1 {
   border-radius: var(--control-radius);
   background: linear-gradient(180deg, var(--color-surface-glass), var(--color-surface));
   box-shadow: 0 18px 60px var(--color-board-shadow);
+}
+
+.board::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 26px 18px auto;
+  height: 58px;
+  border-radius: var(--compact-radius);
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--color-title-glow-soft), transparent);
+  filter: blur(16px);
+  transform: scaleX(0.72);
+}
+
+.board > * {
+  position: relative;
+  z-index: 1;
+}
+
+.board.is-submitting::after {
+  animation: board-word-flash 680ms var(--ease-out) both;
+}
+
+.board.is-submitting .terminal-input {
+  pointer-events: none;
+  animation: submitted-word-departure 680ms cubic-bezier(0.22, 0.8, 0.2, 1) both;
 }
 
 .terminal-input {
@@ -2019,7 +2049,9 @@ h1 {
   transition:
     color var(--motion-base) var(--ease-out),
     text-shadow var(--motion-base) var(--ease-out),
-    transform var(--motion-fast) var(--ease-press);
+    transform var(--motion-fast) var(--ease-press),
+    filter var(--motion-base) var(--ease-out);
+  will-change: filter, opacity, transform;
 }
 
 .terminal-cell.filled span {
@@ -2028,16 +2060,63 @@ h1 {
     0 0 5px var(--color-title-glow-soft),
     0 0 14px var(--color-title-glow-medium),
     0 0 26px var(--color-title-glow-wide);
-  animation: letter-pop 130ms var(--ease-out) both;
+  animation: letter-arrival 440ms cubic-bezier(0.16, 0.88, 0.26, 1.18) both;
 }
 
-@keyframes letter-pop {
+@keyframes letter-arrival {
   from {
-    transform: translateY(2px) scale(0.92);
+    opacity: 0;
+    filter: blur(11px);
+    transform: translateY(13px) scale(0.66);
+  }
+
+  58% {
+    opacity: 1;
+    filter: blur(1.4px);
+    transform: translateY(-2px) scale(1.07);
   }
 
   to {
+    opacity: 1;
+    filter: blur(0);
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes submitted-word-departure {
+  0% {
+    filter: blur(0);
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  45% {
+    filter: blur(1px);
+    opacity: 0.94;
+    transform: scale(1.012);
+  }
+
+  100% {
+    filter: blur(9px);
+    opacity: 0.38;
+    transform: scale(0.975);
+  }
+}
+
+@keyframes board-word-flash {
+  0% {
+    opacity: 0;
+    transform: scaleX(0.72);
+  }
+
+  38% {
+    opacity: 0.85;
+    transform: scaleX(1.03);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scaleX(1.14);
   }
 }
 
@@ -2161,19 +2240,16 @@ h1 {
 .feedback-marker.correct {
   background: var(--color-correct);
   border-color: var(--color-correct);
-  animation: marker-reveal 190ms var(--ease-out) both;
 }
 
 .feedback-marker.present {
   background: var(--color-present);
   border-color: var(--color-present);
-  animation: marker-reveal 190ms var(--ease-out) both;
 }
 
 .feedback-marker.absent {
   background: var(--color-absent);
   border-color: var(--color-absent);
-  animation: marker-reveal 190ms var(--ease-out) both;
 }
 
 .feedback-marker.hidden {
@@ -2182,7 +2258,10 @@ h1 {
   place-items: center;
   background: var(--color-terminal-background);
   color: var(--color-present);
-  animation: marker-reveal 190ms var(--ease-out) both;
+}
+
+.feedback-marker.just-revealed {
+  animation: marker-reveal 420ms var(--ease-out) var(--feedback-reveal-delay, 0ms) both;
 }
 
 .feedback-marker.hidden svg {
@@ -2193,13 +2272,21 @@ h1 {
 
 @keyframes marker-reveal {
   from {
-    opacity: 0.35;
-    transform: scaleY(0.36);
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(10px) scaleX(0.42) scaleY(0.3);
+  }
+
+  62% {
+    opacity: 1;
+    filter: blur(0.8px);
+    transform: translateY(-1px) scaleX(1.06) scaleY(1.15);
   }
 
   to {
     opacity: 1;
-    transform: scaleY(1);
+    filter: blur(0);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 }
 

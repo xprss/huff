@@ -748,6 +748,7 @@ export function App() {
                   terminalCells={terminalCells}
                   answerLength={answerLength}
                   canPlay={canPlay}
+                  isSubmitting={guessMutation.isPending}
                   terminalResult={terminalResult}
                   selectedCellIndex={selectedCellIndex}
                   completedSolution={completedSolution}
