@@ -7,6 +7,38 @@
 }
 
 @font-face {
+  font-family: "Comic Neue";
+  src: url("/fonts/ComicNeue-Regular.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  src: url("/fonts/ComicNeue-Italic.woff2") format("woff2");
+  font-display: swap;
+  font-style: italic;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  src: url("/fonts/ComicNeue-Bold.woff2") format("woff2");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Comic Neue";
+  src: url("/fonts/ComicNeue-BoldItalic.woff2") format("woff2");
+  font-display: swap;
+  font-style: italic;
+  font-weight: 700;
+}
+
+@font-face {
   font-family: "Creato Display";
   src: url("/fonts/CreatoDisplay-Thin.otf") format("opentype");
   font-display: block;
@@ -499,6 +531,11 @@ h1 {
   border: 2px solid var(--color-surface-border);
   border-radius: 50%;
   box-shadow: inset 0 0 0 2px var(--color-page);
+}
+
+html[data-theme="childhood"] {
+  --font-body: "Comic Neue", "Comic Sans MS", "Comic Sans", cursive;
+  --font-title: "Comic Neue", "Comic Sans MS", "Comic Sans", cursive;
 }
 
 html[data-theme="chromatic"] .app-shell {
