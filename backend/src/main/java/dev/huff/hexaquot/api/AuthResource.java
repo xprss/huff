@@ -5,9 +5,11 @@ import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.auth.AdminPrivileges;
 import dev.huff.hexaquot.leaderboard.LeaderboardService;
 import dev.huff.hexaquot.leaderboard.MedalCountsDto;
+import dev.huff.hexaquot.push.AnnouncementService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
@@ -19,6 +21,9 @@ public class AuthResource {
 
     @Inject
     LeaderboardService leaderboardService;
+
+    @Inject
+    AnnouncementService announcementService;
 
     @GET
     public Response me(@CookieParam("huff_session") String sessionId) {
@@ -32,7 +37,8 @@ public class AuthResource {
         Response.ResponseBuilder response = Response.ok(new MeDto(
             true,
             UserDto.from(resolvedUser.user(), leaderboardService.medalCounts(resolvedUser.user().id())),
-            userService.authEnabled()
+            userService.authEnabled(),
+            announcementService.pending(resolvedUser.user().id())
         ));
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
@@ -68,7 +74,22 @@ public class AuthResource {
         return response.build();
     }
 
-    public record MeDto(boolean loggedIn, UserDto user, boolean authEnabled) {
+    @POST
+    @Path("/announcements/{campaign}/seen")
+    public Response markAnnouncementSeen(
+        @CookieParam("huff_session") String sessionId,
+        @jakarta.ws.rs.PathParam("campaign") String campaign
+    ) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) return Response.status(Response.Status.UNAUTHORIZED)
+            .entity(new ErrorDto("token_required", "Token Bearer valido richiesto.")).build();
+        announcementService.markSeen(resolvedUser.user().id(), campaign);
+        Response.ResponseBuilder response = Response.noContent();
+        if (resolvedUser.setCookieHeader() != null) response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        return response.build();
+    }
+
+    public record MeDto(boolean loggedIn, UserDto user, boolean authEnabled, java.util.List<String> pendingAnnouncements) {
     }
 
     public record UserDto(

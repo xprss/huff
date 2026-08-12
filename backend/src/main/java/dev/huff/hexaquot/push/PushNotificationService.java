@@ -3,6 +3,7 @@ package dev.huff.hexaquot.push;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.game.DailyGameService;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
+import dev.huff.hexaquot.persistence.PushCampaignDeliveryEntity;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,6 +32,7 @@ public class PushNotificationService {
     private static final int NEW_GAME_PUSH_TTL_SECONDS = 24 * 60 * 60;
     private static final int DAILY_REMINDER_PUSH_TTL_SECONDS = 60 * 60;
     private static final int WEEKLY_AWARDS_REMINDER_PUSH_TTL_SECONDS = 24 * 60 * 60;
+    private static final int CAMPAIGN_PUSH_TTL_SECONDS = 7 * 24 * 60 * 60;
 
     @ConfigProperty(name = "app.push.vapid.public-key")
     Optional<String> vapidPublicKey;
@@ -105,6 +107,39 @@ public class PushNotificationService {
             return;
         }
         remindWeeklyAwards(dailyGameService.todayDate());
+    }
+
+    @Scheduled(every = "10m", delayed = "5s")
+    void dispatchLaunchCampaignSchedule() {
+        dispatchHexadigitLaunch();
+    }
+
+    @Transactional
+    public void dispatchHexadigitLaunch() {
+        if (!configured()) return;
+        List<PushCampaignDeliveryEntity> deliveries = PushCampaignDeliveryEntity.<PushCampaignDeliveryEntity>list(
+            "campaign = ?1 and sentAt is null order by createdAt", AnnouncementService.HEXADIGIT_LAUNCH
+        );
+        for (PushCampaignDeliveryEntity delivery : deliveries) {
+            PushSubscriptionEntity subscription = PushSubscriptionEntity.findById(delivery.subscriptionId);
+            if (subscription == null) {
+                delivery.delete();
+                continue;
+            }
+            delivery.attempts = (delivery.attempts == null ? 0 : delivery.attempts) + 1;
+            delivery.lastAttemptAt = Instant.now().toString();
+            NotificationPayload payload = new NotificationPayload(
+                "hexadigit-launch",
+                "È arrivato Hexadigit",
+                "Indovina il codice di 6 cifre in 6 tentativi: colori e simboli ti guidano.",
+                "/#/hexadigit",
+                "/icons/huff-icon.svg",
+                "hexadigit-launch"
+            );
+            if (sendNotification(subscription, payload, CAMPAIGN_PUSH_TTL_SECONDS)) {
+                delivery.sentAt = Instant.now().toString();
+            }
+        }
     }
 
     @Transactional
