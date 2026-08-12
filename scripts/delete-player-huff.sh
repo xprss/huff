@@ -176,7 +176,11 @@ SELECT
   u.created_at,
   COUNT(g.id)::integer AS games
 FROM selected_users u
-LEFT JOIN games g ON g.user_id = u.id
+LEFT JOIN (
+  SELECT id, user_id FROM hexaword_games
+  UNION ALL
+  SELECT id, user_id FROM hexadigit_games
+) g ON g.user_id = u.id
 GROUP BY u.id, u.email, u.display_name, u.google_subject, u.created_at
 ORDER BY u.display_name NULLS LAST, u.email NULLS LAST, u.id;
 
@@ -199,11 +203,25 @@ BEGIN
 END $$;
 
 WITH deleted_games AS (
-  DELETE FROM games g
+  DELETE FROM hexaword_games g
   USING selected_users u
   WHERE current_setting('huff_delete.delete_mode') = 'true'
     AND g.user_id = u.id
   RETURNING g.id
+),
+deleted_hexadigit_games AS (
+  DELETE FROM hexadigit_games g
+  USING selected_users u
+  WHERE current_setting('huff_delete.delete_mode') = 'true'
+    AND g.user_id = u.id
+  RETURNING g.id
+),
+deleted_subscriptions AS (
+  DELETE FROM push_subscriptions s
+  USING selected_users u
+  WHERE current_setting('huff_delete.delete_mode') = 'true'
+    AND s.user_id = u.id
+  RETURNING s.id
 ),
 deleted_users AS (
   DELETE FROM users u
@@ -218,7 +236,8 @@ SELECT
     ELSE 'dry-run'
   END AS mode,
   (SELECT COUNT(*) FROM deleted_users)::integer AS users,
-  (SELECT COUNT(*) FROM deleted_games)::integer AS games;
+  ((SELECT COUNT(*) FROM deleted_games) + (SELECT COUNT(*) FROM deleted_hexadigit_games))::integer AS games,
+  (SELECT COUNT(*) FROM deleted_subscriptions)::integer AS push_subscriptions;
 
 COMMIT;
 SQL

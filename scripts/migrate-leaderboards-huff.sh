@@ -27,6 +27,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS weekly_medals_user_week_unique_idx
 CREATE INDEX IF NOT EXISTS weekly_medals_user_medal_idx
   ON weekly_medals (user_id, medal);
 CREATE INDEX IF NOT EXISTS games_won_puzzle_date_user_idx
-  ON games (puzzle_date, user_id)
+  ON hexaword_games (puzzle_date, user_id)
   WHERE status = 'WON';
 "

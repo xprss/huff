@@ -68,7 +68,7 @@ WITH player_stats AS (
       '[]'::jsonb
     ) AS wins
   FROM users u
-  LEFT JOIN games g ON g.user_id = u.id
+  LEFT JOIN hexaword_games g ON g.user_id = u.id
   GROUP BY u.id, u.email, u.display_name, u.created_at
 )
 SELECT jsonb_pretty(

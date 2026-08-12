@@ -24,7 +24,7 @@ WITH weekly_scores AS (
     date_trunc('week', g.puzzle_date::date)::date AS week_start,
     COUNT(*)::integer AS wins,
     MAX(COALESCE(g.completed_at, g.updated_at, g.created_at)) AS last_win_at
-  FROM games g
+  FROM hexaword_games g
   WHERE g.status = 'WON'
     AND g.puzzle_date::date < date_trunc('week', timezone('${GAME_TIMEZONE}', now()))::date
   GROUP BY g.user_id, date_trunc('week', g.puzzle_date::date)::date
