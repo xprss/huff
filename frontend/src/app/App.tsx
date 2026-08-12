@@ -2,7 +2,7 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, X } from "lucide-react";
 import { api, clearAccessToken, isAuthRequiredError, storeAccessToken } from "../api";
-import { AppThemeProvider } from "../theme";
+import { appThemes, AppThemeProvider, getAppTheme, getStoredThemeId, THEME_STORAGE_KEY } from "../theme";
 import type {
   GameDto,
   GameMode,
@@ -99,7 +99,7 @@ export function App() {
   const [dismissedFirstGuessSuggestionPuzzleDate, setDismissedFirstGuessSuggestionPuzzleDate] = React.useState<
     string | null
   >(null);
-  const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
+  const [themeId, setThemeId] = React.useState(getStoredThemeId);
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(() => areGameNotificationsEnabled());
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
     getNotificationPermission
@@ -111,7 +111,7 @@ export function App() {
   const notificationPromptHandledRef = React.useRef(false);
   const launchAnnouncementHandledRef = React.useRef(false);
   const [showLaunchAnnouncement, setShowLaunchAnnouncement] = React.useState(false);
-  const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
+  const appTheme = React.useMemo(() => getAppTheme(themeId), [themeId]);
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
   const isLoggedIn = Boolean(me?.loggedIn);
@@ -298,8 +298,8 @@ export function App() {
   }, [me?.pendingAnnouncements]);
 
   React.useEffect(() => {
-    localStorage.setItem("darkMode", String(darkMode));
-  }, [darkMode]);
+    localStorage.setItem(THEME_STORAGE_KEY, appTheme.id);
+  }, [appTheme.id]);
 
   React.useEffect(() => {
     function refreshNotificationState() {
@@ -690,7 +690,7 @@ export function App() {
 
   if ((me?.authEnabled === true && !me.loggedIn) || isAuthRequiredError(meQuery.error)) {
     return (
-      <AppThemeProvider conditions={themeConditions}>
+      <AppThemeProvider theme={appTheme}>
         <main className="app-shell">
           <GoogleLoginScreen
             onAccessToken={(token) => {
@@ -704,7 +704,7 @@ export function App() {
   }
 
   return (
-    <AppThemeProvider conditions={themeConditions}>
+    <AppThemeProvider theme={appTheme}>
       <main className="app-shell">
         <section className="game-surface" aria-busy={loading}>
           <AppHeader
@@ -720,7 +720,8 @@ export function App() {
             showAdmin={canViewAdmin}
             notificationsEnabled={notificationsEnabled}
             notificationMenuLabel={notificationMenuLabel}
-            darkMode={darkMode}
+            themes={appThemes}
+            selectedThemeId={appTheme.id}
             showLogout={Boolean(me?.authEnabled && me.loggedIn)}
             onLogout={() => {
               void api
@@ -763,9 +764,8 @@ export function App() {
               setShowActionsMenu(false);
             }}
             onToggleNotifications={() => void toggleGameNotifications()}
-            onToggleTheme={() => {
-              setDarkMode((value) => !value);
-              setShowActionsMenu(false);
+            onSelectTheme={(selectedThemeId) => {
+              setThemeId(selectedThemeId);
             }}
             onCloseMenu={() => setShowActionsMenu(false)}
           />

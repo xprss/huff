@@ -208,7 +208,7 @@ button {
   padding: var(--viewport-padding) var(--viewport-padding) calc(var(--viewport-padding) + env(safe-area-inset-bottom, 0px));
   background:
     radial-gradient(circle at 14% 12%, var(--color-app-glow-correct), var(--color-transparent) 32%),
-    radial-gradient(circle at 86% 20%, rgba(70, 201, 255, 0.14), var(--color-transparent) 28%),
+    radial-gradient(circle at 86% 20%, var(--color-title-glow-medium), var(--color-transparent) 28%),
     radial-gradient(circle at 50% 96%, var(--color-app-glow-error), var(--color-transparent) 34%),
     var(--color-page);
   transition: background var(--motion-slow) var(--ease-out), color var(--motion-slow) var(--ease-out);
@@ -400,7 +400,7 @@ h1 {
   border-color: var(--color-present);
   background: var(--color-present);
   color: var(--color-on-present);
-  box-shadow: 0 0 24px rgba(255, 209, 102, 0.34);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--color-present) 34%, transparent);
 }
 
 .star-action.available svg {
@@ -485,6 +485,99 @@ h1 {
   height: 18px;
   flex: 0 0 auto;
   color: var(--color-accent);
+}
+
+.menu-item-trailing-icon,
+.theme-check {
+  margin-left: auto;
+}
+
+.theme-swatch {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 2px solid var(--color-surface-border);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--color-page);
+}
+
+html[data-theme="chromatic"] .app-shell {
+  background:
+    radial-gradient(circle at 12% 16%, rgba(71, 230, 255, 0.2), transparent 30%),
+    radial-gradient(circle at 88% 14%, rgba(255, 90, 194, 0.18), transparent 28%),
+    radial-gradient(circle at 54% 100%, rgba(255, 211, 102, 0.14), transparent 34%),
+    var(--color-page);
+}
+
+html[data-theme="chromatic"] .title-mark h1 {
+  color: #ffffff;
+  text-shadow:
+    0 1px 0 #1a2030,
+    0 0 8px rgba(222, 240, 255, 0.92),
+    0 0 20px rgba(160, 197, 255, 0.72),
+    0 0 38px rgba(244, 142, 229, 0.46);
+}
+
+html[data-theme="chromatic"] .icon-button,
+html[data-theme="chromatic"] .icon-link,
+html[data-theme="chromatic"] .key,
+html[data-theme="chromatic"] .action-menu,
+html[data-theme="chromatic"] .board,
+html[data-theme="chromatic"] .mode-option {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--color-button), var(--color-button)) padding-box,
+    linear-gradient(115deg, #72f1ff, #b4c3ff 22%, #ffb5e8 46%, #ffe09a 68%, #81ffe1 84%, #72f1ff) border-box;
+  background-size: auto, 260% 100%;
+  box-shadow:
+    0 8px 24px var(--color-button-shadow),
+    0 0 14px rgba(148, 188, 255, 0.24);
+  animation: chromatic-sheen 4.5s linear infinite;
+}
+
+html[data-theme="chromatic"] .board {
+  background:
+    linear-gradient(180deg, var(--color-surface-glass), var(--color-surface)) padding-box,
+    linear-gradient(115deg, #72f1ff, #b4c3ff 22%, #ffb5e8 46%, #ffe09a 68%, #81ffe1 84%, #72f1ff) border-box;
+}
+
+html[data-theme="chromatic"] .key.correct {
+  background:
+    linear-gradient(var(--color-correct), var(--color-correct)) padding-box,
+    linear-gradient(115deg, #72f1ff, #b4c3ff 22%, #ffb5e8 46%, #ffe09a 68%, #81ffe1 84%, #72f1ff) border-box;
+  border-color: transparent;
+  background-size: auto, 260% 100%;
+}
+
+html[data-theme="chromatic"] .key.present {
+  background:
+    linear-gradient(var(--color-present), var(--color-present)) padding-box,
+    linear-gradient(115deg, #72f1ff, #b4c3ff 22%, #ffb5e8 46%, #ffe09a 68%, #81ffe1 84%, #72f1ff) border-box;
+  border-color: transparent;
+  background-size: auto, 260% 100%;
+}
+
+html[data-theme="chromatic"] .key.absent {
+  background:
+    linear-gradient(var(--color-absent), var(--color-absent)) padding-box,
+    linear-gradient(115deg, #72f1ff, #b4c3ff 22%, #ffb5e8 46%, #ffe09a 68%, #81ffe1 84%, #72f1ff) border-box;
+  border-color: transparent;
+  background-size: auto, 260% 100%;
+}
+
+@keyframes chromatic-sheen {
+  to { background-position: 0 0, 260% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="chromatic"] .icon-button,
+  html[data-theme="chromatic"] .icon-link,
+  html[data-theme="chromatic"] .key,
+  html[data-theme="chromatic"] .action-menu,
+  html[data-theme="chromatic"] .board,
+  html[data-theme="chromatic"] .mode-option {
+    animation: none;
+  }
 }
 
 @keyframes menu-enter {
@@ -2205,7 +2298,7 @@ h1 {
   background: var(--color-present);
   color: var(--color-on-present);
   cursor: pointer;
-  box-shadow: 0 0 18px rgba(255, 209, 102, 0.24);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-present) 24%, transparent);
   transition:
     transform var(--motion-fast) var(--ease-press),
     border-color var(--motion-base) var(--ease-out),
@@ -2214,7 +2307,7 @@ h1 {
 
 .kitten-button:hover {
   border-color: var(--color-hover-border);
-  box-shadow: 0 0 26px rgba(255, 209, 102, 0.32);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--color-present) 32%, transparent);
 }
 
 .kitten-button:active {
@@ -3003,7 +3096,7 @@ h1 {
 .star-reveal-backdrop {
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 42%, rgba(255, 247, 210, 0.58), rgba(255, 209, 102, 0.32) 17%, rgba(70, 201, 255, 0.18) 36%, rgba(4, 7, 20, 0.78) 72%),
+    radial-gradient(circle at 50% 42%, var(--color-title-glow-soft), color-mix(in srgb, var(--color-present) 32%, transparent) 17%, var(--color-title-glow-medium) 36%, var(--color-modal-backdrop) 72%),
     var(--color-modal-backdrop);
 }
 
@@ -3013,13 +3106,13 @@ h1 {
   inset: -34%;
   background: conic-gradient(
     from 0deg,
-    rgba(255, 255, 255, 0),
-    rgba(255, 247, 210, 0.32),
-    rgba(255, 255, 255, 0),
-    rgba(70, 201, 255, 0.18),
-    rgba(255, 255, 255, 0),
-    rgba(255, 209, 102, 0.28),
-    rgba(255, 255, 255, 0)
+    transparent,
+    var(--color-title-glow-soft),
+    transparent,
+    var(--color-title-glow-medium),
+    transparent,
+    color-mix(in srgb, var(--color-present) 28%, transparent),
+    transparent
   );
   opacity: 0.88;
   pointer-events: none;
@@ -3028,13 +3121,13 @@ h1 {
 .star-reveal-modal {
   position: relative;
   width: min(100%, 430px);
-  border-color: rgba(255, 209, 102, 0.78);
+  border-color: var(--color-present);
   background:
-    linear-gradient(180deg, rgba(255, 247, 210, 0.16), rgba(22, 27, 47, 0.94)),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-title-text) 16%, transparent), var(--color-modal)),
     var(--color-modal);
   box-shadow:
-    0 0 0 1px rgba(255, 247, 210, 0.26),
-    0 0 60px rgba(255, 209, 102, 0.58),
+    0 0 0 1px color-mix(in srgb, var(--color-title-text) 26%, transparent),
+    0 0 60px color-mix(in srgb, var(--color-present) 58%, transparent),
     0 24px 90px var(--color-modal-shadow);
 }
 
@@ -3049,17 +3142,17 @@ h1 {
   height: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 247, 210, 0.18);
+  background: color-mix(in srgb, var(--color-title-text) 18%, transparent);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 247, 210, 0.18),
-    0 0 18px rgba(255, 209, 102, 0.2);
+    inset 0 0 0 1px color-mix(in srgb, var(--color-title-text) 18%, transparent),
+    0 0 18px color-mix(in srgb, var(--color-present) 20%, transparent);
 }
 
 .star-reveal-timer span {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--color-present), rgba(255, 247, 210, 0.94));
+  background: linear-gradient(90deg, var(--color-present), var(--color-title-text));
   transform-origin: left center;
   animation: star-reveal-timer var(--star-reveal-duration) linear forwards;
 }
@@ -3087,8 +3180,8 @@ h1 {
   line-height: 1;
   text-transform: uppercase;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-    0 10px 22px rgba(4, 7, 20, 0.24);
+    inset 0 0 0 1px var(--color-surface-border),
+    0 10px 22px var(--color-modal-shadow);
 }
 
 .star-reveal-tile.correct {
@@ -3142,7 +3235,7 @@ h1 {
 .toast.success {
   border-color: var(--color-present);
   box-shadow:
-    0 0 26px rgba(255, 209, 102, 0.26),
+    0 0 26px color-mix(in srgb, var(--color-present) 26%, transparent),
     0 18px 60px var(--color-modal-shadow);
 }
 

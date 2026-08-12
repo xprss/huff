@@ -1,8 +1,9 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Edit3, Grid2X2, Info, LogOut, Menu, Moon, Shield, Star, Sun, Trophy, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
+import type { AppTheme } from "../theme";
 
 export function AppHeader({
   puzzleDate,
@@ -17,7 +18,8 @@ export function AppHeader({
   showAdmin,
   notificationsEnabled,
   notificationMenuLabel,
-  darkMode,
+  themes,
+  selectedThemeId,
   showLogout,
   onUseStar,
   onEditProfile,
@@ -29,7 +31,7 @@ export function AppHeader({
   onOpenAdmin,
   onOpenInfo,
   onToggleNotifications,
-  onToggleTheme,
+  onSelectTheme,
   onLogout,
   onCloseMenu
 }: {
@@ -45,7 +47,8 @@ export function AppHeader({
   showAdmin: boolean;
   notificationsEnabled: boolean;
   notificationMenuLabel: string;
-  darkMode: boolean;
+  themes: readonly AppTheme[];
+  selectedThemeId: string;
   showLogout: boolean;
   onUseStar: () => void;
   onEditProfile: () => void;
@@ -57,10 +60,16 @@ export function AppHeader({
   onOpenAdmin: () => void;
   onOpenInfo: () => void;
   onToggleNotifications: () => void;
-  onToggleTheme: () => void;
+  onSelectTheme: (themeId: string) => void;
   onLogout: () => void;
   onCloseMenu: () => void;
 }) {
+  const [showThemes, setShowThemes] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!showActionsMenu) setShowThemes(false);
+  }, [showActionsMenu]);
+
   const isMenuPageActive = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
     if (menuPage === "games") {
       return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexadigit";
@@ -122,7 +131,34 @@ export function AppHeader({
             <Menu size={21} />
           </button>
           {showActionsMenu ? (
-            <div className="action-menu" role="menu" aria-label="Azioni">
+            <div className="action-menu" role="menu" aria-label={showThemes ? "Temi" : "Azioni"}>
+              {showThemes ? (
+                <>
+                  <button className="menu-item menu-back" type="button" role="menuitem" onClick={() => setShowThemes(false)}>
+                    <ChevronLeft size={18} />
+                    <span>Temi</span>
+                  </button>
+                  <div className="menu-divider" role="separator" />
+                  {themes.map((theme) => {
+                    const selected = theme.id === selectedThemeId;
+                    return (
+                      <button
+                        className={`menu-item theme-menu-item${selected ? " selected" : ""}`}
+                        key={theme.id}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={selected}
+                        onClick={() => onSelectTheme(theme.id)}
+                      >
+                        <span className="theme-swatch" style={{ background: theme.colors.primary }} aria-hidden="true" />
+                        <span>{theme.name}</span>
+                        {selected ? <Check className="theme-check" size={17} aria-hidden="true" /> : null}
+                      </button>
+                    );
+                  })}
+                </>
+              ) : (
+                <>
               {canUseGameActions ? (
                 <>
                   <button {...menuItemProps("games")} type="button" role="menuitem" onClick={onOpenGames}>
@@ -157,9 +193,10 @@ export function AppHeader({
                 {notificationsEnabled ? <BellOff size={18} /> : <Bell size={18} />}
                 <span>{notificationMenuLabel}</span>
               </button>
-              <button className="menu-item" type="button" role="menuitem" onClick={onToggleTheme}>
-                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-                <span>{darkMode ? "Tema chiaro" : "Tema scuro"}</span>
+              <button className="menu-item" type="button" role="menuitem" onClick={() => setShowThemes(true)}>
+                <Palette size={18} />
+                <span>Temi</span>
+                <ChevronRight className="menu-item-trailing-icon" size={18} aria-hidden="true" />
               </button>
               {showLogout ? (
                 <>
@@ -170,6 +207,8 @@ export function AppHeader({
                   </button>
                 </>
               ) : null}
+                </>
+              )}
             </div>
           ) : null}
         </div>
