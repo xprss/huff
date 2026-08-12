@@ -1,6 +1,6 @@
 package dev.huff.hexaquot.leaderboard;
 
-import dev.huff.hexaquot.game.DailyGameService;
+import dev.huff.hexaquot.game.OverallStatsService;
 import dev.huff.hexaquot.persistence.UserEntity;
 import dev.huff.hexaquot.persistence.WeeklyMedalAwardStateEntity;
 import dev.huff.hexaquot.persistence.WeeklyMedalEntity;
@@ -34,7 +34,7 @@ public class LeaderboardService {
     LeaderboardRepository leaderboardRepository;
 
     @Inject
-    DailyGameService dailyGameService;
+    OverallStatsService overallStatsService;
 
     @Transactional
     void onStart(@Observes StartupEvent event) {
@@ -77,15 +77,19 @@ public class LeaderboardService {
     }
 
     public LeaderboardsDto leaderboards() {
+        return leaderboards(LeaderboardRepository.Board.HEXAWORD);
+    }
+
+    public LeaderboardsDto leaderboards(LeaderboardRepository.Board board) {
         LocalDate today = LocalDate.now(zoneId());
         LocalDate yearStart = today.withDayOfYear(1);
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         return new LeaderboardsDto(
-            period(null, null, false),
-            period(yearStart, yearStart.plusYears(1), false),
-            period(monthStart, monthStart.plusMonths(1), false),
-            period(weekStart, weekStart.plusWeeks(1), true)
+            period(board, null, null, false),
+            period(board, yearStart, yearStart.plusYears(1), false),
+            period(board, monthStart, monthStart.plusMonths(1), false),
+            period(board, weekStart, weekStart.plusWeeks(1), true)
         );
     }
 
@@ -95,12 +99,16 @@ public class LeaderboardService {
         if (user == null) {
             throw new NotFoundException("Giocatore non trovato.");
         }
+        var stats = overallStatsService.allForUser(user.id);
         return new PublicPlayerProfileDto(
             user.displayName,
             user.nickname,
             user.profileEmoji,
             user.bio,
-            dailyGameService.statsForUserId(user.id),
+            stats.overall(),
+            stats.overall(),
+            stats.hexaword(),
+            stats.hexadigit(),
             medalCounts(user.id)
         );
     }
@@ -117,7 +125,7 @@ public class LeaderboardService {
         );
     }
 
-    private LeaderboardPeriodDto period(LocalDate startDate, LocalDate endDate, boolean weekly) {
+    private LeaderboardPeriodDto period(LeaderboardRepository.Board board, LocalDate startDate, LocalDate endDate, boolean weekly) {
         Comparator<LeaderboardRepository.PlayerScore> comparator = Comparator
             .comparingInt(LeaderboardRepository.PlayerScore::wins)
             .reversed();
@@ -129,15 +137,17 @@ public class LeaderboardService {
             comparator = comparator.thenComparing(score -> score.user().nickname);
         }
         List<LeaderboardEntryDto> entries = leaderboardRepository
-            .winnerScores(startDate == null ? null : startDate.toString(), endDate == null ? null : endDate.toString())
+            .winnerScores(board, startDate == null ? null : startDate.toString(), endDate == null ? null : endDate.toString())
             .stream()
             .sorted(comparator)
-            .map(score -> new LeaderboardEntryDto(0, score.user().displayName, score.user().nickname, score.user().profileEmoji, score.wins()))
+            .map(score -> new LeaderboardEntryDto(0, score.user().displayName, score.user().nickname, score.user().profileEmoji,
+                score.wins(), score.hexawordWins(), score.hexadigitWins()))
             .toList();
         List<LeaderboardEntryDto> ranked = java.util.stream.IntStream.range(0, entries.size())
             .mapToObj(index -> {
                 LeaderboardEntryDto entry = entries.get(index);
-                return new LeaderboardEntryDto(index + 1, entry.displayName(), entry.nickname(), entry.profileEmoji(), entry.wins());
+                return new LeaderboardEntryDto(index + 1, entry.displayName(), entry.nickname(), entry.profileEmoji(),
+                    entry.wins(), entry.hexawordWins(), entry.hexadigitWins());
             })
             .toList();
         return new LeaderboardPeriodDto(
@@ -149,7 +159,7 @@ public class LeaderboardService {
 
     private void awardWeek(LocalDate weekStart) {
         List<LeaderboardRepository.PlayerScore> podium = leaderboardRepository
-            .winnerScores(weekStart.toString(), weekStart.plusWeeks(1).toString())
+            .winnerScores(LeaderboardRepository.Board.OVERALL, weekStart.toString(), weekStart.plusWeeks(1).toString())
             .stream()
             .sorted(Comparator.comparingInt(LeaderboardRepository.PlayerScore::wins).reversed()
                 .thenComparing(LeaderboardRepository.PlayerScore::lastWinAt, Comparator.nullsLast(String::compareTo))

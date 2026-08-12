@@ -35,6 +35,12 @@ public class GameResource {
         return response.build();
     }
 
+    @GET
+    @Path("/hexaword/today")
+    public Response hexawordToday(@CookieParam("huff_session") String sessionId) {
+        return today(sessionId);
+    }
+
     @POST
     @Path("/game/today/mode")
     public Response selectMode(@CookieParam("huff_session") String sessionId, ModeRequest request) {
@@ -52,6 +58,12 @@ public class GameResource {
     }
 
     @POST
+    @Path("/hexaword/today/mode")
+    public Response selectHexawordMode(@CookieParam("huff_session") String sessionId, ModeRequest request) {
+        return selectMode(sessionId, request);
+    }
+
+    @POST
     @Path("/game/today/guesses")
     public Response guess(@CookieParam("huff_session") String sessionId, GuessRequest request) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
@@ -63,6 +75,12 @@ public class GameResource {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }
         return response.build();
+    }
+
+    @POST
+    @Path("/hexaword/today/guesses")
+    public Response hexawordGuess(@CookieParam("huff_session") String sessionId, GuessRequest request) {
+        return guess(sessionId, request);
     }
 
     @POST
@@ -80,6 +98,10 @@ public class GameResource {
     }
 
     @POST
+    @Path("/hexaword/today/kitten")
+    public Response useHexawordKitten(@CookieParam("huff_session") String sessionId) { return useKitten(sessionId); }
+
+    @POST
     @Path("/game/today/star")
     public Response useStar(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
@@ -94,6 +116,10 @@ public class GameResource {
         return response.build();
     }
 
+    @POST
+    @Path("/hexaword/today/star")
+    public Response useHexawordStar(@CookieParam("huff_session") String sessionId) { return useStar(sessionId); }
+
     @GET
     @Path("/stats")
     public Response stats(@CookieParam("huff_session") String sessionId) {
@@ -107,6 +133,10 @@ public class GameResource {
         }
         return response.build();
     }
+
+    @GET
+    @Path("/hexaword/stats")
+    public Response hexawordStats(@CookieParam("huff_session") String sessionId) { return stats(sessionId); }
 
     @GET
     @Path("/stats/global")

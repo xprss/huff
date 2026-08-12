@@ -16,7 +16,7 @@ import java.util.Objects;
 
 @Entity
 @Table(
-    name = "games",
+    name = "hexaword_games",
     uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "puzzle_date"})
 )
 public class GameEntity extends PanacheEntityBase {
