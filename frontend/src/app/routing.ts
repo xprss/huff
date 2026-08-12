@@ -1,18 +1,24 @@
 import React from "react";
 
-export type AppRoute = "game" | "profile" | "admin" | "leaderboard" | "player";
+export type AppRoute = "games" | "game" | "hexadigit" | "profile" | "admin" | "leaderboard" | "player";
 
 function routeFromHash(hash: string): AppRoute {
   if (hash.startsWith("#/leaderboard/player/")) return "player";
   if (hash === "#/leaderboard") return "leaderboard";
   if (hash === "#/admin") return "admin";
-  return hash === "#/profile" ? "profile" : "game";
+  if (hash === "#/profile") return "profile";
+  if (hash === "#/hexaword") return "game";
+  if (hash === "#/hexadigit") return "hexadigit";
+  return "games";
 }
 
 function hashFromRoute(route: AppRoute) {
   if (route === "leaderboard" || route === "player") return "#/leaderboard";
   if (route === "admin") return "#/admin";
-  return route === "profile" ? "#/profile" : "#/";
+  if (route === "profile") return "#/profile";
+  if (route === "game") return "#/hexaword";
+  if (route === "hexadigit") return "#/hexadigit";
+  return "#/";
 }
 
 export function playerNicknameFromHash(hash: string): string | null {

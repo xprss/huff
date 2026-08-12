@@ -86,6 +86,41 @@ export interface MeDto {
   readonly loggedIn: boolean;
   readonly user: UserDto | null;
   readonly authEnabled: boolean;
+  readonly pendingAnnouncements: readonly AnnouncementCampaign[];
+}
+
+export type AnnouncementCampaign = "HEXADIGIT_LAUNCH";
+export type DigitComparison = "HIGHER" | "LOWER" | "EQUAL";
+
+export interface HexadigitTileResult {
+  readonly digit: string;
+  readonly state: Exclude<TileState, "HIDDEN">;
+  readonly comparison: DigitComparison;
+}
+
+export interface HexadigitGuessResult {
+  readonly guess: string;
+  readonly tiles: readonly HexadigitTileResult[];
+}
+
+export interface HexadigitGameDto {
+  readonly puzzleDate: IsoDateString;
+  readonly status: GameStatus;
+  readonly maxAttempts: number;
+  readonly answerLength: number;
+  readonly guesses: readonly HexadigitGuessResult[];
+  readonly solution: string | null;
+}
+
+export interface HexadigitTodayDto {
+  readonly puzzleDate: IsoDateString;
+  readonly game: HexadigitGameDto | null;
+}
+
+export interface StatsSetDto {
+  readonly overall: StatsDto;
+  readonly hexaword: StatsDto;
+  readonly hexadigit: StatsDto;
 }
 
 export interface AdminPrivilegesDto {
@@ -121,6 +156,8 @@ export interface LeaderboardEntryDto {
   readonly nickname: string;
   readonly profileEmoji: string;
   readonly wins: number;
+  readonly hexawordWins: number;
+  readonly hexadigitWins: number;
 }
 
 export interface LeaderboardPeriodDto {
@@ -142,6 +179,9 @@ export interface PublicPlayerProfileDto {
   readonly profileEmoji: string;
   readonly bio: string | null;
   readonly stats: StatsDto;
+  readonly overallStats: StatsDto;
+  readonly hexawordStats: StatsDto;
+  readonly hexadigitStats: StatsDto;
   readonly medals: MedalCountsDto;
 }
 
@@ -231,6 +271,18 @@ export interface AdminPlayerDetailDto {
   readonly pushSubscriptions: number;
   readonly stats: StatsDto;
   readonly games: readonly AdminGameDto[];
+  readonly hexadigitGames: readonly AdminHexadigitGameDto[];
+}
+
+export interface AdminHexadigitGameDto {
+  readonly id: string;
+  readonly puzzleDate: IsoDateString;
+  readonly solution: string;
+  readonly guesses: readonly HexadigitGuessResult[];
+  readonly status: GameStatus;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly completedAt: string | null;
 }
 
 export interface AdminPlayerUpdateDto {
@@ -263,6 +315,19 @@ export type ApiEndpointMap = {
       response: MeDto;
     };
   };
+  "/api/me/announcements/HEXADIGIT_LAUNCH/seen": {
+    POST: { response: void };
+  };
+  "/api/hexaword/today": { GET: { response: TodayGameDto } };
+  "/api/hexaword/today/mode": { POST: { body: ModeRequestDto; response: GameDto } };
+  "/api/hexaword/today/guesses": { POST: { body: GuessRequestDto; response: GameDto } };
+  "/api/hexaword/today/kitten": { POST: { response: GameDto } };
+  "/api/hexaword/today/star": { POST: { response: StarRevealDto } };
+  "/api/hexaword/stats": { GET: { response: StatsDto } };
+  "/api/hexadigit/today": { GET: { response: HexadigitTodayDto } };
+  "/api/hexadigit/today/guesses": { POST: { body: GuessRequestDto; response: HexadigitGameDto } };
+  "/api/hexadigit/stats": { GET: { response: StatsDto } };
+  "/api/overall/stats": { GET: { response: StatsDto } };
   "/api/game/today": {
     GET: {
       response: TodayGameDto;
@@ -311,6 +376,9 @@ export type ApiEndpointMap = {
       response: LeaderboardsDto;
     };
   };
+  "/api/hexaword/leaderboards": { GET: { response: LeaderboardsDto } };
+  "/api/hexadigit/leaderboards": { GET: { response: LeaderboardsDto } };
+  "/api/leaderboards/overall": { GET: { response: LeaderboardsDto } };
   "/api/player/:nickname": {
     GET: {
       response: PublicPlayerProfileDto;

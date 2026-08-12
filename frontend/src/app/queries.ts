@@ -6,8 +6,13 @@ export const queryKeys = {
   me: ["me"] as const,
   today: ["game", "today"] as const,
   stats: ["stats", "personal"] as const,
+  hexadigitToday: ["hexadigit", "today"] as const,
+  hexadigitStats: ["stats", "hexadigit"] as const,
+  overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: ["leaderboards"] as const,
+  hexawordLeaderboards: ["leaderboards", "hexaword"] as const,
+  hexadigitLeaderboards: ["leaderboards", "hexadigit"] as const,
   publicPlayer: (nickname: string) => ["player", nickname] as const,
   adminPlayers: (query: string, sort: AdminPlayerSortDto, page: number) => ["admin", "players", query, sort, page] as const,
   adminPlayer: (userId: string) => ["admin", "players", "detail", userId] as const
@@ -37,6 +42,21 @@ export const statsQueryOptions = () =>
     queryFn: api.stats
   });
 
+export const hexadigitTodayQueryOptions = () => queryOptions({
+  queryKey: queryKeys.hexadigitToday,
+  queryFn: api.hexadigitToday
+});
+
+export const hexadigitStatsQueryOptions = () => queryOptions({
+  queryKey: queryKeys.hexadigitStats,
+  queryFn: api.hexadigitStats
+});
+
+export const overallStatsQueryOptions = () => queryOptions({
+  queryKey: queryKeys.overallStats,
+  queryFn: api.overallStats
+});
+
 export const globalStatsQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.globalStats,
@@ -48,6 +68,16 @@ export const leaderboardsQueryOptions = () =>
     queryKey: queryKeys.leaderboards,
     queryFn: api.leaderboards
   });
+
+export const hexawordLeaderboardsQueryOptions = () => queryOptions({
+  queryKey: queryKeys.hexawordLeaderboards,
+  queryFn: api.hexawordLeaderboards
+});
+
+export const hexadigitLeaderboardsQueryOptions = () => queryOptions({
+  queryKey: queryKeys.hexadigitLeaderboards,
+  queryFn: api.hexadigitLeaderboards
+});
 
 export const publicPlayerQueryOptions = (nickname: string) =>
   queryOptions({

@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Edit3, Info, LogOut, Menu, Moon, Shield, Star, Sun, Trophy, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Edit3, Grid2X2, Info, LogOut, Menu, Moon, Shield, Star, Sun, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { ToastMessage } from "../shared/toast";
 
@@ -21,6 +21,7 @@ export function AppHeader({
   onEditProfile,
   onToggleMenu,
   onOpenProfile,
+  onOpenGames,
   onOpenStats,
   onOpenLeaderboard,
   onOpenAdmin,
@@ -47,6 +48,7 @@ export function AppHeader({
   onEditProfile: () => void;
   onToggleMenu: () => void;
   onOpenProfile: () => void;
+  onOpenGames: () => void;
   onOpenStats: () => void;
   onOpenLeaderboard: () => void;
   onOpenAdmin: () => void;
@@ -102,6 +104,10 @@ export function AppHeader({
             <div className="action-menu" role="menu" aria-label="Azioni">
               {canUseGameActions ? (
                 <>
+                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenGames}>
+                    <Grid2X2 size={18} />
+                    <span>Giochi</span>
+                  </button>
                   <button className="menu-item" type="button" role="menuitem" onClick={onOpenProfile}>
                     <UserRound size={18} />
                     <span>Profilo</span>

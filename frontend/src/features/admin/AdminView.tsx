@@ -9,6 +9,7 @@ import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
 import { Metric } from "../../shared/components/Metric";
 import type {
   AdminGameDto,
+  AdminHexadigitGameDto,
   AdminPlayerDetailDto,
   AdminPlayerSortDto,
   AdminPlayerSummaryDto,
@@ -372,6 +373,7 @@ export function AdminView({
                 ) : null}
 
                 <GameHistory games={detail.games} />
+                <HexadigitHistory games={detail.hexadigitGames} />
               </div>
             )}
           </section>
@@ -558,6 +560,31 @@ function GameHistory({ games }: { games: readonly AdminGameDto[] }) {
 
 function maskedSolution(solution: string) {
   return "*".repeat(solution.length || 6);
+}
+
+function HexadigitHistory({ games }: { games: readonly AdminHexadigitGameDto[] }) {
+  return (
+    <section className="admin-games-panel" aria-label="Partite Hexadigit">
+      <h3>Hexadigit</h3>
+      {games.map((game) => (
+        <article className="admin-game-row" key={game.id}>
+          <header><strong>{game.puzzleDate}</strong><span>{game.status}</span><span>Hexadigit</span></header>
+          <p>Soluzione: {game.solution} · Tentativi: {game.guesses.length}</p>
+          <div className="admin-guesses">
+            {game.guesses.map((guess, index) => (
+              <div className="admin-guess" key={`${game.id}-${index}`}>
+                <span>{guess.guess}</span>
+                <span>{guess.tiles.map((tile, tileIndex) => (
+                  <i className={`admin-tile ${tile.state.toLowerCase()}`} key={tileIndex}>{tile.digit}</i>
+                ))}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+      ))}
+      {games.length === 0 ? <p className="admin-empty">Nessuna partita Hexadigit.</p> : null}
+    </section>
+  );
 }
 
 function deleteConfirmationValue(player: AdminPlayerSummaryDto) {

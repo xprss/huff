@@ -1,10 +1,9 @@
 import React from "react";
 import { Check, ChevronLeft, Edit3, X } from "lucide-react";
 import { PROFILE_EMOJIS } from "../../app/constants";
-import { Distribution } from "../../shared/components/Distribution";
-import { Metric } from "../../shared/components/Metric";
 import { MedalCounts } from "../../shared/components/MedalCounts";
-import type { InputHandPreference, ProfileUpdateDto, StatsDto, UserDto } from "../../types";
+import type { InputHandPreference, ProfileUpdateDto, StatsSetDto, UserDto } from "../../types";
+import { StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
 
 export function ProfileView({
   user,
@@ -17,7 +16,7 @@ export function ProfileView({
   onError
 }: {
   user: UserDto;
-  stats: StatsDto | null;
+  stats: StatsSetDto;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
   onBack: () => void;
@@ -31,7 +30,7 @@ export function ProfileView({
   const [inputHandPreference, setInputHandPreference] = React.useState<InputHandPreference>(user.inputHandPreference);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-  const winRate = stats && stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+  const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
 
   React.useEffect(() => {
     setDisplayName(user.displayName ?? "");
@@ -179,17 +178,8 @@ export function ProfileView({
 
       <div className="profile-stats" aria-label="Statistiche personali">
         <MedalCounts medals={user.medals} />
-        <div className="stat-grid">
-          <Metric label="Giocate" value={stats?.played ?? 0} />
-          <Metric label="Vinte" value={stats?.won ?? 0} />
-          <Metric label="Perse" value={stats?.lost ?? 0} />
-          <Metric label="Vittorie" value={`${winRate}%`} />
-        </div>
-        <div className="stat-grid compact">
-          <Metric label="Serie" value={stats?.currentStreak ?? 0} />
-          <Metric label="Record" value={stats?.maxStreak ?? 0} />
-        </div>
-        <Distribution distribution={stats?.guessDistribution ?? {}} />
+        <StatsTabs active={activeStats} onChange={setActiveStats} />
+        <StatsPanel stats={stats[activeStats]} />
       </div>
 
       {showEmojiPicker ? (

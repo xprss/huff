@@ -3,6 +3,7 @@ import { ChevronLeft, Trophy } from "lucide-react";
 import type { LeaderboardPeriodDto, LeaderboardsDto } from "../../types";
 
 type LeaderboardTab = "allTime" | "yearly" | "monthly" | "weekly";
+type LeaderboardGame = "overall" | "hexaword" | "hexadigit";
 
 const TABS: ReadonlyArray<{ id: LeaderboardTab; label: string }> = [
   { id: "allTime", label: "Sempre" },
@@ -16,12 +17,13 @@ export function LeaderboardView({
   onBack,
   onOpenPlayer
 }: {
-  leaderboards: LeaderboardsDto;
+  leaderboards: Record<LeaderboardGame, LeaderboardsDto>;
   onBack: () => void;
   onOpenPlayer: (nickname: string) => void;
 }) {
   const [activeTab, setActiveTab] = React.useState<LeaderboardTab>("weekly");
-  const period = leaderboards[activeTab];
+  const [activeGame, setActiveGame] = React.useState<LeaderboardGame>("overall");
+  const period = leaderboards[activeGame][activeTab];
 
   return (
     <section className="leaderboard-view" aria-label="Leaderboard">
@@ -50,6 +52,12 @@ export function LeaderboardView({
         ))}
       </div>
 
+      <div className="game-stats-tabs" role="tablist" aria-label="Gioco classifica">
+        {([['overall', 'Overall'], ['hexaword', 'Hexaword'], ['hexadigit', 'Hexadigit']] as const).map(([id, label]) =>
+          <button key={id} type="button" role="tab" aria-selected={activeGame === id} className={activeGame === id ? "selected" : ""} onClick={() => setActiveGame(id)}>{label}</button>
+        )}
+      </div>
+
       {period.entries.length === 0 ? (
         <div className="leaderboard-empty">
           <Trophy size={28} aria-hidden="true" />
@@ -66,7 +74,9 @@ export function LeaderboardView({
                   <strong>{entry.displayName}</strong>
                   <small>{entry.nickname}</small>
                 </span>
-                <span className="leaderboard-wins"><strong>{entry.wins}</strong> vittorie</span>
+                <span className="leaderboard-wins"><strong>{entry.wins}</strong> vittorie
+                  {activeGame === "overall" ? <small>{entry.hexawordWins} W · {entry.hexadigitWins} D</small> : null}
+                </span>
               </button>
             </li>
           ))}
