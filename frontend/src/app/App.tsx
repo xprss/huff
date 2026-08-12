@@ -715,6 +715,7 @@ export function App() {
             showProfileEdit={Boolean(activeRoute === "profile" && me?.user && !profileEditing)}
             showActionsMenu={showActionsMenu}
             actionsMenuRef={actionsMenuRef}
+            activeRoute={activeRoute}
             canUseGameActions={canUseGameActions}
             showAdmin={canViewAdmin}
             notificationsEnabled={notificationsEnabled}

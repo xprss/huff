@@ -1,6 +1,7 @@
 import React from "react";
 import { BarChart3, Bell, BellOff, Edit3, Grid2X2, Info, LogOut, Menu, Moon, Shield, Star, Sun, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
+import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
 
 export function AppHeader({
@@ -11,6 +12,7 @@ export function AppHeader({
   showProfileEdit,
   showActionsMenu,
   actionsMenuRef,
+  activeRoute,
   canUseGameActions,
   showAdmin,
   notificationsEnabled,
@@ -38,6 +40,7 @@ export function AppHeader({
   showProfileEdit: boolean;
   showActionsMenu: boolean;
   actionsMenuRef: React.RefObject<HTMLDivElement>;
+  activeRoute: AppRoute;
   canUseGameActions: boolean;
   showAdmin: boolean;
   notificationsEnabled: boolean;
@@ -58,6 +61,24 @@ export function AppHeader({
   onLogout: () => void;
   onCloseMenu: () => void;
 }) {
+  const isMenuPageActive = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
+    if (menuPage === "games") {
+      return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexadigit";
+    }
+    if (menuPage === "leaderboard") {
+      return activeRoute === "leaderboard" || activeRoute === "player";
+    }
+    return activeRoute === menuPage;
+  };
+
+  const menuItemProps = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
+    const isActive = isMenuPageActive(menuPage);
+    return {
+      className: `menu-item${isActive ? " selected" : ""}`,
+      "aria-current": isActive ? ("page" as const) : undefined
+    };
+  };
+
   return (
     <header className="topbar">
       <div className="title-row">
@@ -104,11 +125,11 @@ export function AppHeader({
             <div className="action-menu" role="menu" aria-label="Azioni">
               {canUseGameActions ? (
                 <>
-                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenGames}>
+                  <button {...menuItemProps("games")} type="button" role="menuitem" onClick={onOpenGames}>
                     <Grid2X2 size={18} />
                     <span>Giochi</span>
                   </button>
-                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenProfile}>
+                  <button {...menuItemProps("profile")} type="button" role="menuitem" onClick={onOpenProfile}>
                     <UserRound size={18} />
                     <span>Profilo</span>
                   </button>
@@ -116,12 +137,12 @@ export function AppHeader({
                     <BarChart3 size={18} />
                     <span>Statistiche</span>
                   </button>
-                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenLeaderboard}>
+                  <button {...menuItemProps("leaderboard")} type="button" role="menuitem" onClick={onOpenLeaderboard}>
                     <Trophy size={18} />
                     <span>Leaderboard</span>
                   </button>
                   {showAdmin ? (
-                    <button className="menu-item" type="button" role="menuitem" onClick={onOpenAdmin}>
+                    <button {...menuItemProps("admin")} type="button" role="menuitem" onClick={onOpenAdmin}>
                       <Shield size={18} />
                       <span>Admin</span>
                     </button>

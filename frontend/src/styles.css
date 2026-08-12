@@ -453,6 +453,15 @@ h1 {
   background: var(--color-surface-strong);
 }
 
+.menu-item.selected {
+  background: var(--color-surface-strong);
+  color: var(--color-accent);
+}
+
+.menu-item.selected svg {
+  color: currentColor;
+}
+
 .menu-item.danger {
   color: var(--color-danger);
 }
