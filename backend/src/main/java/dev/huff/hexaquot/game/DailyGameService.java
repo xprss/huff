@@ -40,6 +40,9 @@ public class DailyGameService {
     WordsProvider wordsProvider;
 
     @Inject
+    HexawordDailyGameProvider provider;
+
+    @Inject
     GameRepository gameRepository;
 
     @Inject
@@ -100,13 +103,7 @@ public class DailyGameService {
 
     @Transactional
     public GameDto guess(AppUser user, String rawGuess) {
-        String guess = wordsProvider.normalize(rawGuess);
-        if (!guess.matches("[a-z]{" + WordsProvider.WORD_LENGTH + "}")) {
-            throw new BadRequestException("Completa tutte e 6 le caselle.");
-        }
-        if (!wordsProvider.contains(guess)) {
-            throw new BadRequestException("Parola non presente nella lista.");
-        }
+        String guess = normalizeAndValidate(provider, rawGuess);
 
         GameRecord record = todayRecord(user);
         if (record.status() != GameStatus.IN_PROGRESS) {
@@ -275,6 +272,14 @@ public class DailyGameService {
         return new StatsDto(records.size(), won, records.size() - won, currentStreak, maxStreak, distribution);
     }
 
+    public List<StatsCalculator.CompletedGame> completedForUser(String userId) {
+        return gameRepository.findCompletedByUser(userId).stream()
+            .map(record -> new StatsCalculator.CompletedGame(
+                record.puzzleDate(), record.status(), readGuesses(record).size()
+            ))
+            .toList();
+    }
+
     public GlobalStatsDto globalStats() {
         List<GameRecord> completedRecords = gameRepository.findCompleted();
         int won = 0;
@@ -302,33 +307,26 @@ public class DailyGameService {
     }
 
     public GuessResult score(String guess, String solution) {
-        List<TileResult> tiles = new ArrayList<>();
-        Map<Character, Integer> remaining = new HashMap<>();
-        for (int index = 0; index < WordsProvider.WORD_LENGTH; index++) {
-            char guessLetter = guess.charAt(index);
-            char solutionLetter = solution.charAt(index);
-            if (guessLetter == solutionLetter) {
-                tiles.add(new TileResult(String.valueOf(guessLetter), TileState.CORRECT));
-            } else {
-                tiles.add(null);
-                remaining.put(solutionLetter, remaining.getOrDefault(solutionLetter, 0) + 1);
-            }
-        }
+        return score(provider, guess, solution);
+    }
 
-        for (int index = 0; index < WordsProvider.WORD_LENGTH; index++) {
-            if (tiles.get(index) != null) {
-                continue;
-            }
-            char guessLetter = guess.charAt(index);
-            int available = remaining.getOrDefault(guessLetter, 0);
-            if (available > 0) {
-                tiles.set(index, new TileResult(String.valueOf(guessLetter), TileState.PRESENT));
-                remaining.put(guessLetter, available - 1);
-            } else {
-                tiles.set(index, new TileResult(String.valueOf(guessLetter), TileState.ABSENT));
-            }
-        }
-        return new GuessResult(guess, List.copyOf(tiles));
+    public <G> String normalizeAndValidate(DailyGameProvider<G> gameProvider, String rawGuess) {
+        String normalized = gameProvider.normalize(rawGuess);
+        gameProvider.validate(normalized);
+        return normalized;
+    }
+
+    public <G> G score(DailyGameProvider<G> gameProvider, String guess, String solution) {
+        return gameProvider.score(guess, solution);
+    }
+
+    public <G> GameStatus statusAfter(
+        DailyGameProvider<G> gameProvider,
+        String guess,
+        String solution,
+        List<G> guesses
+    ) {
+        return gameProvider.statusAfter(guess, solution, guesses);
     }
 
     private GameRecord todayRecord(AppUser user) {
@@ -348,14 +346,7 @@ public class DailyGameService {
     }
 
     private String solutionFor(String puzzleDate) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest((wordSeed + ":" + puzzleDate).getBytes(StandardCharsets.UTF_8));
-            int index = new BigInteger(1, hash).mod(BigInteger.valueOf(wordsProvider.words().size())).intValue();
-            return wordsProvider.words().get(index);
-        } catch (Exception error) {
-            throw new IllegalStateException("Cannot choose daily solution", error);
-        }
+        return provider.solutionFor(puzzleDate);
     }
 
     private GameDto toDto(GameRecord record, boolean revealSolution) {
