@@ -53,33 +53,41 @@ class ApiSecurityFilterTest {
     }
 
     @Test
-    @Transactional
     void restoresAnAuthenticatedUserFromAPersistentSessionCookie() {
         String userId = UserIds.google("persisted-google-subject");
-        UserEntity user = new UserEntity();
-        user.id = userId;
-        user.googleSubject = "persisted-google-subject";
-        user.email = "persisted@example.com";
-        user.displayName = "Persistente";
-        user.nickname = "@persistente";
-        user.profileEmoji = "😀";
-        user.createdAt = Instant.now().toString();
-        user.persist();
-
         String sessionId = UUID.randomUUID().toString();
-        AuthSessionEntity session = new AuthSessionEntity();
-        session.id = sessionId;
-        session.userId = userId;
-        session.expiresAt = Instant.now().plusSeconds(60).toString();
-        session.persist();
+        io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+            UserEntity user = new UserEntity();
+            user.id = userId;
+            user.googleSubject = "persisted-google-subject";
+            user.email = "persisted@example.com";
+            user.displayName = "Persistente";
+            user.nickname = "@persistente";
+            user.profileEmoji = "😀";
+            user.createdAt = Instant.now().toString();
+            user.persist();
 
-        given()
-            .header("Cookie", "huff_session=" + sessionId)
-            .when().get("/api/me")
-            .then()
-            .statusCode(200)
-            .body("loggedIn", equalTo(true))
-            .body("user.authenticated", equalTo(true));
+            AuthSessionEntity session = new AuthSessionEntity();
+            session.id = sessionId;
+            session.userId = userId;
+            session.expiresAt = Instant.now().plusSeconds(60).toString();
+            session.persist();
+        });
+
+        try {
+            given()
+                .header("Cookie", "huff_session=" + sessionId)
+                .when().get("/api/me")
+                .then()
+                .statusCode(200)
+                .body("loggedIn", equalTo(true))
+                .body("user.authenticated", equalTo(true));
+        } finally {
+            io.quarkus.narayana.jta.QuarkusTransaction.requiringNew().run(() -> {
+                AuthSessionEntity.deleteById(sessionId);
+                UserEntity.deleteById(userId);
+            });
+        }
     }
 
     @Test
