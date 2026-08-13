@@ -139,8 +139,9 @@ export function HexadigitView({
         {Array.from({ length: 6 }, (_, rowIndex) => {
           const submitted = rows[rowIndex];
           const isCurrent = rowIndex === rows.length && canPlay;
+          const isPenultimateAttempt = Boolean(submitted) && rowIndex === rows.length - 1;
           const pending = isCurrent ? digits : emptyDigitCells();
-          const rowState = submitted ? "past" : isCurrent ? "current" : "future";
+          const rowState = submitted ? `past ${isPenultimateAttempt ? "penultimate" : ""}` : isCurrent ? "current" : "future";
           return (
             <div className={`hexadigit-row ${rowState}`} role="row" key={rowIndex}>
               {Array.from({ length: 6 }, (__, columnIndex) => {
@@ -156,14 +157,14 @@ export function HexadigitView({
                     disabled={!isCurrent || submitting}
                     onClick={() => selectDigitCell(columnIndex)}
                     aria-selected={isSelected}
-                    aria-label={`Casella ${columnIndex + 1}${pending[columnIndex] ? `: ${pending[columnIndex]}` : tile ? `: ${tile.digit}` : ", vuota"}`}
+                    aria-label={`Casella ${columnIndex + 1}${pending[columnIndex] ? `: ${pending[columnIndex]}` : tile && isPenultimateAttempt ? `: ${tile.digit}` : tile ? ", tentativo precedente" : ", vuota"}`}
                     style={
                       isJustRevealed
                         ? ({ "--feedback-reveal-delay": `${columnIndex * 78}ms` } as React.CSSProperties)
                         : undefined
                     }
                   >
-                    <span>{tile?.digit ?? pending[columnIndex] ?? ""}</span>
+                    <span>{tile && !isPenultimateAttempt ? "" : tile?.digit ?? pending[columnIndex] ?? ""}</span>
                     {tile ? <small>{COMPARISON_LABEL[tile.comparison]}</small> : null}
                   </button>
                 );

@@ -100,6 +100,7 @@ export function App() {
     string | null
   >(null);
   const [themeId, setThemeId] = React.useState(getStoredThemeId);
+  const [patternsEnabled, setPatternsEnabled] = React.useState(() => localStorage.getItem("patternsEnabled") === "true");
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(() => areGameNotificationsEnabled());
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
     getNotificationPermission
@@ -300,6 +301,11 @@ export function App() {
   React.useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, appTheme.id);
   }, [appTheme.id]);
+
+  React.useEffect(() => {
+    localStorage.setItem("patternsEnabled", String(patternsEnabled));
+    document.documentElement.dataset.patterns = patternsEnabled ? "enabled" : "disabled";
+  }, [patternsEnabled]);
 
   React.useEffect(() => {
     function refreshNotificationState() {
@@ -722,6 +728,7 @@ export function App() {
             notificationMenuLabel={notificationMenuLabel}
             themes={appThemes}
             selectedThemeId={appTheme.id}
+            patternsEnabled={patternsEnabled}
             showLogout={Boolean(me?.authEnabled && me.loggedIn)}
             onLogout={() => {
               void api
@@ -767,6 +774,7 @@ export function App() {
             onSelectTheme={(selectedThemeId) => {
               setThemeId(selectedThemeId);
             }}
+            onTogglePatterns={() => setPatternsEnabled((value) => !value)}
             onCloseMenu={() => setShowActionsMenu(false)}
           />
 

@@ -8,6 +8,7 @@ import { applyThemeToDocument, getAppTheme, getStoredThemeId } from "./theme";
 import "./styles.css";
 
 applyThemeToDocument(getAppTheme(getStoredThemeId()));
+document.documentElement.dataset.patterns = localStorage.getItem("patternsEnabled") === "true" ? "enabled" : "disabled";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

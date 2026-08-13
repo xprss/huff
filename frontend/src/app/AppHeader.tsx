@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Eye, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
@@ -20,6 +20,7 @@ export function AppHeader({
   notificationMenuLabel,
   themes,
   selectedThemeId,
+  patternsEnabled,
   showLogout,
   onUseStar,
   onEditProfile,
@@ -32,6 +33,7 @@ export function AppHeader({
   onOpenInfo,
   onToggleNotifications,
   onSelectTheme,
+  onTogglePatterns,
   onLogout,
   onCloseMenu
 }: {
@@ -49,6 +51,7 @@ export function AppHeader({
   notificationMenuLabel: string;
   themes: readonly AppTheme[];
   selectedThemeId: string;
+  patternsEnabled: boolean;
   showLogout: boolean;
   onUseStar: () => void;
   onEditProfile: () => void;
@@ -61,6 +64,7 @@ export function AppHeader({
   onOpenInfo: () => void;
   onToggleNotifications: () => void;
   onSelectTheme: (themeId: string) => void;
+  onTogglePatterns: () => void;
   onLogout: () => void;
   onCloseMenu: () => void;
 }) {
@@ -156,6 +160,18 @@ export function AppHeader({
                       </button>
                     );
                   })}
+                  <div className="menu-divider" role="separator" />
+                  <button
+                    className={`menu-item${patternsEnabled ? " selected" : ""}`}
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={patternsEnabled}
+                    onClick={onTogglePatterns}
+                  >
+                    <Eye size={18} />
+                    <span>{patternsEnabled ? "Nascondi motivo" : "Mostra motivo"}</span>
+                    {patternsEnabled ? <Check className="theme-check" size={17} aria-hidden="true" /> : null}
+                  </button>
                 </>
               ) : (
                 <>

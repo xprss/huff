@@ -538,6 +538,24 @@ html[data-theme="childhood"] {
   --font-title: "Comic Neue", "Comic Sans MS", "Comic Sans", cursive;
 }
 
+html[data-theme="tricotopia"] .app-shell {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16) 25%, transparent 25%) -8px 0 / 16px 16px,
+    linear-gradient(45deg, rgba(103, 77, 107, 0.07) 25%, transparent 25%) 0 0 / 16px 16px,
+    var(--color-page);
+}
+
+html[data-theme="tricotopia"] .icon-button,
+html[data-theme="tricotopia"] .icon-link,
+html[data-theme="tricotopia"] .key,
+html[data-theme="tricotopia"] .action-menu,
+html[data-theme="tricotopia"] .board,
+html[data-theme="tricotopia"] .mode-option {
+  background-image:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(45deg, rgba(103, 77, 107, 0.05) 0 1px, transparent 1px 5px);
+}
+
 html[data-theme="chromatic"] .app-shell {
   background:
     radial-gradient(circle at 12% 16%, rgba(71, 230, 255, 0.2), transparent 30%),
@@ -1820,8 +1838,13 @@ html[data-theme="chromatic"] .key.absent {
 }
 
 .hexadigit-row.past .hexadigit-tile > span {
-  font-size: 0.55em;
-  opacity: 0.78;
+  display: none;
+}
+
+.hexadigit-row.past.penultimate .hexadigit-tile > span {
+  display: inline-block;
+  font-size: 0.65em;
+  opacity: 0.86;
 }
 
 .hexadigit-row.past .hexadigit-tile small {
@@ -3612,4 +3635,36 @@ html[data-theme="chromatic"] .key.absent {
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Distinct 75%-opaque patterns make each game state identifiable without relying on colour alone. */
+html[data-patterns="enabled"] .hexadigit-tile.correct,
+html[data-patterns="enabled"] .key.correct,
+html[data-patterns="enabled"] .feedback-marker.correct,
+html[data-patterns="enabled"] .star-reveal-tile.correct,
+html[data-patterns="enabled"] .login-decor-tile.correct {
+  background-color: var(--color-correct);
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0 2px, transparent 2px 7px);
+}
+
+html[data-patterns="enabled"] .hexadigit-tile.present,
+html[data-patterns="enabled"] .key.present,
+html[data-patterns="enabled"] .feedback-marker.present,
+html[data-patterns="enabled"] .star-reveal-tile.present,
+html[data-patterns="enabled"] .star-reveal-tile.hidden,
+html[data-patterns="enabled"] .login-decor-tile.present {
+  background-color: var(--color-present);
+  background-image: radial-gradient(rgba(47, 35, 0, 0.75) 1.5px, transparent 1.8px);
+  background-size: 7px 7px;
+}
+
+html[data-patterns="enabled"] .hexadigit-tile.absent,
+html[data-patterns="enabled"] .key.absent,
+html[data-patterns="enabled"] .feedback-marker.absent,
+html[data-patterns="enabled"] .star-reveal-tile.absent,
+html[data-patterns="enabled"] .login-decor-tile.absent {
+  background-color: var(--color-absent);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.75) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.75) 0 1px, transparent 1px 7px);
 }
