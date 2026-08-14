@@ -1879,7 +1879,7 @@ html[data-theme="chromatic"] .key.absent {
 }
 
 .hexadigit-row.current .hexadigit-tile.filled > span {
-  color: var(--color-title-text);
+  color: var(--color-terminal-text);
   text-shadow:
     0 0 5px var(--color-title-glow-soft),
     0 0 14px var(--color-title-glow-medium),
@@ -2546,7 +2546,7 @@ html[data-theme="chromatic"] .key.absent {
 }
 
 .terminal-cell.filled span {
-  color: var(--color-title-text);
+  color: var(--color-terminal-text);
   text-shadow:
     0 0 5px var(--color-title-glow-soft),
     0 0 14px var(--color-title-glow-medium),
@@ -3637,14 +3637,14 @@ html[data-theme="chromatic"] .key.absent {
   }
 }
 
-/* Distinct 75%-opaque patterns make each game state identifiable without relying on colour alone. */
+/* Subtle patterns keep each game state identifiable without overwhelming its colour. */
 html[data-patterns="enabled"] .hexadigit-tile.correct,
 html[data-patterns="enabled"] .key.correct,
 html[data-patterns="enabled"] .feedback-marker.correct,
 html[data-patterns="enabled"] .star-reveal-tile.correct,
 html[data-patterns="enabled"] .login-decor-tile.correct {
   background-color: var(--color-correct);
-  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0 2px, transparent 2px 7px);
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 2px, transparent 2px 7px);
 }
 
 html[data-patterns="enabled"] .hexadigit-tile.present,
@@ -3654,7 +3654,7 @@ html[data-patterns="enabled"] .star-reveal-tile.present,
 html[data-patterns="enabled"] .star-reveal-tile.hidden,
 html[data-patterns="enabled"] .login-decor-tile.present {
   background-color: var(--color-present);
-  background-image: radial-gradient(rgba(47, 35, 0, 0.75) 1.5px, transparent 1.8px);
+  background-image: radial-gradient(rgba(47, 35, 0, 0.3) 1.5px, transparent 1.8px);
   background-size: 7px 7px;
 }
 
@@ -3665,6 +3665,6 @@ html[data-patterns="enabled"] .star-reveal-tile.absent,
 html[data-patterns="enabled"] .login-decor-tile.absent {
   background-color: var(--color-absent);
   background-image:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.75) 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.75) 0 1px, transparent 1px 7px);
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 7px);
 }
