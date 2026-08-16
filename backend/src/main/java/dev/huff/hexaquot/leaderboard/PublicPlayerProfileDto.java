@@ -10,7 +10,6 @@ public record PublicPlayerProfileDto(
     StatsDto stats,
     StatsDto overallStats,
     StatsDto hexawordStats,
-    StatsDto hexadigitStats,
     MedalCountsDto medals
 ) {
 }

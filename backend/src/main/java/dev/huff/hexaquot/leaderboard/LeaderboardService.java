@@ -108,7 +108,6 @@ public class LeaderboardService {
             stats.overall(),
             stats.overall(),
             stats.hexaword(),
-            stats.hexadigit(),
             medalCounts(user.id)
         );
     }
@@ -141,13 +140,13 @@ public class LeaderboardService {
             .stream()
             .sorted(comparator)
             .map(score -> new LeaderboardEntryDto(0, score.user().displayName, score.user().nickname, score.user().profileEmoji,
-                score.wins(), score.hexawordWins(), score.hexadigitWins()))
+                score.wins()))
             .toList();
         List<LeaderboardEntryDto> ranked = java.util.stream.IntStream.range(0, entries.size())
             .mapToObj(index -> {
                 LeaderboardEntryDto entry = entries.get(index);
                 return new LeaderboardEntryDto(index + 1, entry.displayName(), entry.nickname(), entry.profileEmoji(),
-                    entry.wins(), entry.hexawordWins(), entry.hexadigitWins());
+                    entry.wins());
             })
             .toList();
         return new LeaderboardPeriodDto(

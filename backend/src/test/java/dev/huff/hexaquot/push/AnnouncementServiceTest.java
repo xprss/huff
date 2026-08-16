@@ -29,13 +29,13 @@ class AnnouncementServiceTest {
         UserAnnouncementEntity row = new UserAnnouncementEntity();
         row.id = UUID.randomUUID().toString();
         row.userId = userId;
-        row.campaign = AnnouncementService.HEXADIGIT_LAUNCH;
+        row.campaign = AnnouncementService.HEXAHACK_LAUNCH;
         row.createdAt = Instant.now().toString();
         row.persist();
 
         assertEquals(1, service.pending(userId).size());
-        service.markSeen(userId, AnnouncementService.HEXADIGIT_LAUNCH);
-        service.markSeen(userId, AnnouncementService.HEXADIGIT_LAUNCH);
+        service.markSeen(userId, AnnouncementService.HEXAHACK_LAUNCH);
+        service.markSeen(userId, AnnouncementService.HEXAHACK_LAUNCH);
         assertEquals(0, service.pending(userId).size());
     }
 }

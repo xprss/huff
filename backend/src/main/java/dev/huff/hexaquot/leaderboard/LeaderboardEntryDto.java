@@ -5,11 +5,6 @@ public record LeaderboardEntryDto(
     String displayName,
     String nickname,
     String profileEmoji,
-    int wins,
-    int hexawordWins,
-    int hexadigitWins
+    int wins
 ) {
-    public LeaderboardEntryDto(int rank, String displayName, String nickname, String profileEmoji, int wins) {
-        this(rank, displayName, nickname, profileEmoji, wins, wins, 0);
-    }
 }

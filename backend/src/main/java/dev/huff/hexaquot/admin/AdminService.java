@@ -8,11 +8,12 @@ import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.game.GuessResult;
 import dev.huff.hexaquot.game.StatsDto;
-import dev.huff.hexaquot.game.HexadigitGuessResult;
+import dev.huff.hexaquot.game.HexahackDtos;
+import dev.huff.hexaquot.game.HexahackDtos.EventDto;
 import dev.huff.hexaquot.game.OverallStatsService;
 import dev.huff.hexaquot.persistence.AdminUserEntity;
 import dev.huff.hexaquot.persistence.GameEntity;
-import dev.huff.hexaquot.persistence.HexadigitGameEntity;
+import dev.huff.hexaquot.persistence.HexahackGameEntity;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -75,9 +76,9 @@ public class AdminService {
             .stream()
             .map(this::gameDto)
             .toList();
-        List<AdminHexadigitGameDto> hexadigitGames = HexadigitGameEntity.<HexadigitGameEntity>find(
+        List<AdminHexahackGameDto> hexahackGames = HexahackGameEntity.<HexahackGameEntity>find(
                 "userId = ?1 order by puzzleDate desc, updatedAt desc", userId
-            ).list().stream().map(this::hexadigitGameDto).toList();
+            ).list().stream().map(this::hexahackGameDto).toList();
 
         return new AdminPlayerDetailDto(
             summary(user),
@@ -86,7 +87,7 @@ public class AdminService {
             Math.toIntExact(PushSubscriptionEntity.count("userId", user.id)),
             overallStatsService.statsForUserId(user.id),
             games,
-            hexadigitGames
+            hexahackGames
         );
     }
 
@@ -122,7 +123,7 @@ public class AdminService {
         }
         findUser(userId);
         long games = GameEntity.delete("userId = ?1", userId);
-        games += HexadigitGameEntity.delete("userId = ?1", userId);
+        games += HexahackGameEntity.delete("userId = ?1", userId);
         long subscriptions = PushSubscriptionEntity.delete("userId = ?1", userId);
         long adminRows = AdminUserEntity.delete("userId = ?1", userId);
         long users = UserEntity.delete("id = ?1", userId);
@@ -159,20 +160,18 @@ public class AdminService {
     }
 
     private AdminPlayerSummaryDto summary(UserEntity user) {
-        long started = GameEntity.count("userId", user.id) + HexadigitGameEntity.count("userId", user.id);
-        long won = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.WON)
-            + HexadigitGameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.WON);
-        long lost = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.LOST)
-            + HexadigitGameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.LOST);
+        long started = GameEntity.count("userId", user.id) + HexahackGameEntity.count("userId", user.id);
+        long won = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.WON);
+        long lost = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.LOST);
         long completed = won + lost;
         int winRate = completed == 0 ? 0 : Math.toIntExact(Math.round((won * 100.0) / completed));
         String wordActivity = GameEntity.<GameEntity>find("userId = ?1 order by updatedAt desc", user.id)
             .firstResultOptional()
             .map(game -> game.updatedAt)
             .orElse(user.createdAt);
-        String digitActivity = HexadigitGameEntity.<HexadigitGameEntity>find("userId = ?1 order by updatedAt desc", user.id)
+        String hackActivity = HexahackGameEntity.<HexahackGameEntity>find("userId = ?1 order by updatedAt desc", user.id)
             .firstResultOptional().map(game -> game.updatedAt).orElse(user.createdAt);
-        String lastActivityAt = wordActivity.compareTo(digitActivity) >= 0 ? wordActivity : digitActivity;
+        String lastActivityAt = wordActivity.compareTo(hackActivity) >= 0 ? wordActivity : hackActivity;
         return new AdminPlayerSummaryDto(
             user.id,
             user.email,
@@ -222,13 +221,14 @@ public class AdminService {
         }
     }
 
-    private AdminHexadigitGameDto hexadigitGameDto(HexadigitGameEntity game) {
+    private AdminHexahackGameDto hexahackGameDto(HexahackGameEntity game) {
         try {
-            List<HexadigitGuessResult> guesses = objectMapper.readValue(game.guessesJson, new TypeReference<>() {});
-            return new AdminHexadigitGameDto(game.id, game.puzzleDate, game.solution, guesses, game.status,
+            List<EventDto> log = objectMapper.readValue(game.eventLogJson, new TypeReference<>() {});
+            return new AdminHexahackGameDto(game.id, game.puzzleDate, game.rulesVersion, game.solution, log,
+                game.totalCost, game.wrongSubmissions, game.overrideCount, game.status, game.stealth, game.rank,
                 game.createdAt, game.updatedAt, game.completedAt);
         } catch (Exception error) {
-            throw new IllegalStateException("Cannot parse Hexadigit guesses for admin view", error);
+            throw new IllegalStateException("Cannot parse Hexahack event log for admin view", error);
         }
     }
 
@@ -273,7 +273,7 @@ public class AdminService {
                 LEFT JOIN (
                   SELECT id, user_id, status, updated_at FROM hexaword_games
                   UNION ALL
-                  SELECT id, user_id, status, updated_at FROM hexadigit_games
+                  SELECT id, user_id, status, updated_at FROM hexahack_games
                 ) g ON g.user_id = u.id
                 LEFT JOIN admin_users a ON a.user_id = u.id
                 WHERE :query = ''
@@ -406,16 +406,22 @@ public class AdminService {
         int pushSubscriptions,
         StatsDto stats,
         List<AdminGameDto> games,
-        List<AdminHexadigitGameDto> hexadigitGames
+        List<AdminHexahackGameDto> hexahackGames
     ) {
     }
 
-    public record AdminHexadigitGameDto(
+    public record AdminHexahackGameDto(
         String id,
         String puzzleDate,
+        int rulesVersion,
         String solution,
-        List<HexadigitGuessResult> guesses,
-        GameStatus status,
+        List<EventDto> log,
+        int totalCost,
+        int wrongSubmissions,
+        int overrideCount,
+        HexahackDtos.Status status,
+        Integer stealth,
+        HexahackDtos.Rank rank,
         String createdAt,
         String updatedAt,
         String completedAt

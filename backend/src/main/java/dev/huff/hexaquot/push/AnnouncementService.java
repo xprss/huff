@@ -10,7 +10,7 @@ import java.util.List;
 
 @ApplicationScoped
 public class AnnouncementService {
-    public static final String HEXADIGIT_LAUNCH = "HEXADIGIT_LAUNCH";
+    public static final String HEXAHACK_LAUNCH = "HEXAHACK_LAUNCH";
 
     public List<String> pending(String userId) {
         return UserAnnouncementEntity.<UserAnnouncementEntity>list(
@@ -20,7 +20,7 @@ public class AnnouncementService {
 
     @Transactional
     public void markSeen(String userId, String campaign) {
-        if (!HEXADIGIT_LAUNCH.equals(campaign)) throw new NotFoundException("Annuncio non trovato.");
+        if (!HEXAHACK_LAUNCH.equals(campaign)) throw new NotFoundException("Annuncio non trovato.");
         UserAnnouncementEntity row = UserAnnouncementEntity.<UserAnnouncementEntity>find(
             "userId = ?1 and campaign = ?2", userId, campaign
         ).firstResult();

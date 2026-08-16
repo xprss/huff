@@ -43,6 +43,9 @@ public class PushNotificationService {
     @ConfigProperty(name = "app.push.vapid.subject")
     String vapidSubject;
 
+    @ConfigProperty(name = "app.push.hexahack-launch.enabled", defaultValue = "false")
+    boolean hexahackLaunchEnabled;
+
     @Inject
     DailyGameService dailyGameService;
 
@@ -111,14 +114,14 @@ public class PushNotificationService {
 
     @Scheduled(every = "10m", delayed = "5s")
     void dispatchLaunchCampaignSchedule() {
-        dispatchHexadigitLaunch();
+        dispatchHexahackLaunch();
     }
 
     @Transactional
-    public void dispatchHexadigitLaunch() {
-        if (!configured()) return;
+    public void dispatchHexahackLaunch() {
+        if (!hexahackLaunchEnabled || !configured()) return;
         List<PushCampaignDeliveryEntity> deliveries = PushCampaignDeliveryEntity.<PushCampaignDeliveryEntity>list(
-            "campaign = ?1 and sentAt is null order by createdAt", AnnouncementService.HEXADIGIT_LAUNCH
+            "campaign = ?1 and sentAt is null order by createdAt", AnnouncementService.HEXAHACK_LAUNCH
         );
         for (PushCampaignDeliveryEntity delivery : deliveries) {
             PushSubscriptionEntity subscription = PushSubscriptionEntity.findById(delivery.subscriptionId);
@@ -129,12 +132,12 @@ public class PushNotificationService {
             delivery.attempts = (delivery.attempts == null ? 0 : delivery.attempts) + 1;
             delivery.lastAttemptAt = Instant.now().toString();
             NotificationPayload payload = new NotificationPayload(
-                "hexadigit-launch",
-                "È arrivato Hexadigit",
-                "Indovina il codice di 6 cifre in 6 tentativi: colori e simboli ti guidano.",
-                "/#/hexadigit",
+                "hexahack-launch",
+                "È arrivato Hexahack",
+                "Un nuovo nodo è online. Analizza il codice, proteggi lo Stealth e viola la porta.",
+                "/#/hexahack",
                 "/icons/huff-icon.svg",
-                "hexadigit-launch"
+                "hexahack-launch"
             );
             if (sendNotification(subscription, payload, CAMPAIGN_PUSH_TTL_SECONDS)) {
                 delivery.sentAt = Instant.now().toString();

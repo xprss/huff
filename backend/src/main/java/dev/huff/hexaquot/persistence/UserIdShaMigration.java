@@ -44,7 +44,7 @@ public class UserIdShaMigration {
                 .setParameter(2, userId)
                 .executeUpdate();
             entityManager
-                .createNativeQuery("UPDATE hexadigit_games SET user_id = ?1 WHERE user_id = ?2")
+                .createNativeQuery("UPDATE hexahack_games SET user_id = ?1 WHERE user_id = ?2")
                 .setParameter(1, canonicalUserId)
                 .setParameter(2, userId)
                 .executeUpdate();
