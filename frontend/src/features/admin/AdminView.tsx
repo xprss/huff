@@ -27,13 +27,11 @@ const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
   canManagePlayers,
-  showHexahack,
   onAuthRequired,
   onSuccess,
   onError
 }: {
   canManagePlayers: boolean;
-  showHexahack: boolean;
   onAuthRequired: (error: unknown) => boolean;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -375,7 +373,7 @@ export function AdminView({
                 ) : null}
 
                 <GameHistory games={detail.games} />
-                {showHexahack ? <HexahackHistory games={detail.hexahackGames} /> : null}
+                <HexahackHistory games={detail.hexahackGames} />
               </div>
             )}
           </section>

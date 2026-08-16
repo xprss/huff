@@ -156,7 +156,7 @@ done
 
 if [[ "${BUILD_IMAGE}" == "true" ]]; then
   echo "Building ${IMAGE_NAME}:latest from ${PROJECT_ROOT}"
-  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" --build-arg "VITE_HIDE_HEXAHACK=${VITE_HIDE_HEXAHACK:-false}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 fi
 
 PREVIOUS_IMAGE_ID=""

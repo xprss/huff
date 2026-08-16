@@ -2,13 +2,11 @@ import { Binary, Check, SpellCheck2 } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
-  showHexahack,
   hexahackCompleted,
   onHexaword,
   onHexahack
 }: {
   hexawordCompleted: boolean;
-  showHexahack: boolean;
   hexahackCompleted: boolean;
   onHexaword: () => void;
   onHexahack: () => void;
@@ -29,16 +27,14 @@ export function GameSelector({
           </span>
           <span>Trova la parola italiana di sei lettere.</span>
         </button>
-        {showHexahack ? (
-          <button className={hexahackCompleted ? "completed" : ""} type="button" onClick={onHexahack}>
-            <Binary className="game-selector-icon" aria-hidden="true" />
-            <span className="game-selector-name">
-              <strong>Hexahack</strong>
-              {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
-            </span>
-            <span>Viola il nodo senza perdere Stealth.</span>
-          </button>
-        ) : null}
+        <button className={hexahackCompleted ? "completed" : ""} type="button" onClick={onHexahack}>
+          <Binary className="game-selector-icon" aria-hidden="true" />
+          <span className="game-selector-name">
+            <strong>Hexahack</strong>
+            {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
+          </span>
+          <span>Viola il nodo senza perdere Stealth.</span>
+        </button>
       </div>
     </section>
   );

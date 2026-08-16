@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { Activity, ChevronRight, Eye, Radio, Share2, ShieldCheck, X } from "lucide-react";
 import type {
   HexahackGameDto,
@@ -280,7 +281,7 @@ function Tutorial({ onClose }: { onClose: () => void }) {
     ["PING 1 = 2", "PING costa 1 e confronta una posizione con una soglia. La prima cifra è 2; dal CHECKSUM segue che la seconda è 3."],
     ["INJECT 234", "Un codice errato rivela soltanto quante posizioni sono corrette. Non ci sono limiti: ogni nodo è completabile."]
   ] as const;
-  return <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+  return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
     <section className="modal hack-tutorial" role="dialog" aria-modal="true" aria-labelledby="hack-tutorial-title" onMouseDown={(event) => event.stopPropagation()}>
       <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
       <span className="hack-kicker">TRAINING NODE</span><h2 id="hack-tutorial-title">Simulazione a tre cifre</h2>
@@ -288,7 +289,7 @@ function Tutorial({ onClose }: { onClose: () => void }) {
       <strong>{steps[step][0]}</strong><p>{steps[step][1]}</p>
       <button className="hack-execute" type="button" onClick={() => step === steps.length - 1 ? onClose() : setStep(step + 1)}>{step === steps.length - 1 ? "Entra nel nodo" : "Continua"} <ChevronRight size={16} /></button>
     </section>
-  </div>;
+  </div>, document.body);
 }
 
 function knownDigitsFrom(game: HexahackGameDto | null) {

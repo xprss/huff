@@ -36,7 +36,6 @@ import {
   todayQueryOptions
 } from "./queries";
 import { playerHash, playerNicknameFromHash, useAppRoute } from "./routing";
-import { isHexahackHidden } from "./features";
 import { GameBoard } from "../features/game/components/GameBoard";
 import { DailyGameIntro } from "../features/game/components/DailyGameIntro";
 import { GameKeyboard } from "../features/game/components/GameKeyboard";
@@ -126,8 +125,8 @@ export function App() {
     ...statsQueryOptions(),
     enabled: isLoggedIn
   });
-  const hexahackTodayQuery = useQuery({ ...hexahackTodayQueryOptions(), enabled: isLoggedIn && !isHexahackHidden });
-  const hexahackStatsQuery = useQuery({ ...hexahackStatsQueryOptions(), enabled: isLoggedIn && !isHexahackHidden });
+  const hexahackTodayQuery = useQuery({ ...hexahackTodayQueryOptions(), enabled: isLoggedIn });
+  const hexahackStatsQuery = useQuery({ ...hexahackStatsQueryOptions(), enabled: isLoggedIn });
   const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
   const leaderboardsQuery = useQuery({
     ...leaderboardsQueryOptions(),
@@ -156,7 +155,7 @@ export function App() {
     isAuthRequiredError(meQuery.error) ||
     globalStatsQuery.isPending ||
     (isLoggedIn && (todayQuery.isPending || statsQuery.isPending ||
-      (!isHexahackHidden && (hexahackTodayQuery.isPending || hexahackStatsQuery.isPending)) || overallStatsQuery.isPending));
+      hexahackTodayQuery.isPending || hexahackStatsQuery.isPending || overallStatsQuery.isPending));
 
   function setTodayGame(gameUpdate: GameDto | null) {
     queryClient.setQueryData<TodayGameDto | undefined>(queryKeys.today, (current) =>
@@ -172,7 +171,7 @@ export function App() {
   function refreshStats() {
     return Promise.all([
       queryClient.fetchQuery(statsQueryOptions()),
-      ...(isHexahackHidden ? [] : [queryClient.fetchQuery(hexahackStatsQueryOptions())]),
+      queryClient.fetchQuery(hexahackStatsQueryOptions()),
       queryClient.fetchQuery(overallStatsQueryOptions()),
       queryClient.fetchQuery(globalStatsQueryOptions())
     ]);
@@ -266,8 +265,8 @@ export function App() {
       globalStatsQuery.error ??
       todayQuery.error ??
       statsQuery.error ??
-      (!isHexahackHidden ? hexahackTodayQuery.error : null) ??
-      (!isHexahackHidden ? hexahackStatsQuery.error : null) ??
+      hexahackTodayQuery.error ??
+      hexahackStatsQuery.error ??
       overallStatsQuery.error ??
       leaderboardsQuery.error ??
       publicPlayerQuery.error;
@@ -279,7 +278,7 @@ export function App() {
     hexahackStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
-    if (isHexahackHidden || !me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") || launchAnnouncementHandledRef.current) return;
+    if (!me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") || launchAnnouncementHandledRef.current) return;
     launchAnnouncementHandledRef.current = true;
     setShowNotificationPrompt(false);
     setShowLaunchAnnouncement(true);
@@ -808,7 +807,6 @@ export function App() {
           ) : activeRoute === "admin" && canViewAdmin ? (
             <AdminView
               canManagePlayers={canManagePlayers}
-              showHexahack={!isHexahackHidden}
               onAuthRequired={handleAuthRequired}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}
@@ -816,7 +814,6 @@ export function App() {
           ) : activeRoute === "games" ? (
             <GameSelector
               hexawordCompleted={Boolean(game && game.status !== "IN_PROGRESS")}
-              showHexahack={!isHexahackHidden}
               hexahackCompleted={Boolean(hexahackGame && hexahackGame.status === "COMPLETED")}
               onHexaword={() => setActiveRoute("game")}
               onHexahack={() => setActiveRoute("hexahack")}
