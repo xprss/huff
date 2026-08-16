@@ -87,6 +87,12 @@ LEADERBOARD_WEEKLY_AWARDS_CRON=0 5 0 ? * MON
 
 The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification per subscribed browser for each new daily puzzle. `PUSH_DAILY_REMINDER_CRON` reminds subscribed browsers whose user has not submitted any guess for the current puzzle date. `PUSH_WEEKLY_AWARDS_REMINDER_CRON` sends every Monday at 20:10 a reminder that the previous week has ended; tapping it opens the user's profile to view the updated medals.
 
+### Hexahack rollout
+
+Hexahack can be withheld from the public frontend by setting `VITE_HIDE_HEXAHACK=true` in the deployment environment. The value is compiled into the client image, so redeploy after changing it. While enabled, the game selector, direct `/#/hexahack` route, launch modal, related requests, and the admin history are hidden; the launch announcement remains pending.
+
+The launch push campaign is disabled by default. Set `PUSH_HEXAHACK_LAUNCH_ENABLED=true` only when Hexahack is released, together with `VITE_HIDE_HEXAHACK=false`; pending campaign deliveries are then sent by the existing scheduler.
+
 The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 
 ## Deploy
@@ -182,12 +188,22 @@ Database schema changes are managed by Flyway. Versioned SQL migrations live in
 application starts. Hibernate validates the migrated schema instead of changing
 it at runtime.
 
-Existing deployments are baselined automatically and then receive the legacy,
-idempotent migrations once; no data reset is required. Add every new database
-change as a new `V<n>__description.sql` file in that directory—never edit a
-migration that has already been deployed. The legacy `scripts/migrate-*.sh`
-files are retained only for emergency/manual use and are no longer run during
-deployment.
+Existing production deployments are baselined automatically and upgrade from
+V11 to `V12__add_hexahack_and_launch_campaign.sql`. This V12 replaces an
+unreleased experiment: do not repair its checksum and do not add a conversion
+migration. Local test databases are disposable; recreate any local database
+that recorded the experimental V12 with
+`scripts/run-docker-local.sh --fresh-db`. Recreate staging with:
+
+```bash
+scripts/reset-db-huff-staging.sh
+```
+
+The staging reset moves the previous data directory under `data/backups` before
+running Flyway V1-V12 on a fresh database. Production must be at V11 before this
+release and must not be reset. After V12 ships, resume the normal rule: every
+schema change gets a new `V<n>__description.sql` migration. The legacy
+`scripts/migrate-*.sh` files remain only for emergency/manual use.
 
 User profile nicknames can be changed directly in PostgreSQL when needed. The command is a dry-run by default and only writes with `--yes`:
 

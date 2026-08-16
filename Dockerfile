@@ -4,7 +4,9 @@ FROM node:22-alpine AS frontend-build
 WORKDIR /workspace/frontend
 
 ARG GOOGLE_CLIENT_ID
+ARG VITE_HIDE_HEXAHACK=false
 ENV VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+ENV VITE_HIDE_HEXAHACK=${VITE_HIDE_HEXAHACK}
 
 COPY frontend/package.json frontend/package-lock.json ./
 RUN --mount=type=cache,target=/root/.npm,sharing=locked npm ci
