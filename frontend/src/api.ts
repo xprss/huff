@@ -8,6 +8,7 @@ import type {
   HexahackOverrideRequestDto,
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
+  HexaskyCheckRequestDto,
   ProfileUpdateDto,
   PushSubscriptionDto
 } from "./types";
@@ -83,6 +84,9 @@ export type ApiClient = {
   readonly hexahackSubmit: EndpointHandler<"/api/hexahack/today/submissions", "POST", [submission: HexahackSubmissionRequestDto]>;
   readonly hexahackOverride: EndpointHandler<"/api/hexahack/today/overrides", "POST", [request: HexahackOverrideRequestDto]>;
   readonly hexahackStats: EndpointHandler<"/api/hexahack/stats", "GET">;
+  readonly hexaskyToday: EndpointHandler<"/api/hexasky/today", "GET">;
+  readonly hexaskyCheck: EndpointHandler<"/api/hexasky/today/checks", "POST", [request: HexaskyCheckRequestDto]>;
+  readonly hexaskyStats: EndpointHandler<"/api/hexasky/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
@@ -175,6 +179,9 @@ export const api = {
   hexahackSubmit: (submission: HexahackSubmissionRequestDto) => request("/api/hexahack/today/submissions", { method: "POST", body: submission }),
   hexahackOverride: (overrideRequest: HexahackOverrideRequestDto) => request("/api/hexahack/today/overrides", { method: "POST", body: overrideRequest }),
   hexahackStats: () => request("/api/hexahack/stats", { method: "GET" }),
+  hexaskyToday: () => request("/api/hexasky/today", { method: "GET" }),
+  hexaskyCheck: (checkRequest: HexaskyCheckRequestDto) => request("/api/hexasky/today/checks", { method: "POST", body: checkRequest }),
+  hexaskyStats: () => request("/api/hexasky/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {

@@ -1762,6 +1762,30 @@ html[data-theme="chromatic"] .key.absent {
 .game-selector-name small svg { width: 13px; height: 13px; stroke-width: 3; }
 .game-selector-grid span { color: var(--color-muted); font-size: 0.83rem; line-height: 1.35; }
 
+.sky-shell { width: min(100%, 600px); margin: 0 auto; display: grid; gap: 14px; }
+.sky-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sky-heading h2 { margin: 0; color: var(--color-text); }
+.sky-heading .eyebrow { margin: 0 0 3px; }
+.sky-help { width: 38px; height: 38px; border: 1px solid var(--color-button-border); border-radius: 50%; display: grid; place-items: center; background: var(--color-button); color: var(--color-primary); cursor: pointer; }
+.sky-intro { margin: -7px 0 0; color: var(--color-muted); font-size: .82rem; font-weight: 680; line-height: 1.35; }
+.sky-puzzle { width: min(100%, 470px); margin: 0 auto; display: grid; grid-template-columns: minmax(28px, 10%) 1fr minmax(28px, 10%); grid-template-rows: minmax(28px, 10%) 1fr minmax(28px, 10%); gap: 5px; }
+.sky-grid { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: repeat(4, 1fr); aspect-ratio: 1; border: 2px solid var(--color-primary); border-radius: var(--compact-radius); overflow: hidden; touch-action: manipulation; user-select: none; }
+.sky-cell { min-width: 0; aspect-ratio: 1; border: 1px solid var(--color-surface-border); border-radius: 0; display: grid; place-items: center; background: var(--color-surface-raised); color: var(--color-text); cursor: pointer; font-size: clamp(1.15rem, 7vw, 2rem); font-weight: 900; touch-action: manipulation; user-select: none; }
+.sky-cell.selected { position: relative; z-index: 1; outline: 3px solid var(--color-primary); outline-offset: -3px; background: color-mix(in srgb, var(--color-primary) 17%, var(--color-surface-raised)); box-shadow: inset 0 0 16px var(--color-focus-ring); }
+.sky-cell.revealed { background: color-mix(in srgb, var(--color-present) 18%, var(--color-surface-raised)); color: var(--color-text); }
+.sky-cell:disabled { cursor: default; }
+.sky-clues { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.sky-clues.top { grid-column: 2; grid-row: 1; }.sky-clues.bottom { grid-column: 2; grid-row: 3; }.sky-clues.left { grid-column: 1; grid-row: 2; }.sky-clues.right { grid-column: 3; grid-row: 2; }
+.sky-clues.vertical { grid-template-columns: 1fr; grid-template-rows: repeat(4, 1fr); }
+.sky-clues span { min-width: 0; min-height: 0; display: grid; place-items: center; border-radius: var(--compact-radius); background: var(--color-primary); color: var(--color-on-solid); font-size: clamp(.78rem, 3.5vw, 1rem); font-weight: 900; }
+.sky-keyboard { width: min(100%, 470px); margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.sky-keyboard button, .sky-check { min-height: 44px; border: 1px solid var(--color-button-border); border-radius: var(--compact-radius); background: var(--color-button); color: var(--color-text); cursor: pointer; font-weight: 900; touch-action: manipulation; user-select: none; }
+.sky-keyboard button { font-size: 1.05rem; }.sky-check { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-on-solid); }.sky-check:disabled, .sky-keyboard button:disabled { cursor: default; opacity: .5; }
+.sky-keyboard .sky-delete { border-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 18%, var(--color-button)); color: var(--color-danger); }
+.sky-check { width: min(100%, 470px); margin: 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }.sky-check span { min-width: 22px; min-height: 22px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--color-on-solid) 22%, transparent); }
+.sky-result { margin: 0; padding: 10px; border-radius: var(--compact-radius); text-align: center; font-weight: 800; }.sky-result.lost { display: grid; gap: 4px; background: color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-raised)); color: var(--color-text); }.sky-result.won { background: color-mix(in srgb, var(--color-correct) 18%, var(--color-surface-raised)); color: var(--color-text); }
+.sky-tutorial { width: min(100%, 450px); display: grid; gap: 10px; }.sky-tutorial h2, .sky-tutorial p { margin: 0; }.sky-tutorial p { color: var(--color-muted); line-height: 1.42; }
+
 .game-stats-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -8,6 +8,8 @@ import type {
   GameMode,
   GuessResult,
   HexahackTodayDto,
+  HexaskyGameDto,
+  HexaskyTodayDto,
   MeDto,
   ProfileUpdateDto,
   TodayGameDto,
@@ -27,6 +29,8 @@ import {
   globalStatsQueryOptions,
   hexahackStatsQueryOptions,
   hexahackTodayQueryOptions,
+  hexaskyStatsQueryOptions,
+  hexaskyTodayQueryOptions,
   leaderboardsQueryOptions,
   meQueryOptions,
   publicPlayerQueryOptions,
@@ -64,6 +68,7 @@ import { StatsModal } from "../features/stats/StatsModal";
 import type { StatsGame } from "../features/stats/StatsModal";
 import { GameSelector } from "../features/game/GameSelector";
 import { HexahackView } from "../features/hexahack/HexahackView";
+import { HexaskyView } from "../features/hexasky/HexaskyView";
 import { HexahackLaunchModal } from "../features/notifications/HexahackLaunchModal";
 import { AdminView } from "../features/admin/AdminView";
 import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
@@ -127,6 +132,8 @@ export function App() {
   });
   const hexahackTodayQuery = useQuery({ ...hexahackTodayQueryOptions(), enabled: isLoggedIn });
   const hexahackStatsQuery = useQuery({ ...hexahackStatsQueryOptions(), enabled: isLoggedIn });
+  const hexaskyTodayQuery = useQuery({ ...hexaskyTodayQueryOptions(), enabled: isLoggedIn });
+  const hexaskyStatsQuery = useQuery({ ...hexaskyStatsQueryOptions(), enabled: isLoggedIn });
   const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
   const leaderboardsQuery = useQuery({
     ...leaderboardsQueryOptions(),
@@ -143,9 +150,13 @@ export function App() {
   const stats = isLoggedIn ? statsQuery.data ?? null : null;
   const hexahackToday = hexahackTodayQuery.data ?? null;
   const hexahackGame = hexahackToday?.game ?? null;
+  const hexaskyToday = hexaskyTodayQuery.data ?? null;
+  const hexaskyGame = hexaskyToday?.game ?? null;
   const statsSet: StatsSetDto = {
     overall: overallStatsQuery.data ?? emptyStats,
-    hexaword: stats ?? emptyStats
+    hexaword: stats ?? emptyStats,
+    hexahack: hexahackStatsQuery.data ?? emptyHexahackStats,
+    hexasky: hexaskyStatsQuery.data ?? emptyHexaskyStats
   };
   const canViewAdmin = Boolean(me?.user?.admin?.canViewPlayers);
   const canManagePlayers = Boolean(me?.user?.admin?.canManagePlayers);
@@ -155,7 +166,7 @@ export function App() {
     isAuthRequiredError(meQuery.error) ||
     globalStatsQuery.isPending ||
     (isLoggedIn && (todayQuery.isPending || statsQuery.isPending ||
-      hexahackTodayQuery.isPending || hexahackStatsQuery.isPending || overallStatsQuery.isPending));
+      hexahackTodayQuery.isPending || hexahackStatsQuery.isPending || hexaskyTodayQuery.isPending || hexaskyStatsQuery.isPending || overallStatsQuery.isPending));
 
   function setTodayGame(gameUpdate: GameDto | null) {
     queryClient.setQueryData<TodayGameDto | undefined>(queryKeys.today, (current) =>
@@ -172,6 +183,7 @@ export function App() {
     return Promise.all([
       queryClient.fetchQuery(statsQueryOptions()),
       queryClient.fetchQuery(hexahackStatsQueryOptions()),
+      queryClient.fetchQuery(hexaskyStatsQueryOptions()),
       queryClient.fetchQuery(overallStatsQueryOptions()),
       queryClient.fetchQuery(globalStatsQueryOptions())
     ]);
@@ -199,6 +211,10 @@ export function App() {
   const hexahackProbeMutation = useMutation({ mutationFn: api.hexahackProbe, onSuccess: (action) => setHexahackGame(action.game) });
   const hexahackSubmitMutation = useMutation({ mutationFn: api.hexahackSubmit, onSuccess: (action) => setHexahackGame(action.game) });
   const hexahackOverrideMutation = useMutation({ mutationFn: api.hexahackOverride, onSuccess: (action) => setHexahackGame(action.game) });
+  function setHexaskyGame(updated: HexaskyGameDto) {
+    queryClient.setQueryData<HexaskyTodayDto | undefined>(queryKeys.hexaskyToday, (current) => current ? { ...current, game: updated } : current);
+  }
+  const hexaskyCheckMutation = useMutation({ mutationFn: api.hexaskyCheck, onSuccess: (action) => setHexaskyGame(action.game) });
 
   const useKittenMutation = useMutation({
     mutationFn: api.useKitten,
@@ -267,6 +283,8 @@ export function App() {
       statsQuery.error ??
       hexahackTodayQuery.error ??
       hexahackStatsQuery.error ??
+      hexaskyTodayQuery.error ??
+      hexaskyStatsQuery.error ??
       overallStatsQuery.error ??
       leaderboardsQuery.error ??
       publicPlayerQuery.error;
@@ -275,7 +293,7 @@ export function App() {
 
     showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
   }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error, hexahackTodayQuery.error,
-    hexahackStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
+    hexahackStatsQuery.error, hexaskyTodayQuery.error, hexaskyStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
     if (!me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") || launchAnnouncementHandledRef.current) return;
@@ -407,7 +425,7 @@ export function App() {
   const shouldHideKeyboardHints = Boolean(game?.mode === "MISCHIEVOUS_MOUSE" && !game.kitten.used);
   const answerLength = game?.answerLength ?? 6;
   const puzzleDate = formatPuzzleDate(
-    activeRoute === "hexahack" ? hexahackGame?.puzzleDate ?? hexahackToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
+    activeRoute === "hexahack" ? hexahackGame?.puzzleDate ?? hexahackToday?.puzzleDate : activeRoute === "hexasky" ? hexaskyGame?.puzzleDate ?? hexaskyToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
   );
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
@@ -740,7 +758,7 @@ export function App() {
               setShowActionsMenu(false);
             }}
             onOpenStats={() => {
-              setStatsInitialGame(activeRoute === "game" ? "hexaword" : "overall");
+              setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : "overall");
               setShowStats(true);
               setShowActionsMenu(false);
             }}
@@ -815,8 +833,10 @@ export function App() {
             <GameSelector
               hexawordCompleted={Boolean(game && game.status !== "IN_PROGRESS")}
               hexahackCompleted={Boolean(hexahackGame && hexahackGame.status === "COMPLETED")}
+              hexaskyCompleted={Boolean(hexaskyGame && hexaskyGame.status !== "IN_PROGRESS")}
               onHexaword={() => setActiveRoute("game")}
               onHexahack={() => setActiveRoute("hexahack")}
+              onHexasky={() => setActiveRoute("hexasky")}
             />
           ) : activeRoute === "hexahack" && hexahackToday && hexahackStatsQuery.data ? (
             <HexahackView
@@ -830,6 +850,19 @@ export function App() {
               onComplete={(updated) => {
                 void refreshStats();
                 if (updated.rank === "GHOST") void launchVictoryConfetti();
+              }}
+            />
+          ) : activeRoute === "hexasky" && hexaskyToday && hexaskyStatsQuery.data ? (
+            <HexaskyView
+              today={hexaskyToday}
+              busy={hexaskyCheckMutation.isPending}
+              onCheck={(request) => hexaskyCheckMutation.mutateAsync(request)}
+              onError={(message) => showToast(message, "warning")}
+              onComplete={(action) => {
+                void refreshStats();
+                if (action.game.status === "WON") void launchVictoryConfetti();
+                setShowStats(true);
+                setStatsInitialGame("hexasky");
               }}
             />
           ) : !game ? (
@@ -960,6 +993,27 @@ const emptyStats = {
   currentStreak: 0,
   maxStreak: 0,
   guessDistribution: {}
+} as const;
+
+const emptyHexahackStats = {
+  completedAccesses: 0,
+  averageStealth: 0,
+  bestStealth: 0,
+  rankDistribution: { GHOST: 0, SHADOW: 0, BREACH: 0, TRACED: 0 },
+  currentStreak: 0,
+  maxStreak: 0,
+  noOverrideStreak: 0,
+  maxNoOverrideStreak: 0,
+  last30Nodes: []
+} as const;
+
+const emptyHexaskyStats = {
+  played: 0,
+  won: 0,
+  lost: 0,
+  currentStreak: 0,
+  maxStreak: 0,
+  checkDistribution: { "1": 0, "2": 0 }
 } as const;
 
 function normalizeGuessCells(cells: readonly string[], answerLength: number) {

@@ -8,6 +8,8 @@ export const queryKeys = {
   stats: ["stats", "personal"] as const,
   hexahackToday: ["hexahack", "today"] as const,
   hexahackStats: ["hexahack", "stats"] as const,
+  hexaskyToday: ["hexasky", "today"] as const,
+  hexaskyStats: ["hexasky", "stats"] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: ["leaderboards"] as const,
@@ -50,6 +52,9 @@ export const hexahackStatsQueryOptions = () => queryOptions({
   queryKey: queryKeys.hexahackStats,
   queryFn: api.hexahackStats
 });
+
+export const hexaskyTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaskyToday, queryFn: api.hexaskyToday });
+export const hexaskyStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaskyStats, queryFn: api.hexaskyStats });
 
 export const overallStatsQueryOptions = () => queryOptions({
   queryKey: queryKeys.overallStats,

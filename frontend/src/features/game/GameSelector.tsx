@@ -1,15 +1,19 @@
-import { Binary, Check, SpellCheck2 } from "lucide-react";
+import { Binary, Check, SpellCheck2, Building2 } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
   hexahackCompleted,
+  hexaskyCompleted,
   onHexaword,
-  onHexahack
+  onHexahack,
+  onHexasky
 }: {
   hexawordCompleted: boolean;
   hexahackCompleted: boolean;
+  hexaskyCompleted: boolean;
   onHexaword: () => void;
   onHexahack: () => void;
+  onHexasky: () => void;
 }) {
   return (
     <section className="game-selector" aria-labelledby="game-selector-title">
@@ -34,6 +38,11 @@ export function GameSelector({
             {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
           </span>
           <span>Viola il nodo senza perdere Stealth.</span>
+        </button>
+        <button className={hexaskyCompleted ? "completed" : ""} type="button" onClick={onHexasky}>
+          <Building2 className="game-selector-icon" aria-hidden="true" />
+          <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
+          <span>Risolvi il grattacielo quotidiano 4×4.</span>
         </button>
       </div>
     </section>

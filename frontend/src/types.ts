@@ -216,9 +216,21 @@ export interface HexahackStatsDto {
   readonly last30Nodes: readonly HexahackCalendarNodeDto[];
 }
 
+export type HexaskyStatus = "IN_PROGRESS" | "WON" | "LOST";
+export interface HexaskyVisibilityDto { readonly top: readonly number[]; readonly right: readonly number[]; readonly bottom: readonly number[]; readonly left: readonly number[]; }
+export interface HexaskyCheckRequestDto { readonly requestId: string; readonly solution: readonly number[]; }
+export interface HexaskyCheckResultDto { readonly requestId: string; readonly correct: boolean; readonly checksUsed: number; readonly status: HexaskyStatus; readonly solution: readonly number[] | null; }
+export interface HexaskyEventDto { readonly sequence: number; readonly kind: "CHECK"; readonly occurredAt: string; readonly check: HexaskyCheckResultDto; }
+export interface HexaskyGameDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly status: HexaskyStatus; readonly checksUsed: number; readonly proposal: readonly number[] | null; readonly log: readonly HexaskyEventDto[]; readonly solution: readonly number[] | null; readonly completedAt: string | null; }
+export interface HexaskyTodayDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly visibility: HexaskyVisibilityDto; readonly game: HexaskyGameDto | null; }
+export interface HexaskyCheckActionDto { readonly game: HexaskyGameDto; readonly result: HexaskyCheckResultDto; readonly replayed: boolean; }
+export interface HexaskyStatsDto { readonly played: number; readonly won: number; readonly lost: number; readonly currentStreak: number; readonly maxStreak: number; readonly checkDistribution: Readonly<Record<"1" | "2", number>>; }
+
 export interface StatsSetDto {
   readonly overall: StatsDto;
   readonly hexaword: StatsDto;
+  readonly hexahack: HexahackStatsDto;
+  readonly hexasky: HexaskyStatsDto;
 }
 
 export interface AdminPrivilegesDto {
@@ -277,6 +289,8 @@ export interface PublicPlayerProfileDto {
   readonly stats: StatsDto;
   readonly overallStats: StatsDto;
   readonly hexawordStats: StatsDto;
+  readonly hexahackStats: HexahackStatsDto;
+  readonly hexaskyStats: HexaskyStatsDto;
   readonly medals: MedalCountsDto;
 }
 
@@ -430,6 +444,9 @@ export type ApiEndpointMap = {
   "/api/hexahack/today/submissions": { POST: { body: HexahackSubmissionRequestDto; response: HexahackSubmissionActionDto } };
   "/api/hexahack/today/overrides": { POST: { body: HexahackOverrideRequestDto; response: HexahackOverrideActionDto } };
   "/api/hexahack/stats": { GET: { response: HexahackStatsDto } };
+  "/api/hexasky/today": { GET: { response: HexaskyTodayDto } };
+  "/api/hexasky/today/checks": { POST: { body: HexaskyCheckRequestDto; response: HexaskyCheckActionDto } };
+  "/api/hexasky/stats": { GET: { response: HexaskyStatsDto } };
   "/api/overall/stats": { GET: { response: StatsDto } };
   "/api/game/today": {
     GET: {

@@ -2,14 +2,21 @@ import React from "react";
 import { X } from "lucide-react";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
-import type { GameDto, StatsDto, StatsSetDto } from "../../types";
+import type { GameDto, HexahackRank, HexahackStatsDto, HexaskyStatsDto, StatsDto, StatsSetDto } from "../../types";
 
-export type StatsGame = "overall" | "hexaword";
+export type StatsGame = "overall" | "hexaword" | "hexahack" | "hexasky";
+
+const RANK_LABELS: Readonly<Record<HexahackRank, string>> = {
+  GHOST: "Ghost",
+  SHADOW: "Shadow",
+  BREACH: "Breach",
+  TRACED: "Traced"
+};
 
 export function StatsTabs({ active, onChange }: { active: StatsGame; onChange: (game: StatsGame) => void }) {
   return (
     <div className="game-stats-tabs" role="tablist" aria-label="Gioco">
-      {([['overall', 'Overall'], ['hexaword', 'Hexaword']] as const).map(([id, label]) =>
+      {([['overall', 'Overall'], ['hexaword', 'Hexaword'], ['hexahack', 'Hexahack'], ['hexasky', 'Hexasky']] as const).map(([id, label]) =>
         <button key={id} type="button" role="tab" aria-selected={active === id} className={active === id ? "selected" : ""} onClick={() => onChange(id)}>{label}</button>
       )}
     </div>
@@ -33,6 +40,30 @@ export function StatsPanel({ stats }: { stats: StatsDto | null }) {
   </>;
 }
 
+export function HexahackStatsPanel({ stats }: { stats: HexahackStatsDto }) {
+  return <section className="hack-mastery" aria-label="Maestria Hexahack">
+    <header><strong>MAESTRIA</strong><span>ultimi 30 nodi</span></header>
+    <div className="hack-metrics">
+      <div><strong>{stats.completedAccesses}</strong><span>Accessi</span></div>
+      <div><strong>{stats.averageStealth}</strong><span>Media</span></div>
+      <div><strong>{stats.bestStealth}</strong><span>Migliore</span></div>
+      <div><strong>{stats.currentStreak}</strong><span>Serie</span></div>
+      <div><strong>{stats.noOverrideStreak}</strong><span>No Override</span></div>
+    </div>
+    <div className="hack-ranks" aria-label="Distribuzione ranghi">
+      {(Object.keys(RANK_LABELS) as HexahackRank[]).map((rank) => <span key={rank}>{RANK_LABELS[rank]} <strong>{stats.rankDistribution[rank] ?? 0}</strong></span>)}
+    </div>
+    <div className="hack-calendar">
+      {stats.last30Nodes.map((node) => <span className={node.completed ? `rank-${node.rank?.toLowerCase()}` : "empty"} title={`${node.puzzleDate}${node.completed ? ` · ${node.rank} · ${node.stealth}` : " · non completato"}`} aria-label={`${node.puzzleDate}${node.completed ? `, rango ${node.rank}, Stealth ${node.stealth}` : ", non completato"}`} key={node.puzzleDate} />)}
+    </div>
+  </section>;
+}
+
+export function HexaskyStatsPanel({ stats }: { stats: HexaskyStatsDto }) {
+  const winRate = stats.played ? Math.round((stats.won / stats.played) * 100) : 0;
+  return <><div className="stat-grid"><Metric label="Giocate" value={stats.played} /><Metric label="Vinte" value={stats.won} /><Metric label="Perse" value={stats.lost} /><Metric label="Vittorie" value={`${winRate}%`} /></div><div className="stat-grid compact"><Metric label="Serie" value={stats.currentStreak} /><Metric label="Record" value={stats.maxStreak} /></div><div className="distribution"><h3>Controlli per vittoria</h3>{([1, 2] as const).map((check) => <div className="distribution-row" key={check}><span>{check}</span><div><i style={{ width: `${Math.min(100, (stats.checkDistribution[String(check) as "1" | "2"] ?? 0) * 10)}%` }} /></div><strong>{stats.checkDistribution[String(check) as "1" | "2"] ?? 0}</strong></div>)}</div></>;
+}
+
 export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
   game: GameDto | null;
   stats: StatsSetDto;
@@ -40,14 +71,14 @@ export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
   onClose: () => void;
 }) {
   const [active, setActive] = React.useState<StatsGame>(initialGame);
-  const selected = stats[active];
+  const selected = active === "hexahack" || active === "hexasky" ? null : stats[active];
   const completed = active === "hexaword" ? game : null;
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
         <header className="modal-head"><h2>Statistiche</h2><button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button></header>
         <StatsTabs active={active} onChange={setActive} />
-        <StatsPanel stats={selected} />
+        {active === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : active === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : <StatsPanel stats={selected} />}
         {completed?.status === "WON" ? <p className="result won">Risolta.</p> : null}
         {completed?.status === "LOST" ? <p className="result lost">Soluzione: {completed.solution?.toUpperCase()}</p> : null}
       </section>
