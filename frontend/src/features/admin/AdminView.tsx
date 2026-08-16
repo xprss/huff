@@ -9,7 +9,7 @@ import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
 import { Metric } from "../../shared/components/Metric";
 import type {
   AdminGameDto,
-  AdminHexadigitGameDto,
+  AdminHexahackGameDto,
   AdminPlayerDetailDto,
   AdminPlayerSortDto,
   AdminPlayerSummaryDto,
@@ -27,11 +27,13 @@ const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
   canManagePlayers,
+  showHexahack,
   onAuthRequired,
   onSuccess,
   onError
 }: {
   canManagePlayers: boolean;
+  showHexahack: boolean;
   onAuthRequired: (error: unknown) => boolean;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -373,7 +375,7 @@ export function AdminView({
                 ) : null}
 
                 <GameHistory games={detail.games} />
-                <HexadigitHistory games={detail.hexadigitGames} />
+                {showHexahack ? <HexahackHistory games={detail.hexahackGames} /> : null}
               </div>
             )}
           </section>
@@ -562,27 +564,25 @@ function maskedSolution(solution: string) {
   return "*".repeat(solution.length || 6);
 }
 
-function HexadigitHistory({ games }: { games: readonly AdminHexadigitGameDto[] }) {
+function HexahackHistory({ games }: { games: readonly AdminHexahackGameDto[] }) {
   return (
-    <section className="admin-games-panel" aria-label="Partite Hexadigit">
-      <h3>Hexadigit</h3>
+    <section className="admin-games-panel" aria-label="Nodi Hexahack">
+      <h3>Hexahack</h3>
       {games.map((game) => (
         <article className="admin-game-row" key={game.id}>
-          <header><strong>{game.puzzleDate}</strong><span>{game.status}</span><span>Hexadigit</span></header>
-          <p>Soluzione: {game.solution} · Tentativi: {game.guesses.length}</p>
+          <header><strong>{game.puzzleDate}</strong><span>{game.status}</span><span>{game.rank ?? "—"}</span></header>
+          <p>Soluzione: {game.solution} · Costo: {game.totalCost} · Errori: {game.wrongSubmissions} · Override: {game.overrideCount}</p>
           <div className="admin-guesses">
-            {game.guesses.map((guess, index) => (
-              <div className="admin-guess" key={`${game.id}-${index}`}>
-                <span>{guess.guess}</span>
-                <span>{guess.tiles.map((tile, tileIndex) => (
-                  <i className={`admin-tile ${tile.state.toLowerCase()}`} key={tileIndex}>{tile.digit}</i>
-                ))}</span>
+            {game.log.map((entry) => (
+              <div className="admin-guess" key={`${game.id}-${entry.sequence}`}>
+                <span>#{entry.sequence} {entry.kind}</span>
+                <span>{entry.probe?.summary ?? entry.submission?.code ?? (entry.override ? `P${entry.override.position}=${entry.override.digit}` : "")}</span>
               </div>
             ))}
           </div>
         </article>
       ))}
-      {games.length === 0 ? <p className="admin-empty">Nessuna partita Hexadigit.</p> : null}
+      {games.length === 0 ? <p className="admin-empty">Nessun nodo Hexahack.</p> : null}
     </section>
   );
 }

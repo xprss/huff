@@ -7,8 +7,7 @@ import type {
   GameDto,
   GameMode,
   GuessResult,
-  HexadigitGameDto,
-  HexadigitTodayDto,
+  HexahackTodayDto,
   MeDto,
   ProfileUpdateDto,
   TodayGameDto,
@@ -26,10 +25,8 @@ import {
 import { AppHeader } from "./AppHeader";
 import {
   globalStatsQueryOptions,
-  hexadigitStatsQueryOptions,
-  hexadigitTodayQueryOptions,
-  hexadigitLeaderboardsQueryOptions,
-  hexawordLeaderboardsQueryOptions,
+  hexahackStatsQueryOptions,
+  hexahackTodayQueryOptions,
   leaderboardsQueryOptions,
   meQueryOptions,
   publicPlayerQueryOptions,
@@ -39,6 +36,7 @@ import {
   todayQueryOptions
 } from "./queries";
 import { playerHash, playerNicknameFromHash, useAppRoute } from "./routing";
+import { isHexahackHidden } from "./features";
 import { GameBoard } from "../features/game/components/GameBoard";
 import { DailyGameIntro } from "../features/game/components/DailyGameIntro";
 import { GameKeyboard } from "../features/game/components/GameKeyboard";
@@ -66,8 +64,8 @@ import { LeaderboardView } from "../features/leaderboard/LeaderboardView";
 import { StatsModal } from "../features/stats/StatsModal";
 import type { StatsGame } from "../features/stats/StatsModal";
 import { GameSelector } from "../features/game/GameSelector";
-import { HexadigitView } from "../features/hexadigit/HexadigitView";
-import { HexadigitLaunchModal } from "../features/notifications/HexadigitLaunchModal";
+import { HexahackView } from "../features/hexahack/HexahackView";
+import { HexahackLaunchModal } from "../features/notifications/HexahackLaunchModal";
 import { AdminView } from "../features/admin/AdminView";
 import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
@@ -128,19 +126,11 @@ export function App() {
     ...statsQueryOptions(),
     enabled: isLoggedIn
   });
-  const hexadigitTodayQuery = useQuery({ ...hexadigitTodayQueryOptions(), enabled: isLoggedIn });
-  const hexadigitStatsQuery = useQuery({ ...hexadigitStatsQueryOptions(), enabled: isLoggedIn });
+  const hexahackTodayQuery = useQuery({ ...hexahackTodayQueryOptions(), enabled: isLoggedIn && !isHexahackHidden });
+  const hexahackStatsQuery = useQuery({ ...hexahackStatsQueryOptions(), enabled: isLoggedIn && !isHexahackHidden });
   const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
   const leaderboardsQuery = useQuery({
     ...leaderboardsQueryOptions(),
-    enabled: isLoggedIn && (activeRoute === "leaderboard" || activeRoute === "player")
-  });
-  const hexawordLeaderboardsQuery = useQuery({
-    ...hexawordLeaderboardsQueryOptions(),
-    enabled: isLoggedIn && (activeRoute === "leaderboard" || activeRoute === "player")
-  });
-  const hexadigitLeaderboardsQuery = useQuery({
-    ...hexadigitLeaderboardsQueryOptions(),
     enabled: isLoggedIn && (activeRoute === "leaderboard" || activeRoute === "player")
   });
   const publicPlayerQuery = useQuery({
@@ -152,12 +142,11 @@ export function App() {
   const modes = today?.modes ?? [];
   const todayPuzzleDate = today?.puzzleDate ?? null;
   const stats = isLoggedIn ? statsQuery.data ?? null : null;
-  const hexadigitToday = hexadigitTodayQuery.data ?? null;
-  const hexadigitGame = hexadigitToday?.game ?? null;
+  const hexahackToday = hexahackTodayQuery.data ?? null;
+  const hexahackGame = hexahackToday?.game ?? null;
   const statsSet: StatsSetDto = {
     overall: overallStatsQuery.data ?? emptyStats,
-    hexaword: stats ?? emptyStats,
-    hexadigit: hexadigitStatsQuery.data ?? emptyStats
+    hexaword: stats ?? emptyStats
   };
   const canViewAdmin = Boolean(me?.user?.admin?.canViewPlayers);
   const canManagePlayers = Boolean(me?.user?.admin?.canManagePlayers);
@@ -166,8 +155,8 @@ export function App() {
     meQuery.isPending ||
     isAuthRequiredError(meQuery.error) ||
     globalStatsQuery.isPending ||
-    (isLoggedIn && (todayQuery.isPending || statsQuery.isPending || hexadigitTodayQuery.isPending ||
-      hexadigitStatsQuery.isPending || overallStatsQuery.isPending));
+    (isLoggedIn && (todayQuery.isPending || statsQuery.isPending ||
+      (!isHexahackHidden && (hexahackTodayQuery.isPending || hexahackStatsQuery.isPending)) || overallStatsQuery.isPending));
 
   function setTodayGame(gameUpdate: GameDto | null) {
     queryClient.setQueryData<TodayGameDto | undefined>(queryKeys.today, (current) =>
@@ -183,7 +172,7 @@ export function App() {
   function refreshStats() {
     return Promise.all([
       queryClient.fetchQuery(statsQueryOptions()),
-      queryClient.fetchQuery(hexadigitStatsQueryOptions()),
+      ...(isHexahackHidden ? [] : [queryClient.fetchQuery(hexahackStatsQueryOptions())]),
       queryClient.fetchQuery(overallStatsQueryOptions()),
       queryClient.fetchQuery(globalStatsQueryOptions())
     ]);
@@ -202,14 +191,15 @@ export function App() {
     mutationFn: api.guess
   });
 
-  const hexadigitGuessMutation = useMutation({
-    mutationFn: api.hexadigitGuess,
-    onSuccess: (updated) => {
-      queryClient.setQueryData<HexadigitTodayDto | undefined>(queryKeys.hexadigitToday, (current) =>
-        current ? { ...current, game: updated } : current
-      );
-    }
-  });
+  function setHexahackGame(updated: NonNullable<HexahackTodayDto["game"]>) {
+    queryClient.setQueryData<HexahackTodayDto | undefined>(queryKeys.hexahackToday, (current) =>
+      current ? { ...current, game: updated } : current
+    );
+  }
+
+  const hexahackProbeMutation = useMutation({ mutationFn: api.hexahackProbe, onSuccess: (action) => setHexahackGame(action.game) });
+  const hexahackSubmitMutation = useMutation({ mutationFn: api.hexahackSubmit, onSuccess: (action) => setHexahackGame(action.game) });
+  const hexahackOverrideMutation = useMutation({ mutationFn: api.hexahackOverride, onSuccess: (action) => setHexahackGame(action.game) });
 
   const useKittenMutation = useMutation({
     mutationFn: api.useKitten,
@@ -276,23 +266,20 @@ export function App() {
       globalStatsQuery.error ??
       todayQuery.error ??
       statsQuery.error ??
-      hexadigitTodayQuery.error ??
-      hexadigitStatsQuery.error ??
+      (!isHexahackHidden ? hexahackTodayQuery.error : null) ??
+      (!isHexahackHidden ? hexahackStatsQuery.error : null) ??
       overallStatsQuery.error ??
       leaderboardsQuery.error ??
-      hexawordLeaderboardsQuery.error ??
-      hexadigitLeaderboardsQuery.error ??
       publicPlayerQuery.error;
     if (!error) return;
     if (handleAuthRequired(error)) return;
 
     showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
-  }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error, hexadigitTodayQuery.error,
-    hexadigitStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, hexawordLeaderboardsQuery.error,
-    hexadigitLeaderboardsQuery.error, publicPlayerQuery.error]);
+  }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error, hexahackTodayQuery.error,
+    hexahackStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
-    if (!me?.pendingAnnouncements.includes("HEXADIGIT_LAUNCH") || launchAnnouncementHandledRef.current) return;
+    if (isHexahackHidden || !me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") || launchAnnouncementHandledRef.current) return;
     launchAnnouncementHandledRef.current = true;
     setShowNotificationPrompt(false);
     setShowLaunchAnnouncement(true);
@@ -421,7 +408,7 @@ export function App() {
   const shouldHideKeyboardHints = Boolean(game?.mode === "MISCHIEVOUS_MOUSE" && !game.kitten.used);
   const answerLength = game?.answerLength ?? 6;
   const puzzleDate = formatPuzzleDate(
-    activeRoute === "hexadigit" ? hexadigitGame?.puzzleDate ?? hexadigitToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
+    activeRoute === "hexahack" ? hexahackGame?.puzzleDate ?? hexahackToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
   );
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
@@ -686,12 +673,12 @@ export function App() {
     setShowLaunchAnnouncement(false);
     queryClient.setQueryData<MeDto | undefined>(queryKeys.me, (current) => current ? {
       ...current,
-      pendingAnnouncements: current.pendingAnnouncements.filter((campaign) => campaign !== "HEXADIGIT_LAUNCH")
+      pendingAnnouncements: current.pendingAnnouncements.filter((campaign) => campaign !== "HEXAHACK_LAUNCH")
     } : current);
-    void api.markHexadigitLaunchSeen().catch(() => {
+    void api.markHexahackLaunchSeen().catch(() => {
       // The local close is immediate. A later identity refresh/access will retry via the persistent pending row.
     });
-    if (play) setActiveRoute("hexadigit");
+    if (play) setActiveRoute("hexahack");
   }
 
   if ((me?.authEnabled === true && !me.loggedIn) || isAuthRequiredError(meQuery.error)) {
@@ -754,7 +741,7 @@ export function App() {
               setShowActionsMenu(false);
             }}
             onOpenStats={() => {
-              setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexadigit" ? "hexadigit" : "overall");
+              setStatsInitialGame(activeRoute === "game" ? "hexaword" : "overall");
               setShowStats(true);
               setShowActionsMenu(false);
             }}
@@ -783,15 +770,11 @@ export function App() {
               <LoadingSpinner />
             </div>
           ) : activeRoute === "leaderboard" ? (
-            leaderboardsQuery.isPending || hexawordLeaderboardsQuery.isPending || hexadigitLeaderboardsQuery.isPending ? (
+            leaderboardsQuery.isPending ? (
               <div className="play-area"><LoadingSpinner /></div>
-            ) : leaderboardsQuery.data && hexawordLeaderboardsQuery.data && hexadigitLeaderboardsQuery.data ? (
+            ) : leaderboardsQuery.data ? (
               <LeaderboardView
-                leaderboards={{
-                  overall: leaderboardsQuery.data,
-                  hexaword: hexawordLeaderboardsQuery.data,
-                  hexadigit: hexadigitLeaderboardsQuery.data
-                }}
+                leaderboards={leaderboardsQuery.data}
                 onBack={() => setActiveRoute("games")}
                 onOpenPlayer={(nickname) => {
                   window.location.hash = playerHash(nickname);
@@ -825,6 +808,7 @@ export function App() {
           ) : activeRoute === "admin" && canViewAdmin ? (
             <AdminView
               canManagePlayers={canManagePlayers}
+              showHexahack={!isHexahackHidden}
               onAuthRequired={handleAuthRequired}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}
@@ -832,23 +816,23 @@ export function App() {
           ) : activeRoute === "games" ? (
             <GameSelector
               hexawordCompleted={Boolean(game && game.status !== "IN_PROGRESS")}
-              hexadigitCompleted={Boolean(hexadigitGame && hexadigitGame.status !== "IN_PROGRESS")}
+              showHexahack={!isHexahackHidden}
+              hexahackCompleted={Boolean(hexahackGame && hexahackGame.status === "COMPLETED")}
               onHexaword={() => setActiveRoute("game")}
-              onHexadigit={() => setActiveRoute("hexadigit")}
+              onHexahack={() => setActiveRoute("hexahack")}
             />
-          ) : activeRoute === "hexadigit" && hexadigitToday ? (
-            <HexadigitView
-              today={hexadigitToday}
-              hand={me?.user?.inputHandPreference ?? "RIGHT"}
-              submitting={hexadigitGuessMutation.isPending}
-              onGuess={(guess) => hexadigitGuessMutation.mutateAsync(guess)}
+          ) : activeRoute === "hexahack" && hexahackToday && hexahackStatsQuery.data ? (
+            <HexahackView
+              today={hexahackToday}
+              stats={hexahackStatsQuery.data}
+              busy={hexahackProbeMutation.isPending || hexahackSubmitMutation.isPending || hexahackOverrideMutation.isPending}
+              onProbe={(probe) => hexahackProbeMutation.mutateAsync(probe)}
+              onSubmit={(submission) => hexahackSubmitMutation.mutateAsync(submission)}
+              onOverride={(overrideRequest) => hexahackOverrideMutation.mutateAsync(overrideRequest)}
               onError={(message) => showToast(message, "warning")}
               onComplete={(updated) => {
-                void refreshStats().then(() => {
-                  setStatsInitialGame("hexadigit");
-                  setShowStats(true);
-                  if (updated.status === "WON") void launchVictoryConfetti();
-                });
+                void refreshStats();
+                if (updated.rank === "GHOST") void launchVictoryConfetti();
               }}
             />
           ) : !game ? (
@@ -933,7 +917,7 @@ export function App() {
         </section>
 
         {showStats ? (
-          <StatsModal game={game} hexadigitGame={hexadigitGame} stats={statsSet} initialGame={statsInitialGame} onClose={() => setShowStats(false)} />
+          <StatsModal game={game} stats={statsSet} initialGame={statsInitialGame} onClose={() => setShowStats(false)} />
         ) : null}
 
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
@@ -951,7 +935,7 @@ export function App() {
         ) : null}
 
         {showLaunchAnnouncement ? (
-          <HexadigitLaunchModal onPlay={() => dismissLaunchAnnouncement(true)} onClose={() => dismissLaunchAnnouncement(false)} />
+          <HexahackLaunchModal onPlay={() => dismissLaunchAnnouncement(true)} onClose={() => dismissLaunchAnnouncement(false)} />
         ) : null}
 
         {starReveal ? (

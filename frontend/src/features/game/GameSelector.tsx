@@ -2,14 +2,16 @@ import { Binary, Check, SpellCheck2 } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
-  hexadigitCompleted,
+  showHexahack,
+  hexahackCompleted,
   onHexaword,
-  onHexadigit
+  onHexahack
 }: {
   hexawordCompleted: boolean;
-  hexadigitCompleted: boolean;
+  showHexahack: boolean;
+  hexahackCompleted: boolean;
   onHexaword: () => void;
-  onHexadigit: () => void;
+  onHexahack: () => void;
 }) {
   return (
     <section className="game-selector" aria-labelledby="game-selector-title">
@@ -27,14 +29,16 @@ export function GameSelector({
           </span>
           <span>Trova la parola italiana di sei lettere.</span>
         </button>
-        <button className={hexadigitCompleted ? "completed" : ""} type="button" onClick={onHexadigit}>
-          <Binary className="game-selector-icon" aria-hidden="true" />
-          <span className="game-selector-name">
-            <strong>Hexadigit</strong>
-            {hexadigitCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}
-          </span>
-          <span>Trova il codice di sei cifre con colori e confronti.</span>
-        </button>
+        {showHexahack ? (
+          <button className={hexahackCompleted ? "completed" : ""} type="button" onClick={onHexahack}>
+            <Binary className="game-selector-icon" aria-hidden="true" />
+            <span className="game-selector-name">
+              <strong>Hexahack</strong>
+              {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
+            </span>
+            <span>Viola il nodo senza perdere Stealth.</span>
+          </button>
+        ) : null}
       </div>
     </section>
   );

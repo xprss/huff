@@ -2,14 +2,14 @@ import React from "react";
 import { X } from "lucide-react";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
-import type { GameDto, HexadigitGameDto, StatsDto, StatsSetDto } from "../../types";
+import type { GameDto, StatsDto, StatsSetDto } from "../../types";
 
-export type StatsGame = "overall" | "hexaword" | "hexadigit";
+export type StatsGame = "overall" | "hexaword";
 
 export function StatsTabs({ active, onChange }: { active: StatsGame; onChange: (game: StatsGame) => void }) {
   return (
     <div className="game-stats-tabs" role="tablist" aria-label="Gioco">
-      {([['overall', 'Overall'], ['hexaword', 'Hexaword'], ['hexadigit', 'Hexadigit']] as const).map(([id, label]) =>
+      {([['overall', 'Overall'], ['hexaword', 'Hexaword']] as const).map(([id, label]) =>
         <button key={id} type="button" role="tab" aria-selected={active === id} className={active === id ? "selected" : ""} onClick={() => onChange(id)}>{label}</button>
       )}
     </div>
@@ -33,16 +33,15 @@ export function StatsPanel({ stats }: { stats: StatsDto | null }) {
   </>;
 }
 
-export function StatsModal({ game, hexadigitGame, stats, initialGame = "overall", onClose }: {
+export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
   game: GameDto | null;
-  hexadigitGame: HexadigitGameDto | null;
   stats: StatsSetDto;
   initialGame?: StatsGame;
   onClose: () => void;
 }) {
   const [active, setActive] = React.useState<StatsGame>(initialGame);
   const selected = stats[active];
-  const completed = active === "hexaword" ? game : active === "hexadigit" ? hexadigitGame : null;
+  const completed = active === "hexaword" ? game : null;
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>

@@ -76,7 +76,7 @@ export function AppHeader({
 
   const isMenuPageActive = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
     if (menuPage === "games") {
-      return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexadigit";
+      return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexahack";
     }
     if (menuPage === "leaderboard") {
       return activeRoute === "leaderboard" || activeRoute === "player";

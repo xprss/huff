@@ -6,7 +6,7 @@ import type { PublicPlayerProfileDto } from "../../types";
 
 export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerProfileDto; onBack: () => void }) {
   const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
-  const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats, hexadigit: profile.hexadigitStats };
+  const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats };
   return (
     <section className="profile-view public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
       <div className="profile-summary">
