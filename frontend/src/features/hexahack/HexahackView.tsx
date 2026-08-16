@@ -1,6 +1,6 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Activity, ChevronRight, Eye, Radio, Share2, ShieldCheck, X } from "lucide-react";
+import { Activity, ChevronRight, CircleHelp, Eye, Radio, Share2, ShieldCheck, X } from "lucide-react";
 import type {
   HexahackGameDto,
   HexahackOverrideActionDto,
@@ -27,7 +27,7 @@ const PROBE_LABELS: Readonly<Record<HexahackProbeType, string>> = {
   CHECKSUM: "CHECKSUM"
 };
 
-const TUTORIAL_STORAGE_KEY = "huff.hexahack.tutorial.v1";
+const TUTORIAL_STORAGE_KEY = "huff.hexahack.tutorial.v2";
 
 export function HexahackView({
   today,
@@ -140,7 +140,7 @@ export function HexahackView({
     <section className="hack-shell" aria-label="Hexahack">
       <header className="hack-heading">
         <div><span className="hack-kicker">NODE/{today.puzzleDate}</span><h2>Hexahack</h2></div>
-        <button className="hack-help" type="button" onClick={() => setTutorialOpen(true)}>Simulazione</button>
+        <button className="tutorial-help" type="button" onClick={() => setTutorialOpen(true)} aria-label="Come si gioca"><CircleHelp size={20} /></button>
       </header>
 
       <div className="hack-status-grid" aria-label="Telemetria nodo">
@@ -276,16 +276,20 @@ function MasteryStats({ stats }: { stats: HexahackStatsDto }) {
 function Tutorial({ onClose }: { onClose: () => void }) {
   const [step, setStep] = React.useState(0);
   const steps = [
-    ["SIM/3", "Il codice simulato ha tre cifre. Il terminale offre gratis somma 9 e 3 cifre distinte."],
-    ["CHECKSUM 1+2 = 5", "Una sonda CHECKSUM costa 2 e somma due posizioni."],
-    ["PING 1 = 2", "PING costa 1 e confronta una posizione con una soglia. La prima cifra è 2; dal CHECKSUM segue che la seconda è 3."],
-    ["INJECT 234", "Un codice errato rivela soltanto quante posizioni sono corrette. Non ci sono limiti: ogni nodo è completabile."]
+    ["OBIETTIVO", "Ogni giorno devi ricostruire un codice di sei cifre. Somma totale e numero di cifre distinte sono indizi gratuiti: usali per escludere combinazioni."],
+    ["PING · costo 1", "Scegli una posizione e una soglia: PING risponde se la cifra è minore, uguale o maggiore. Ad esempio, “posizione 1 = 2” fissa subito quella cifra."],
+    ["BIT SCAN · costo 1", "BIT SCAN rivela soltanto la parità della cifra scelta: pari o dispari. È utile per dimezzare le possibilità quando non ti serve un valore esatto."],
+    ["LINK TRACE · costo 1", "Confronta due posizioni diverse: scopri se la prima cifra è minore, uguale o maggiore della seconda. Combina questi rapporti con PING e BIT SCAN."],
+    ["CHECKSUM · costo 2", "Somma due posizioni diverse. Per esempio, se 1 + 2 = 5 e PING conferma che la posizione 1 è 2, allora la posizione 2 è 3."],
+    ["OVERRIDE · costo 6", "L'icona con l'occhio rivela una cifra senza ambiguità. È una rete di sicurezza, ma qualsiasi Override assegna il rango TRACED alla partita."],
+    ["INJECT CODE", "Inserisci le sei cifre quando hai una soluzione. Un tentativo errato indica quante posizioni sono esatte, ma costa 5 Stealth; ogni punto costo delle sonde ne sottrae 2. Meno costo ed errori significano un rango migliore."]
   ] as const;
+  const trainingCode = step >= 4 ? ["2", "3", "?", "?", "?", "?"] : step >= 1 ? ["2", "?", "?", "?", "?", "?"] : ["?", "?", "?", "?", "?", "?"];
   return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
     <section className="modal hack-tutorial" role="dialog" aria-modal="true" aria-labelledby="hack-tutorial-title" onMouseDown={(event) => event.stopPropagation()}>
       <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
-      <span className="hack-kicker">TRAINING NODE</span><h2 id="hack-tutorial-title">Simulazione a tre cifre</h2>
-      <div className="hack-tutorial-code" aria-hidden="true"><i>{step >= 2 ? "2" : "?"}</i><i>{step >= 2 ? "3" : "?"}</i><i>{step >= 1 ? "4" : "?"}</i></div>
+      <span className="hack-kicker">TRAINING NODE · {step + 1}/{steps.length}</span><h2 id="hack-tutorial-title">Come si gioca a Hexahack</h2>
+      <div className="hack-tutorial-code" aria-hidden="true">{trainingCode.map((digit, index) => <i key={index}>{digit}</i>)}</div>
       <strong>{steps[step][0]}</strong><p>{steps[step][1]}</p>
       <button className="hack-execute" type="button" onClick={() => step === steps.length - 1 ? onClose() : setStep(step + 1)}>{step === steps.length - 1 ? "Entra nel nodo" : "Continua"} <ChevronRight size={16} /></button>
     </section>

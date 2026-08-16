@@ -11,7 +11,8 @@ public final class HexaskyDtos {
 
     public record VisibilityDto(List<Integer> top, List<Integer> right, List<Integer> bottom, List<Integer> left) {}
     public record CheckRequest(String requestId, List<Integer> solution) {}
-    public record CheckResultDto(String requestId, boolean correct, int checksUsed, Status status, List<Integer> solution) {}
+    public record CheckResultDto(String requestId, boolean correct, int checksUsed, Status status, List<Integer> solution,
+                                 List<Integer> incorrectCells) {}
     public record EventDto(int sequence, EventKind kind, String occurredAt, CheckResultDto check) {
         public String requestId() { return check == null ? null : check.requestId(); }
     }

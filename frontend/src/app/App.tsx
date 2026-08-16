@@ -42,6 +42,7 @@ import {
 import { playerHash, playerNicknameFromHash, useAppRoute } from "./routing";
 import { GameBoard } from "../features/game/components/GameBoard";
 import { DailyGameIntro } from "../features/game/components/DailyGameIntro";
+import { HexawordTutorial } from "../features/game/components/HexawordTutorial";
 import { GameKeyboard } from "../features/game/components/GameKeyboard";
 import { LetterNavigator } from "../features/game/components/LetterNavigator";
 import { ModeSelection } from "../features/game/components/ModeSelection";
@@ -84,6 +85,8 @@ import {
   getRemainingMilliseconds
 } from "../shared/utils/date";
 
+const HEXAWORD_TUTORIAL_STORAGE_KEY = "huff.hexaword.tutorial.closed";
+
 export function App() {
   const queryClient = useQueryClient();
   const [currentGuess, setCurrentGuess] = React.useState<string[]>([]);
@@ -91,6 +94,7 @@ export function App() {
   const [showStats, setShowStats] = React.useState(false);
   const [statsInitialGame, setStatsInitialGame] = React.useState<StatsGame>("overall");
   const [showInfo, setShowInfo] = React.useState(false);
+  const [hexawordTutorialOpen, setHexawordTutorialOpen] = React.useState(() => localStorage.getItem(HEXAWORD_TUTORIAL_STORAGE_KEY) !== "true");
   const [activeRoute, setActiveRoute] = useAppRoute();
   const publicPlayerNickname = activeRoute === "player" ? playerNicknameFromHash(window.location.hash) : null;
   const [profileEditing, setProfileEditing] = React.useState(false);
@@ -867,7 +871,7 @@ export function App() {
             />
           ) : !game ? (
             <>
-              <DailyGameIntro game="Hexaword" title="Trova la parola">
+              <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
                 Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
               </DailyGameIntro>
               <div className="play-area">
@@ -876,7 +880,7 @@ export function App() {
             </>
           ) : (
             <>
-              <DailyGameIntro game="Hexaword" title="Trova la parola">
+              <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
                 Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
               </DailyGameIntro>
               <div className="play-area">
@@ -952,6 +956,11 @@ export function App() {
 
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
 
+        {activeRoute === "game" && hexawordTutorialOpen ? <HexawordTutorial onClose={() => {
+          localStorage.setItem(HEXAWORD_TUTORIAL_STORAGE_KEY, "true");
+          setHexawordTutorialOpen(false);
+        }} /> : null}
+
         {showNotificationPrompt ? (
           <NotificationPromptModal
             isEnabling={enablingNotifications}
@@ -979,7 +988,7 @@ export function App() {
         <footer className="app-footer">
           <span>Sviluppato con</span>
           <Heart className="footer-heart" aria-hidden="true" />
-          <span>da xprss</span>
+          <span>da xprss e yumi</span>
         </footer>
       </main>
     </AppThemeProvider>

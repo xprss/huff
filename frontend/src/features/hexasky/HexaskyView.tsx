@@ -16,9 +16,11 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
   const [cells, setCells] = React.useState<number[]>(() => loadDraft(draftKey, game?.proposal));
   const displayedCells = game?.status === "LOST" && game.solution ? game.solution : cells;
   const [selected, setSelected] = React.useState(0);
+  const [incorrectCells, setIncorrectCells] = React.useState(() => latestIncorrectCells(game));
   const [tutorialOpen, setTutorialOpen] = React.useState(() => localStorage.getItem(TUTORIAL_KEY) !== "true");
 
   React.useEffect(() => { setCells(loadDraft(draftKey, game?.proposal)); }, [draftKey, game?.proposal]);
+  React.useEffect(() => { setIncorrectCells(latestIncorrectCells(game)); }, [game?.log]);
   React.useEffect(() => { if (!completed) localStorage.setItem(draftKey, JSON.stringify(cells)); }, [cells, completed, draftKey]);
   React.useEffect(() => {
     function keyboard(event: KeyboardEvent) {
@@ -38,6 +40,7 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
       const next = [...previous]; next[selected] = value;
       setSelected(nextEmpty(next, selected + 1) ?? selected); return next;
     });
+    setIncorrectCells((previous) => previous.filter((index) => index !== selected));
   }
   function press(event: React.PointerEvent<HTMLButtonElement>, action: () => void) {
     if (event.button !== 0) return;
@@ -48,18 +51,19 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
     if (event.detail !== 0) return;
     action();
   }
-  function clearValue() { if (completed || busy) return; setCells((previous) => { const next=[...previous]; next[selected]=0; return next; }); }
+  function clearValue() { if (completed || busy) return; setCells((previous) => { const next=[...previous]; next[selected]=0; return next; }); setIncorrectCells((previous) => previous.filter((index) => index !== selected)); }
   async function check() {
     if (cells.some((value) => !value) || completed || busy) return;
     try {
       const action = await onCheck({ requestId: crypto.randomUUID(), solution: cells });
+      setIncorrectCells([...(action.result.incorrectCells ?? [])]);
       if (action.result.status !== "IN_PROGRESS") { localStorage.removeItem(draftKey); onComplete(action); }
       else onError("Non è la soluzione. Hai ancora un ultimo controllo.");
     } catch (error) { onError(error instanceof Error ? error.message : "Impossibile verificare la griglia."); }
   }
   const checksLeft = Math.max(0, 2 - (game?.checksUsed ?? 0));
   return <section className="sky-shell" aria-label="Hexasky">
-    <header className="sky-heading"><div><p className="eyebrow">GRATTACIELO / {today.puzzleDate}</p><h2>Hexasky</h2></div><button className="sky-help" type="button" onClick={() => setTutorialOpen(true)} aria-label="Come si gioca"><CircleHelp size={20} /></button></header>
+    <header className="sky-heading"><div><p className="eyebrow">GRATTACIELO / {today.puzzleDate}</p><h2>Hexasky</h2></div><button className="tutorial-help" type="button" onClick={() => setTutorialOpen(true)} aria-label="Come si gioca"><CircleHelp size={20} /></button></header>
     <p className="sky-intro">Ogni riga e colonna contiene 1–4 una sola volta. Gli indizi indicano quanti grattacieli sono visibili da quel lato.</p>
     <div className="sky-puzzle" aria-label="Griglia Hexasky e indizi di visibilità">
       <Clues className="top" clues={today.visibility.top} />
@@ -67,7 +71,7 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
       <Clues className="left" clues={today.visibility.left} vertical />
       <Clues className="right" clues={today.visibility.right} vertical />
       <div className="sky-grid" role="grid" aria-label="Griglia 4 per 4">
-        {displayedCells.map((value, index) => <button key={index} type="button" role="gridcell" className={`sky-cell${selected === index ? " selected" : ""}${game?.status === "LOST" ? " revealed" : ""}`} onPointerDown={(event) => press(event, () => setSelected(index))} onClick={(event) => keyboardClick(event, () => setSelected(index))} disabled={completed || busy} aria-label={`Riga ${Math.floor(index / 4) + 1}, colonna ${(index % 4) + 1}: ${value || "vuota"}`}>{value || ""}</button>)}
+        {displayedCells.map((value, index) => <button key={index} type="button" role="gridcell" className={`sky-cell${selected === index ? " selected" : ""}${incorrectCells.includes(index) && !completed ? " danger" : ""}${game?.status === "LOST" ? " revealed" : ""}`} onPointerDown={(event) => press(event, () => setSelected(index))} onClick={(event) => keyboardClick(event, () => setSelected(index))} disabled={completed || busy} aria-label={`Riga ${Math.floor(index / 4) + 1}, colonna ${(index % 4) + 1}: ${value || "vuota"}`}>{value || ""}</button>)}
       </div>
     </div>
     {game?.status === "WON" ? <p className="sky-result won">Grattacielo risolto al controllo {game.checksUsed}.</p> : null}
@@ -78,6 +82,7 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
 }
 
 function Clues({ clues, className, vertical = false }: { clues: readonly number[]; className: string; vertical?: boolean }) { return <div className={`sky-clues ${className}${vertical ? " vertical" : ""}`}>{clues.map((clue, index) => <span key={index}>{clue}</span>)}</div>; }
-function Tutorial({ onClose }: { onClose: () => void }) { return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}><section className="modal sky-tutorial" role="dialog" aria-modal="true" aria-labelledby="sky-tutorial-title" onMouseDown={(event) => event.stopPropagation()}><button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button><h2 id="sky-tutorial-title">Come si gioca a Hexasky</h2><p>Gli indizi ai quattro lati dicono quanti grattacieli vedi guardando quella riga o colonna: un edificio più alto nasconde quelli più bassi dietro di sé.</p><p>Inserisci i numeri da 1 a 4 senza ripetizioni in ogni riga e colonna. Tocca una cella, usa la tastiera virtuale e la selezione avanza automaticamente.</p><p>Hai due verifiche: il primo errore non mostra dettagli; il secondo chiude la partita e rivela la soluzione.</p><button className="sky-check" type="button" onClick={onClose}>Ho capito</button></section></div>, document.body); }
+function Tutorial({ onClose }: { onClose: () => void }) { return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}><section className="modal sky-tutorial" role="dialog" aria-modal="true" aria-labelledby="sky-tutorial-title" onMouseDown={(event) => event.stopPropagation()}><button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button><h2 id="sky-tutorial-title">Come si gioca a Hexasky</h2><p>Gli indizi ai quattro lati dicono quanti grattacieli vedi guardando quella riga o colonna: un edificio più alto nasconde quelli più bassi dietro di sé.</p><p>Inserisci i numeri da 1 a 4 senza ripetizioni in ogni riga e colonna. Tocca una cella, usa la tastiera virtuale e la selezione avanza automaticamente.</p><p>Hai due verifiche: le caselle errate vengono evidenziate; al secondo errore la partita termina e viene rivelata la soluzione.</p><button className="sky-check" type="button" onClick={onClose}>Ho capito</button></section></div>, document.body); }
+function latestIncorrectCells(game: HexaskyTodayDto["game"]) { const check=game?.log[game.log.length - 1]?.check; return check?.status === "IN_PROGRESS" ? [...(check.incorrectCells ?? [])] : []; }
 function loadDraft(key: string, proposal: readonly number[] | null | undefined) { try { const stored=JSON.parse(localStorage.getItem(key) ?? "null"); if(Array.isArray(stored)&&stored.length===16&&stored.every((value)=>Number.isInteger(value)&&value>=0&&value<=4)) return stored; } catch { /* ignore malformed local state */ } return proposal ? [...proposal] : Array(16).fill(0); }
 function nextEmpty(cells: readonly number[], start: number) { for(let index=start;index<cells.length;index++)if(!cells[index])return index; for(let index=0;index<start;index++)if(!cells[index])return index; return null; }

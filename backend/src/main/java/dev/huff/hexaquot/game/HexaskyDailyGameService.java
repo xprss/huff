@@ -27,7 +27,8 @@ public class HexaskyDailyGameService {
         if(record.status()!=HexaskyDtos.Status.IN_PROGRESS) throw new WebApplicationException("La partita di oggi è già conclusa.",Response.Status.CONFLICT);
         List<Integer> proposal=provider.validateSolution(request==null?null:request.solution()); List<Integer> solution=readGrid(record.solutionJson());
         boolean correct=proposal.equals(solution); int checks=record.checksUsed()+1; HexaskyDtos.Status status=correct?HexaskyDtos.Status.WON:checks>=2?HexaskyDtos.Status.LOST:HexaskyDtos.Status.IN_PROGRESS;
-        String now=Instant.now().toString(); HexaskyDtos.CheckResultDto result=new HexaskyDtos.CheckResultDto(requestId,correct,checks,status,status==HexaskyDtos.Status.LOST?solution:null);
+        List<Integer> incorrectCells = correct ? List.of() : mismatchedCells(proposal, solution);
+        String now=Instant.now().toString(); HexaskyDtos.CheckResultDto result=new HexaskyDtos.CheckResultDto(requestId,correct,checks,status,status==HexaskyDtos.Status.LOST?solution:null,incorrectCells);
         events.add(new HexaskyDtos.EventDto(events.size()+1,HexaskyDtos.EventKind.CHECK,now,result));
         HexaskyGameRecord updated=new HexaskyGameRecord(record.id(),record.userId(),record.puzzleDate(),record.rulesVersion(),record.solutionJson(),writeGrid(proposal),writeEvents(events),checks,status,record.createdAt(),now,status==HexaskyDtos.Status.IN_PROGRESS?null:now);
         return new HexaskyDtos.CheckActionDto(toDto(repository.update(updated)),result,false);
@@ -45,4 +46,5 @@ public class HexaskyDailyGameService {
     private String writeEvents(List<HexaskyDtos.EventDto> e){try{return objectMapper.writeValueAsString(e);}catch(Exception x){throw new IllegalStateException("Cannot write Hexasky events",x);}}
     private List<Integer> readGrid(String json){try{return List.copyOf(objectMapper.readValue(json,new TypeReference<List<Integer>>(){}));}catch(Exception e){throw new IllegalStateException("Cannot parse Hexasky grid",e);}}
     private String writeGrid(List<Integer> grid){try{return objectMapper.writeValueAsString(grid);}catch(Exception e){throw new IllegalStateException("Cannot write Hexasky grid",e);}}
+    private List<Integer> mismatchedCells(List<Integer> proposal, List<Integer> solution) { List<Integer> incorrect=new ArrayList<>(); for(int index=0;index<solution.size();index++)if(!solution.get(index).equals(proposal.get(index)))incorrect.add(index); return List.copyOf(incorrect); }
 }

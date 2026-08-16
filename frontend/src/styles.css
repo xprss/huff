@@ -1766,7 +1766,7 @@ html[data-theme="chromatic"] .key.absent {
 .sky-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .sky-heading h2 { margin: 0; color: var(--color-text); }
 .sky-heading .eyebrow { margin: 0 0 3px; }
-.sky-help { width: 38px; height: 38px; border: 1px solid var(--color-button-border); border-radius: 50%; display: grid; place-items: center; background: var(--color-button); color: var(--color-primary); cursor: pointer; }
+.tutorial-help { width: 38px; height: 38px; flex: 0 0 auto; border: 1px solid var(--color-button-border); border-radius: 50%; display: grid; place-items: center; background: var(--color-button); color: var(--color-primary); cursor: pointer; }
 .sky-intro { margin: -7px 0 0; color: var(--color-muted); font-size: .82rem; font-weight: 680; line-height: 1.35; }
 .sky-puzzle { width: min(100%, 470px); aspect-ratio: 1; margin: 0 auto; display: grid; grid-template-columns: minmax(28px, 10%) 1fr minmax(28px, 10%); grid-template-rows: minmax(28px, 10%) 1fr minmax(28px, 10%); gap: 5px; }
 .sky-grid { grid-column: 2; grid-row: 2; display: grid; grid-template-columns: repeat(4, 1fr); aspect-ratio: 1; border: 2px solid var(--color-primary); border-radius: var(--compact-radius); overflow: hidden; touch-action: manipulation; user-select: none; }
@@ -1774,6 +1774,7 @@ html[data-theme="chromatic"] .key.absent {
 .sky-cell:nth-child(4n + 3) { border-left-width: 3px; border-left-color: var(--color-primary); }
 .sky-cell:nth-child(n + 9):nth-child(-n + 12) { border-top-width: 3px; border-top-color: var(--color-primary); }
 .sky-cell.selected { position: relative; z-index: 1; outline: 3px solid var(--color-primary); outline-offset: -3px; background: color-mix(in srgb, var(--color-primary) 17%, var(--color-surface-raised)); box-shadow: inset 0 0 16px var(--color-focus-ring); }
+.sky-cell.danger { position: relative; z-index: 1; border-color: var(--color-danger); outline: 3px solid var(--color-danger); outline-offset: -3px; background: color-mix(in srgb, var(--color-danger) 18%, var(--color-surface-raised)); color: var(--color-danger); }
 .sky-cell.revealed { background: color-mix(in srgb, var(--color-present) 18%, var(--color-surface-raised)); color: var(--color-text); }
 .sky-cell:disabled { cursor: default; }
 .sky-clues { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
@@ -1787,6 +1788,20 @@ html[data-theme="chromatic"] .key.absent {
 .sky-check { width: min(100%, 470px); margin: 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }.sky-check span { min-width: 22px; min-height: 22px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--color-on-solid) 22%, transparent); }
 .sky-result { margin: 0; padding: 10px; border-radius: var(--compact-radius); text-align: center; font-weight: 800; }.sky-result.lost { display: grid; gap: 4px; background: color-mix(in srgb, var(--color-danger) 15%, var(--color-surface-raised)); color: var(--color-text); }.sky-result.won { background: color-mix(in srgb, var(--color-correct) 18%, var(--color-surface-raised)); color: var(--color-text); }
 .sky-tutorial { width: min(100%, 450px); display: grid; gap: 10px; }.sky-tutorial h2, .sky-tutorial p { margin: 0; }.sky-tutorial p { color: var(--color-muted); line-height: 1.42; }
+
+.word-tutorial { position: relative; display: grid; gap: 12px; }
+.word-tutorial > .close-button { position: absolute; top: 12px; right: 12px; }
+.word-tutorial h2, .word-tutorial p { margin: 0; }
+.word-tutorial h2 { padding-right: 34px; }
+.word-tutorial > p { color: var(--color-muted); line-height: 1.42; }
+.word-tutorial-examples { display: grid; gap: 8px; }
+.word-tutorial-examples > div { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 10px; }
+.word-tutorial-examples span { width: 38px; aspect-ratio: 1; display: grid; place-items: center; border-radius: var(--compact-radius); color: var(--color-on-solid); font-weight: 900; }
+.word-tutorial-examples span.correct { background: var(--color-correct); }
+.word-tutorial-examples span.present { background: var(--color-present); }
+.word-tutorial-examples span.absent { background: var(--color-absent); }
+.word-tutorial-examples p { color: var(--color-muted); font-size: .86rem; line-height: 1.32; }
+.word-tutorial-examples strong { color: var(--color-text); }
 
 .game-stats-tabs {
   display: grid;
@@ -1817,6 +1832,10 @@ html[data-theme="chromatic"] .key.absent {
   flex: 0 0 auto;
   text-align: center;
 }
+
+.daily-game-intro.with-help { position: relative; }
+.daily-game-intro.with-help > div { padding: 0 44px; }
+.daily-game-intro.with-help .tutorial-help { position: absolute; top: 0; right: 0; }
 
 .daily-game-intro h2 { margin: 2px 0 0; }
 .daily-game-intro p:last-child { max-width: 430px; margin: 5px auto 0; font-size: 0.76rem; line-height: 1.35; }
@@ -1860,15 +1879,6 @@ html[data-theme="chromatic"] .key.absent {
 
 .hack-heading h2 { margin: 0; letter-spacing: .04em; }
 .hack-kicker { color: var(--color-terminal-text); font-size: .68rem; font-weight: 900; letter-spacing: .14em; }
-.hack-help {
-  border: 1px solid var(--color-surface-border);
-  border-radius: 999px;
-  padding: 7px 12px;
-  color: var(--color-muted);
-  background: var(--color-surface-soft);
-  cursor: pointer;
-}
-
 .hack-status-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2108,9 +2118,9 @@ html[data-theme="chromatic"] .key.absent {
 
 .hack-tutorial { position: relative; display: grid; justify-items: center; gap: 10px; text-align: center; }
 .hack-tutorial > .close-button { position: absolute; top: 12px; right: 12px; }
-.hack-tutorial h2 { margin: 0; }
+.hack-tutorial h2 { margin: 0; padding: 0 32px; }
 .hack-tutorial p { min-height: 58px; margin: 0; color: var(--color-muted); line-height: 1.45; }
-.hack-tutorial-code { display: grid; grid-template-columns: repeat(3, 54px); gap: 7px; }
+.hack-tutorial-code { display: grid; grid-template-columns: repeat(6, minmax(0, 42px)); gap: 5px; }
 .hack-tutorial-code i { aspect-ratio: 1; border: 1px solid var(--color-terminal-cursor); border-radius: var(--compact-radius); display: grid; place-items: center; color: var(--color-terminal-text); background: var(--color-terminal-background); font: normal 900 1.5rem monospace; }
 
 @media (max-width: 620px) {

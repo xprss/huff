@@ -219,7 +219,7 @@ export interface HexahackStatsDto {
 export type HexaskyStatus = "IN_PROGRESS" | "WON" | "LOST";
 export interface HexaskyVisibilityDto { readonly top: readonly number[]; readonly right: readonly number[]; readonly bottom: readonly number[]; readonly left: readonly number[]; }
 export interface HexaskyCheckRequestDto { readonly requestId: string; readonly solution: readonly number[]; }
-export interface HexaskyCheckResultDto { readonly requestId: string; readonly correct: boolean; readonly checksUsed: number; readonly status: HexaskyStatus; readonly solution: readonly number[] | null; }
+export interface HexaskyCheckResultDto { readonly requestId: string; readonly correct: boolean; readonly checksUsed: number; readonly status: HexaskyStatus; readonly solution: readonly number[] | null; readonly incorrectCells?: readonly number[]; }
 export interface HexaskyEventDto { readonly sequence: number; readonly kind: "CHECK"; readonly occurredAt: string; readonly check: HexaskyCheckResultDto; }
 export interface HexaskyGameDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly status: HexaskyStatus; readonly checksUsed: number; readonly proposal: readonly number[] | null; readonly log: readonly HexaskyEventDto[]; readonly solution: readonly number[] | null; readonly completedAt: string | null; }
 export interface HexaskyTodayDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly visibility: HexaskyVisibilityDto; readonly game: HexaskyGameDto | null; }
