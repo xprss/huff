@@ -1,6 +1,8 @@
 package dev.huff.hexaquot.leaderboard;
 
 import dev.huff.hexaquot.game.GameStatus;
+import dev.huff.hexaquot.game.HexaskyDtos;
+import dev.huff.hexaquot.persistence.HexaskyGameEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -21,6 +23,7 @@ public class LeaderboardRepository {
     public List<PlayerScore> winnerScores(Board board, String startDate, String endDate) {
         Map<String, MutableScore> scores = new HashMap<>();
         merge(scores, rows(startDate, endDate));
+        if (board == Board.OVERALL) merge(scores, hexaskyRows(startDate, endDate));
         if (scores.isEmpty()) return List.of();
         Set<String> ids = scores.keySet();
         Map<String, UserEntity> users = new HashMap<>();
@@ -37,6 +40,16 @@ public class LeaderboardRepository {
         if (startDate != null) query += " AND g.puzzleDate >= ?2 AND g.puzzleDate < ?3";
         query += " GROUP BY g.userId";
         var typed = Panache.getEntityManager().createQuery(query, Object[].class).setParameter(1, GameStatus.WON);
+        if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
+        return typed.getResultList();
+    }
+
+    private List<Object[]> hexaskyRows(String startDate, String endDate) {
+        String query = "SELECT g.userId, COUNT(g), MAX(COALESCE(g.completedAt, g.updatedAt, g.createdAt)) "
+            + "FROM HexaskyGameEntity g WHERE g.status = ?1";
+        if (startDate != null) query += " AND g.puzzleDate >= ?2 AND g.puzzleDate < ?3";
+        query += " GROUP BY g.userId";
+        var typed = Panache.getEntityManager().createQuery(query, Object[].class).setParameter(1, HexaskyDtos.Status.WON);
         if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
         return typed.getResultList();
     }

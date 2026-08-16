@@ -125,7 +125,11 @@ public class HexahackDailyGameService {
     }
 
     public StatsDto stats(AppUser user) {
-        List<HexahackGameRecord> records = repository.findCompletedByUser(user.id());
+        return statsForUserId(user.id());
+    }
+
+    public StatsDto statsForUserId(String userId) {
+        List<HexahackGameRecord> records = repository.findCompletedByUser(userId);
         EnumMap<Rank, Integer> distribution = new EnumMap<>(Rank.class);
         for (Rank rank : Rank.values()) distribution.put(rank, 0);
         long totalStealth = 0;
