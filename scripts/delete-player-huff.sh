@@ -179,7 +179,7 @@ FROM selected_users u
 LEFT JOIN (
   SELECT id, user_id FROM hexaword_games
   UNION ALL
-  SELECT id, user_id FROM hexadigit_games
+  SELECT id, user_id FROM hexahack_games
 ) g ON g.user_id = u.id
 GROUP BY u.id, u.email, u.display_name, u.google_subject, u.created_at
 ORDER BY u.display_name NULLS LAST, u.email NULLS LAST, u.id;
@@ -209,8 +209,8 @@ WITH deleted_games AS (
     AND g.user_id = u.id
   RETURNING g.id
 ),
-deleted_hexadigit_games AS (
-  DELETE FROM hexadigit_games g
+deleted_hexahack_games AS (
+  DELETE FROM hexahack_games g
   USING selected_users u
   WHERE current_setting('huff_delete.delete_mode') = 'true'
     AND g.user_id = u.id
@@ -236,7 +236,7 @@ SELECT
     ELSE 'dry-run'
   END AS mode,
   (SELECT COUNT(*) FROM deleted_users)::integer AS users,
-  ((SELECT COUNT(*) FROM deleted_games) + (SELECT COUNT(*) FROM deleted_hexadigit_games))::integer AS games,
+  ((SELECT COUNT(*) FROM deleted_games) + (SELECT COUNT(*) FROM deleted_hexahack_games))::integer AS games,
   (SELECT COUNT(*) FROM deleted_subscriptions)::integer AS push_subscriptions;
 
 COMMIT;

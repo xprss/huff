@@ -202,7 +202,7 @@ if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
   PREVIOUS_IMAGE_ID="$(docker inspect --format '{{.Image}}' "${CONTAINER_NAME}")"
 fi
 
-DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" --build-arg "VITE_HIDE_HEXAHACK=${VITE_HIDE_HEXAHACK:-false}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 NEW_IMAGE_ID="$(docker image inspect --format '{{.Id}}' "${IMAGE_NAME}:latest")"
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then

@@ -30,13 +30,14 @@ LOCAL_COOKIE_SECURE="${LOCAL_COOKIE_SECURE:-false}"
 
 usage() {
   cat <<EOF
-Usage: scripts/run-docker-local.sh [--no-build]
+Usage: scripts/run-docker-local.sh [--no-build] [--fresh-db]
 
 Build and run the application Docker image locally with PostgreSQL.
 The application runs in the foreground at http://localhost:${HOST_PORT}.
 
 Options:
   --no-build  Run the existing ${IMAGE_NAME}:latest image without rebuilding it
+  --fresh-db  Recreate the disposable local PostgreSQL volume before starting
   -h, --help  Show this help
 
 Local overrides:
@@ -49,10 +50,14 @@ EOF
 }
 
 BUILD_IMAGE="true"
+FRESH_DB="false"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --no-build)
       BUILD_IMAGE="false"
+      ;;
+    --fresh-db)
+      FRESH_DB="true"
       ;;
     -h|--help)
       usage
@@ -85,6 +90,19 @@ fi
 if [[ "${LOCAL_AUTH_ENABLED}" == "true" && -z "${GOOGLE_CLIENT_ID:-}" ]]; then
   echo "Local Docker run refused: GOOGLE_CLIENT_ID is required when authentication is enabled." >&2
   exit 1
+fi
+
+if [[ "${FRESH_DB}" == "true" ]]; then
+  echo "Recreating disposable local database volume: ${POSTGRES_DATA_VOLUME}"
+  if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
+    docker rm -f "${CONTAINER_NAME}" >/dev/null
+  fi
+  if docker ps -a --format '{{.Names}}' | grep -Fxq "${POSTGRES_CONTAINER_NAME}"; then
+    docker rm -f "${POSTGRES_CONTAINER_NAME}" >/dev/null
+  fi
+  if docker volume inspect "${POSTGRES_DATA_VOLUME}" >/dev/null 2>&1; then
+    docker volume rm "${POSTGRES_DATA_VOLUME}" >/dev/null
+  fi
 fi
 
 if ! docker network inspect "${DOCKER_NETWORK}" >/dev/null 2>&1; then
@@ -124,7 +142,7 @@ done
 
 if [[ "${BUILD_IMAGE}" == "true" ]]; then
   echo "Building ${IMAGE_NAME}:latest"
-  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}" --build-arg "VITE_HIDE_HEXAHACK=${VITE_HIDE_HEXAHACK:-false}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 fi
 
 if docker ps -a --format '{{.Names}}' | grep -Fxq "${CONTAINER_NAME}"; then
