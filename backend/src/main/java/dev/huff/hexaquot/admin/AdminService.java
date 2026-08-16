@@ -4,13 +4,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.auth.AppUser;
 import dev.huff.hexaquot.auth.UserService;
-import dev.huff.hexaquot.game.DailyGameService;
 import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.game.GuessResult;
 import dev.huff.hexaquot.game.StatsDto;
+import dev.huff.hexaquot.game.HexahackDtos;
+import dev.huff.hexaquot.game.HexahackDtos.EventDto;
+import dev.huff.hexaquot.game.OverallStatsService;
 import dev.huff.hexaquot.persistence.AdminUserEntity;
 import dev.huff.hexaquot.persistence.GameEntity;
+import dev.huff.hexaquot.persistence.HexahackGameEntity;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -38,7 +41,7 @@ public class AdminService {
     ObjectMapper objectMapper;
 
     @Inject
-    DailyGameService dailyGameService;
+    OverallStatsService overallStatsService;
 
     @Inject
     UserService userService;
@@ -73,22 +76,18 @@ public class AdminService {
             .stream()
             .map(this::gameDto)
             .toList();
+        List<AdminHexahackGameDto> hexahackGames = HexahackGameEntity.<HexahackGameEntity>find(
+                "userId = ?1 order by puzzleDate desc, updatedAt desc", userId
+            ).list().stream().map(this::hexahackGameDto).toList();
 
         return new AdminPlayerDetailDto(
             summary(user),
             user.googleSubject,
             user.createdAt,
             Math.toIntExact(PushSubscriptionEntity.count("userId", user.id)),
-            dailyGameService.stats(new AppUser(
-                user.id,
-                user.email,
-                user.displayName,
-                user.nickname,
-                user.profileEmoji,
-                user.bio,
-                user.googleSubject != null
-            )),
-            games
+            overallStatsService.statsForUserId(user.id),
+            games,
+            hexahackGames
         );
     }
 
@@ -124,6 +123,7 @@ public class AdminService {
         }
         findUser(userId);
         long games = GameEntity.delete("userId = ?1", userId);
+        games += HexahackGameEntity.delete("userId = ?1", userId);
         long subscriptions = PushSubscriptionEntity.delete("userId = ?1", userId);
         long adminRows = AdminUserEntity.delete("userId = ?1", userId);
         long users = UserEntity.delete("id = ?1", userId);
@@ -160,15 +160,18 @@ public class AdminService {
     }
 
     private AdminPlayerSummaryDto summary(UserEntity user) {
-        long started = GameEntity.count("userId", user.id);
+        long started = GameEntity.count("userId", user.id) + HexahackGameEntity.count("userId", user.id);
         long won = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.WON);
         long lost = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.LOST);
         long completed = won + lost;
         int winRate = completed == 0 ? 0 : Math.toIntExact(Math.round((won * 100.0) / completed));
-        String lastActivityAt = GameEntity.<GameEntity>find("userId = ?1 order by updatedAt desc", user.id)
+        String wordActivity = GameEntity.<GameEntity>find("userId = ?1 order by updatedAt desc", user.id)
             .firstResultOptional()
             .map(game -> game.updatedAt)
             .orElse(user.createdAt);
+        String hackActivity = HexahackGameEntity.<HexahackGameEntity>find("userId = ?1 order by updatedAt desc", user.id)
+            .firstResultOptional().map(game -> game.updatedAt).orElse(user.createdAt);
+        String lastActivityAt = wordActivity.compareTo(hackActivity) >= 0 ? wordActivity : hackActivity;
         return new AdminPlayerSummaryDto(
             user.id,
             user.email,
@@ -218,6 +221,17 @@ public class AdminService {
         }
     }
 
+    private AdminHexahackGameDto hexahackGameDto(HexahackGameEntity game) {
+        try {
+            List<EventDto> log = objectMapper.readValue(game.eventLogJson, new TypeReference<>() {});
+            return new AdminHexahackGameDto(game.id, game.puzzleDate, game.rulesVersion, game.solution, log,
+                game.totalCost, game.wrongSubmissions, game.overrideCount, game.status, game.stealth, game.rank,
+                game.createdAt, game.updatedAt, game.completedAt);
+        } catch (Exception error) {
+            throw new IllegalStateException("Cannot parse Hexahack event log for admin view", error);
+        }
+    }
+
     private long countPlayers(String query) {
         return ((Number) entityManager
             .createNativeQuery("""
@@ -256,7 +270,11 @@ public class AdminService {
                   CAST(COUNT(g.id) FILTER (WHERE g.status = 'LOST') AS integer) AS lost,
                   COALESCE(MAX(g.updated_at), u.created_at) AS last_activity_at
                 FROM users u
-                LEFT JOIN games g ON g.user_id = u.id
+                LEFT JOIN (
+                  SELECT id, user_id, status, updated_at FROM hexaword_games
+                  UNION ALL
+                  SELECT id, user_id, status, updated_at FROM hexahack_games
+                ) g ON g.user_id = u.id
                 LEFT JOIN admin_users a ON a.user_id = u.id
                 WHERE :query = ''
                    OR LOWER(u.id) LIKE :query_pattern
@@ -387,9 +405,27 @@ public class AdminService {
         String createdAt,
         int pushSubscriptions,
         StatsDto stats,
-        List<AdminGameDto> games
+        List<AdminGameDto> games,
+        List<AdminHexahackGameDto> hexahackGames
     ) {
     }
+
+    public record AdminHexahackGameDto(
+        String id,
+        String puzzleDate,
+        int rulesVersion,
+        String solution,
+        List<EventDto> log,
+        int totalCost,
+        int wrongSubmissions,
+        int overrideCount,
+        HexahackDtos.Status status,
+        Integer stealth,
+        HexahackDtos.Rank rank,
+        String createdAt,
+        String updatedAt,
+        String completedAt
+    ) {}
 
     public record AdminGameDto(
         String id,

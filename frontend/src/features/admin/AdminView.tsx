@@ -9,6 +9,7 @@ import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
 import { Metric } from "../../shared/components/Metric";
 import type {
   AdminGameDto,
+  AdminHexahackGameDto,
   AdminPlayerDetailDto,
   AdminPlayerSortDto,
   AdminPlayerSummaryDto,
@@ -26,11 +27,13 @@ const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
   canManagePlayers,
+  showHexahack,
   onAuthRequired,
   onSuccess,
   onError
 }: {
   canManagePlayers: boolean;
+  showHexahack: boolean;
   onAuthRequired: (error: unknown) => boolean;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -372,6 +375,7 @@ export function AdminView({
                 ) : null}
 
                 <GameHistory games={detail.games} />
+                {showHexahack ? <HexahackHistory games={detail.hexahackGames} /> : null}
               </div>
             )}
           </section>
@@ -558,6 +562,29 @@ function GameHistory({ games }: { games: readonly AdminGameDto[] }) {
 
 function maskedSolution(solution: string) {
   return "*".repeat(solution.length || 6);
+}
+
+function HexahackHistory({ games }: { games: readonly AdminHexahackGameDto[] }) {
+  return (
+    <section className="admin-games-panel" aria-label="Nodi Hexahack">
+      <h3>Hexahack</h3>
+      {games.map((game) => (
+        <article className="admin-game-row" key={game.id}>
+          <header><strong>{game.puzzleDate}</strong><span>{game.status}</span><span>{game.rank ?? "—"}</span></header>
+          <p>Soluzione: {game.solution} · Costo: {game.totalCost} · Errori: {game.wrongSubmissions} · Override: {game.overrideCount}</p>
+          <div className="admin-guesses">
+            {game.log.map((entry) => (
+              <div className="admin-guess" key={`${game.id}-${entry.sequence}`}>
+                <span>#{entry.sequence} {entry.kind}</span>
+                <span>{entry.probe?.summary ?? entry.submission?.code ?? (entry.override ? `P${entry.override.position}=${entry.override.digit}` : "")}</span>
+              </div>
+            ))}
+          </div>
+        </article>
+      ))}
+      {games.length === 0 ? <p className="admin-empty">Nessun nodo Hexahack.</p> : null}
+    </section>
+  );
 }
 
 function deleteConfirmationValue(player: AdminPlayerSummaryDto) {

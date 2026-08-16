@@ -259,7 +259,9 @@ public class UserService {
         String normalizedNickname = normalizeNickname(nickname);
         String normalizedProfileEmoji = normalizeProfileEmoji(profileEmoji);
         String normalizedBio = normalizeBio(bio);
-        String normalizedInputHandPreference = normalizeInputHandPreference(inputHandPreference);
+        String normalizedInputHandPreference = inputHandPreference == null
+            ? (isValidInputHandPreference(user.inputHandPreference) ? user.inputHandPreference : DEFAULT_INPUT_HAND_PREFERENCE)
+            : normalizeInputHandPreference(inputHandPreference);
         UserEntity nicknameOwner = UserEntity.<UserEntity>find("nickname", normalizedNickname).firstResult();
         if (nicknameOwner != null && !nicknameOwner.id.equals(userId)) {
             throw new WebApplicationException("Nickname già in uso.", Response.Status.CONFLICT);

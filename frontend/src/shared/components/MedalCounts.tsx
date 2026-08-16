@@ -2,7 +2,8 @@ import type { MedalCountsDto } from "../../types";
 
 export function MedalCounts({ medals }: { medals: MedalCountsDto }) {
   return (
-    <section className="medal-counts" aria-label="Medaglie conquistate">
+    <section className="medal-counts" aria-label="Medaglie Overall conquistate">
+      <h3>Medaglie Overall</h3>
       <div className="medal-count gold">
         <span aria-hidden="true">🥇</span>
         <strong>{medals.gold}</strong>

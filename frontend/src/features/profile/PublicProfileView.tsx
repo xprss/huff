@@ -1,11 +1,12 @@
 import { ChevronLeft } from "lucide-react";
-import { Distribution } from "../../shared/components/Distribution";
 import { MedalCounts } from "../../shared/components/MedalCounts";
-import { Metric } from "../../shared/components/Metric";
+import React from "react";
+import { StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
 import type { PublicPlayerProfileDto } from "../../types";
 
 export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerProfileDto; onBack: () => void }) {
-  const winRate = profile.stats.played > 0 ? Math.round((profile.stats.won / profile.stats.played) * 100) : 0;
+  const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
+  const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats };
   return (
     <section className="profile-view public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
       <div className="profile-summary">
@@ -25,17 +26,8 @@ export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerPr
       </div>
       <div className="profile-stats" aria-label="Statistiche pubbliche">
         <MedalCounts medals={profile.medals} />
-        <div className="stat-grid">
-          <Metric label="Giocate" value={profile.stats.played} />
-          <Metric label="Vinte" value={profile.stats.won} />
-          <Metric label="Perse" value={profile.stats.lost} />
-          <Metric label="Vittorie" value={`${winRate}%`} />
-        </div>
-        <div className="stat-grid compact">
-          <Metric label="Serie" value={profile.stats.currentStreak} />
-          <Metric label="Record" value={profile.stats.maxStreak} />
-        </div>
-        <Distribution distribution={profile.stats.guessDistribution} />
+        <StatsTabs active={activeStats} onChange={setActiveStats} />
+        <StatsPanel stats={stats[activeStats]} />
       </div>
     </section>
   );

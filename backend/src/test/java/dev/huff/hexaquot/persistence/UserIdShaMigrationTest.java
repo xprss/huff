@@ -28,6 +28,7 @@ class UserIdShaMigrationTest {
         String oldUserId = "google:legacy subject " + UUID.randomUUID();
         String newUserId = UserIds.canonical(oldUserId);
         String gameId = UUID.randomUUID().toString();
+        String hackGameId = UUID.randomUUID().toString();
         String googleSubject = "legacy-subject-" + UUID.randomUUID();
         String now = Instant.now().toString();
 
@@ -46,7 +47,7 @@ class UserIdShaMigrationTest {
             .executeUpdate();
         entityManager
             .createNativeQuery(
-                "INSERT INTO games "
+                "INSERT INTO hexaword_games "
                     + "(id, user_id, puzzle_date, mode, solution, guesses_json, status, "
                     + "mouse_revealed, kitten_unlocked, created_at, updated_at) "
                     + "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)"
@@ -63,6 +64,17 @@ class UserIdShaMigrationTest {
             .setParameter(10, now)
             .setParameter(11, now)
             .executeUpdate();
+        entityManager
+            .createNativeQuery(
+                "INSERT INTO hexahack_games "
+                    + "(id, user_id, puzzle_date, rules_version, solution, event_log_json, total_cost, "
+                    + "wrong_submissions, override_count, status, created_at, updated_at) "
+                    + "VALUES (?1, ?2, '2099-01-02', 1, '001122', '[]', 0, 0, 0, 'IN_PROGRESS', ?3, ?3)"
+            )
+            .setParameter(1, hackGameId)
+            .setParameter(2, oldUserId)
+            .setParameter(3, now)
+            .executeUpdate();
 
         assertEquals(1, migration.migrate());
 
@@ -72,6 +84,8 @@ class UserIdShaMigrationTest {
         assertEquals(1, countUsers(newUserId));
         assertEquals(1, countGamesForUser(newUserId));
         assertEquals(0, countGamesForUser(oldUserId));
+        assertEquals(1, countHackGamesForUser(newUserId));
+        assertEquals(0, countHackGamesForUser(oldUserId));
     }
 
     private long countUsers(String userId) {
@@ -83,7 +97,14 @@ class UserIdShaMigrationTest {
 
     private long countGamesForUser(String userId) {
         return ((Number) entityManager
-            .createNativeQuery("SELECT COUNT(*) FROM games WHERE user_id = ?1")
+            .createNativeQuery("SELECT COUNT(*) FROM hexaword_games WHERE user_id = ?1")
+            .setParameter(1, userId)
+            .getSingleResult()).longValue();
+    }
+
+    private long countHackGamesForUser(String userId) {
+        return ((Number) entityManager
+            .createNativeQuery("SELECT COUNT(*) FROM hexahack_games WHERE user_id = ?1")
             .setParameter(1, userId)
             .getSingleResult()).longValue();
     }

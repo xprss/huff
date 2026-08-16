@@ -1,7 +1,9 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Edit3, Info, LogOut, Menu, Moon, Shield, Star, Sun, Trophy, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Eye, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
+import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
+import type { AppTheme } from "../theme";
 
 export function AppHeader({
   puzzleDate,
@@ -11,22 +13,27 @@ export function AppHeader({
   showProfileEdit,
   showActionsMenu,
   actionsMenuRef,
+  activeRoute,
   canUseGameActions,
   showAdmin,
   notificationsEnabled,
   notificationMenuLabel,
-  darkMode,
+  themes,
+  selectedThemeId,
+  patternsEnabled,
   showLogout,
   onUseStar,
   onEditProfile,
   onToggleMenu,
   onOpenProfile,
+  onOpenGames,
   onOpenStats,
   onOpenLeaderboard,
   onOpenAdmin,
   onOpenInfo,
   onToggleNotifications,
-  onToggleTheme,
+  onSelectTheme,
+  onTogglePatterns,
   onLogout,
   onCloseMenu
 }: {
@@ -37,25 +44,54 @@ export function AppHeader({
   showProfileEdit: boolean;
   showActionsMenu: boolean;
   actionsMenuRef: React.RefObject<HTMLDivElement>;
+  activeRoute: AppRoute;
   canUseGameActions: boolean;
   showAdmin: boolean;
   notificationsEnabled: boolean;
   notificationMenuLabel: string;
-  darkMode: boolean;
+  themes: readonly AppTheme[];
+  selectedThemeId: string;
+  patternsEnabled: boolean;
   showLogout: boolean;
   onUseStar: () => void;
   onEditProfile: () => void;
   onToggleMenu: () => void;
   onOpenProfile: () => void;
+  onOpenGames: () => void;
   onOpenStats: () => void;
   onOpenLeaderboard: () => void;
   onOpenAdmin: () => void;
   onOpenInfo: () => void;
   onToggleNotifications: () => void;
-  onToggleTheme: () => void;
+  onSelectTheme: (themeId: string) => void;
+  onTogglePatterns: () => void;
   onLogout: () => void;
   onCloseMenu: () => void;
 }) {
+  const [showThemes, setShowThemes] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!showActionsMenu) setShowThemes(false);
+  }, [showActionsMenu]);
+
+  const isMenuPageActive = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
+    if (menuPage === "games") {
+      return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexahack";
+    }
+    if (menuPage === "leaderboard") {
+      return activeRoute === "leaderboard" || activeRoute === "player";
+    }
+    return activeRoute === menuPage;
+  };
+
+  const menuItemProps = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
+    const isActive = isMenuPageActive(menuPage);
+    return {
+      className: `menu-item${isActive ? " selected" : ""}`,
+      "aria-current": isActive ? ("page" as const) : undefined
+    };
+  };
+
   return (
     <header className="topbar">
       <div className="title-row">
@@ -99,10 +135,53 @@ export function AppHeader({
             <Menu size={21} />
           </button>
           {showActionsMenu ? (
-            <div className="action-menu" role="menu" aria-label="Azioni">
+            <div className="action-menu" role="menu" aria-label={showThemes ? "Temi" : "Azioni"}>
+              {showThemes ? (
+                <>
+                  <button className="menu-item menu-back" type="button" role="menuitem" onClick={() => setShowThemes(false)}>
+                    <ChevronLeft size={18} />
+                    <span>Temi</span>
+                  </button>
+                  <div className="menu-divider" role="separator" />
+                  {themes.map((theme) => {
+                    const selected = theme.id === selectedThemeId;
+                    return (
+                      <button
+                        className={`menu-item theme-menu-item${selected ? " selected" : ""}`}
+                        key={theme.id}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={selected}
+                        onClick={() => onSelectTheme(theme.id)}
+                      >
+                        <span className="theme-swatch" style={{ background: theme.colors.primary }} aria-hidden="true" />
+                        <span>{theme.name}</span>
+                        {selected ? <Check className="theme-check" size={17} aria-hidden="true" /> : null}
+                      </button>
+                    );
+                  })}
+                  <div className="menu-divider" role="separator" />
+                  <button
+                    className={`menu-item${patternsEnabled ? " selected" : ""}`}
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={patternsEnabled}
+                    onClick={onTogglePatterns}
+                  >
+                    <Eye size={18} />
+                    <span>{patternsEnabled ? "Nascondi motivo" : "Mostra motivo"}</span>
+                    {patternsEnabled ? <Check className="theme-check" size={17} aria-hidden="true" /> : null}
+                  </button>
+                </>
+              ) : (
+                <>
               {canUseGameActions ? (
                 <>
-                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenProfile}>
+                  <button {...menuItemProps("games")} type="button" role="menuitem" onClick={onOpenGames}>
+                    <Grid2X2 size={18} />
+                    <span>Giochi</span>
+                  </button>
+                  <button {...menuItemProps("profile")} type="button" role="menuitem" onClick={onOpenProfile}>
                     <UserRound size={18} />
                     <span>Profilo</span>
                   </button>
@@ -110,12 +189,12 @@ export function AppHeader({
                     <BarChart3 size={18} />
                     <span>Statistiche</span>
                   </button>
-                  <button className="menu-item" type="button" role="menuitem" onClick={onOpenLeaderboard}>
+                  <button {...menuItemProps("leaderboard")} type="button" role="menuitem" onClick={onOpenLeaderboard}>
                     <Trophy size={18} />
                     <span>Leaderboard</span>
                   </button>
                   {showAdmin ? (
-                    <button className="menu-item" type="button" role="menuitem" onClick={onOpenAdmin}>
+                    <button {...menuItemProps("admin")} type="button" role="menuitem" onClick={onOpenAdmin}>
                       <Shield size={18} />
                       <span>Admin</span>
                     </button>
@@ -130,9 +209,10 @@ export function AppHeader({
                 {notificationsEnabled ? <BellOff size={18} /> : <Bell size={18} />}
                 <span>{notificationMenuLabel}</span>
               </button>
-              <button className="menu-item" type="button" role="menuitem" onClick={onToggleTheme}>
-                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-                <span>{darkMode ? "Tema chiaro" : "Tema scuro"}</span>
+              <button className="menu-item" type="button" role="menuitem" onClick={() => setShowThemes(true)}>
+                <Palette size={18} />
+                <span>Temi</span>
+                <ChevronRight className="menu-item-trailing-icon" size={18} aria-hidden="true" />
               </button>
               {showLogout ? (
                 <>
@@ -143,6 +223,8 @@ export function AppHeader({
                   </button>
                 </>
               ) : null}
+                </>
+              )}
             </div>
           ) : null}
         </div>

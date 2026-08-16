@@ -3,6 +3,7 @@ package dev.huff.hexaquot.push;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.game.DailyGameService;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
+import dev.huff.hexaquot.persistence.PushCampaignDeliveryEntity;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,6 +32,7 @@ public class PushNotificationService {
     private static final int NEW_GAME_PUSH_TTL_SECONDS = 24 * 60 * 60;
     private static final int DAILY_REMINDER_PUSH_TTL_SECONDS = 60 * 60;
     private static final int WEEKLY_AWARDS_REMINDER_PUSH_TTL_SECONDS = 24 * 60 * 60;
+    private static final int CAMPAIGN_PUSH_TTL_SECONDS = 7 * 24 * 60 * 60;
 
     @ConfigProperty(name = "app.push.vapid.public-key")
     Optional<String> vapidPublicKey;
@@ -40,6 +42,9 @@ public class PushNotificationService {
 
     @ConfigProperty(name = "app.push.vapid.subject")
     String vapidSubject;
+
+    @ConfigProperty(name = "app.push.hexahack-launch.enabled", defaultValue = "false")
+    boolean hexahackLaunchEnabled;
 
     @Inject
     DailyGameService dailyGameService;
@@ -105,6 +110,39 @@ public class PushNotificationService {
             return;
         }
         remindWeeklyAwards(dailyGameService.todayDate());
+    }
+
+    @Scheduled(every = "10m", delayed = "5s")
+    void dispatchLaunchCampaignSchedule() {
+        dispatchHexahackLaunch();
+    }
+
+    @Transactional
+    public void dispatchHexahackLaunch() {
+        if (!hexahackLaunchEnabled || !configured()) return;
+        List<PushCampaignDeliveryEntity> deliveries = PushCampaignDeliveryEntity.<PushCampaignDeliveryEntity>list(
+            "campaign = ?1 and sentAt is null order by createdAt", AnnouncementService.HEXAHACK_LAUNCH
+        );
+        for (PushCampaignDeliveryEntity delivery : deliveries) {
+            PushSubscriptionEntity subscription = PushSubscriptionEntity.findById(delivery.subscriptionId);
+            if (subscription == null) {
+                delivery.delete();
+                continue;
+            }
+            delivery.attempts = (delivery.attempts == null ? 0 : delivery.attempts) + 1;
+            delivery.lastAttemptAt = Instant.now().toString();
+            NotificationPayload payload = new NotificationPayload(
+                "hexahack-launch",
+                "È arrivato Hexahack",
+                "Un nuovo nodo è online. Analizza il codice, proteggi lo Stealth e viola la porta.",
+                "/#/hexahack",
+                "/icons/huff-icon.svg",
+                "hexahack-launch"
+            );
+            if (sendNotification(subscription, payload, CAMPAIGN_PUSH_TTL_SECONDS)) {
+                delivery.sentAt = Instant.now().toString();
+            }
+        }
     }
 
     @Transactional

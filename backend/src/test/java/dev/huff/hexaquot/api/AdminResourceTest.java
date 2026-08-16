@@ -70,7 +70,9 @@ class AdminResourceTest {
             .statusCode(200)
             .body("player.id", equalTo(targetId))
             .body("games[0].solution", equalTo("abbaco"))
-            .body("games[0].guesses[0].word", equalTo("abbaco"));
+            .body("games[0].guesses[0].word", equalTo("abbaco"))
+            .body("hexahackGames[0].solution", equalTo("012345"))
+            .body("hexahackGames[0].rank", equalTo("GHOST"));
 
         given()
             .header("Cookie", cookie(adminSessionId))
@@ -101,7 +103,7 @@ class AdminResourceTest {
             .then()
             .statusCode(200)
             .body("users", equalTo(1))
-            .body("games", equalTo(1))
+            .body("games", equalTo(2))
             .body("pushSubscriptions", equalTo(1));
 
         given()
@@ -195,7 +197,7 @@ class AdminResourceTest {
             String now = Instant.now().toString();
             entityManager
                 .createNativeQuery(
-                    "INSERT INTO games "
+                    "INSERT INTO hexaword_games "
                         + "(id, user_id, puzzle_date, mode, solution, guesses_json, status, mouse_revealed, "
                         + "kitten_unlocked, created_at, updated_at, completed_at) "
                         + "VALUES (?1, ?2, '2099-01-01', 'CLASSIC', 'abbaco', ?3, 'WON', true, false, ?4, ?4, ?4)"
@@ -226,6 +228,19 @@ class AdminResourceTest {
                 .setParameter(3, "https://example.test/" + UUID.randomUUID())
                 .setParameter(4, now)
                 .executeUpdate();
+
+            entityManager
+                .createNativeQuery(
+                    "INSERT INTO hexahack_games "
+                        + "(id, user_id, puzzle_date, rules_version, solution, event_log_json, total_cost, "
+                        + "wrong_submissions, override_count, status, stealth, rank, created_at, updated_at, completed_at) "
+                        + "VALUES (?1, ?2, '2099-01-02', 1, '012345', '[]', 0, 0, 0, 'COMPLETED', 100, "
+                        + "'GHOST', ?3, ?3, ?3)"
+                )
+                .setParameter(1, UUID.randomUUID().toString())
+                .setParameter(2, userId)
+                .setParameter(3, now)
+                .executeUpdate();
         });
     }
 
@@ -248,7 +263,7 @@ class AdminResourceTest {
     private void createCompletedGame(String userId, String puzzleDate, String timestamp) {
         QuarkusTransaction.requiringNew().run(() -> entityManager
             .createNativeQuery(
-                "INSERT INTO games "
+                "INSERT INTO hexaword_games "
                     + "(id, user_id, puzzle_date, mode, solution, guesses_json, status, mouse_revealed, "
                     + "kitten_unlocked, created_at, updated_at, completed_at) "
                     + "VALUES (?1, ?2, ?3, 'CLASSIC', 'abbaco', ?4, 'WON', true, false, ?5, ?5, ?5)"

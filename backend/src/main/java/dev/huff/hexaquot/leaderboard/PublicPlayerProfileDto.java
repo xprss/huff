@@ -8,6 +8,8 @@ public record PublicPlayerProfileDto(
     String profileEmoji,
     String bio,
     StatsDto stats,
+    StatsDto overallStats,
+    StatsDto hexawordStats,
     MedalCountsDto medals
 ) {
 }

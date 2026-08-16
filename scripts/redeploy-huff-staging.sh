@@ -61,6 +61,10 @@ POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-huff-staging}"
 POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 POSTGRES_HOST_BIND="${POSTGRES_HOST_BIND:-127.0.0.1}"
 POSTGRES_HOST_PORT="${POSTGRES_HOST_PORT:-}"
+APP_MEMORY="${APP_MEMORY:-320m}"
+APP_MEMORY_SWAP="${APP_MEMORY_SWAP:-448m}"
+POSTGRES_MEMORY="${POSTGRES_MEMORY:-160m}"
+POSTGRES_MEMORY_SWAP="${POSTGRES_MEMORY_SWAP:-224m}"
 COOKIE_SECURE="${COOKIE_SECURE:-true}"
 AUTH_ENABLED="${AUTH_ENABLED:-true}"
 VAPID_SUBJECT="${VAPID_SUBJECT:-mailto:notifications@staging.huff.ottonovembre.it}"
@@ -127,6 +131,8 @@ else
     --name "${POSTGRES_CONTAINER_NAME}" \
     --restart unless-stopped \
     --network "${DOCKER_NETWORK}" \
+    --memory "${POSTGRES_MEMORY}" \
+    --memory-swap "${POSTGRES_MEMORY_SWAP}" \
     -e "POSTGRES_DB=${POSTGRES_DB}" \
     -e "POSTGRES_USER=${POSTGRES_USER}" \
     -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
@@ -150,7 +156,7 @@ done
 
 if [[ "${BUILD_IMAGE}" == "true" ]]; then
   echo "Building ${IMAGE_NAME}:latest from ${PROJECT_ROOT}"
-  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
+  DOCKER_BUILDKIT=1 docker build --build-arg "GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}" --build-arg "VITE_HIDE_HEXAHACK=${VITE_HIDE_HEXAHACK:-false}" -t "${IMAGE_NAME}:latest" "${PROJECT_ROOT}"
 fi
 
 PREVIOUS_IMAGE_ID=""
@@ -170,6 +176,8 @@ docker run -d \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
   --network "${DOCKER_NETWORK}" \
+  --memory "${APP_MEMORY}" \
+  --memory-swap "${APP_MEMORY_SWAP}" \
   "${ENV_ARGS[@]}" \
   -e "AUTH_ENABLED=${AUTH_ENABLED}" \
   -e "COOKIE_SECURE=${COOKIE_SECURE}" \

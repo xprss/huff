@@ -8,12 +8,14 @@ export function LetterNavigator({
   answerLength,
   canPlay,
   hand,
+  label = "Navigazione lettere",
   selectedCellIndex,
   onSelectCell
 }: {
   answerLength: number;
   canPlay: boolean;
   hand: InputHandPreference;
+  label?: string;
   selectedCellIndex: number | null;
   onSelectCell: (index: number) => void;
 }) {
@@ -84,7 +86,7 @@ export function LetterNavigator({
   const restingThumbOffset = isEngaged ? startThumbOffset.current : thumbOffsetFor(selectedPosition - 1);
 
   return (
-    <div className={`letter-navigator hand-${hand.toLowerCase()}`} aria-label="Navigazione lettere">
+    <div className={`letter-navigator hand-${hand.toLowerCase()}`} aria-label={label}>
       <div
         className={`letter-joystick ${isEngaged || isFocused ? "engaged" : ""}`}
         style={

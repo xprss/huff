@@ -5,6 +5,9 @@ import type {
   GameMode,
   AdminPlayerSortDto,
   AdminPlayerUpdateDto,
+  HexahackOverrideRequestDto,
+  HexahackProbeRequestDto,
+  HexahackSubmissionRequestDto,
   ProfileUpdateDto,
   PushSubscriptionDto
 } from "./types";
@@ -68,15 +71,23 @@ export function clearAccessToken() {
 export type ApiClient = {
   readonly logout: EndpointHandler<"/api/logout", "POST">;
   readonly me: EndpointHandler<"/api/me", "GET">;
-  readonly today: EndpointHandler<"/api/game/today", "GET">;
-  readonly selectMode: EndpointHandler<"/api/game/today/mode", "POST", [mode: GameMode]>;
-  readonly guess: EndpointHandler<"/api/game/today/guesses", "POST", [guess: string]>;
-  readonly useKitten: EndpointHandler<"/api/game/today/kitten", "POST">;
-  readonly useStar: EndpointHandler<"/api/game/today/star", "POST">;
-  readonly stats: EndpointHandler<"/api/stats", "GET">;
+  readonly markHexahackLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAHACK_LAUNCH/seen", "POST">;
+  readonly today: EndpointHandler<"/api/hexaword/today", "GET">;
+  readonly selectMode: EndpointHandler<"/api/hexaword/today/mode", "POST", [mode: GameMode]>;
+  readonly guess: EndpointHandler<"/api/hexaword/today/guesses", "POST", [guess: string]>;
+  readonly useKitten: EndpointHandler<"/api/hexaword/today/kitten", "POST">;
+  readonly useStar: EndpointHandler<"/api/hexaword/today/star", "POST">;
+  readonly stats: EndpointHandler<"/api/hexaword/stats", "GET">;
+  readonly hexahackToday: EndpointHandler<"/api/hexahack/today", "GET">;
+  readonly hexahackProbe: EndpointHandler<"/api/hexahack/today/probes", "POST", [probe: HexahackProbeRequestDto]>;
+  readonly hexahackSubmit: EndpointHandler<"/api/hexahack/today/submissions", "POST", [submission: HexahackSubmissionRequestDto]>;
+  readonly hexahackOverride: EndpointHandler<"/api/hexahack/today/overrides", "POST", [request: HexahackOverrideRequestDto]>;
+  readonly hexahackStats: EndpointHandler<"/api/hexahack/stats", "GET">;
+  readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
-  readonly leaderboards: EndpointHandler<"/api/leaderboards", "GET">;
+  readonly leaderboards: EndpointHandler<"/api/leaderboards/overall", "GET">;
+  readonly hexawordLeaderboards: EndpointHandler<"/api/hexaword/leaderboards", "GET">;
   readonly publicPlayer: EndpointHandler<"/api/player/:nickname", "GET", [nickname: string]>;
   readonly pushSettings: EndpointHandler<"/api/push/settings", "GET">;
   readonly savePushSubscription: EndpointHandler<"/api/push/subscriptions", "POST", [subscription: PushSubscriptionDto]>;
@@ -138,33 +149,41 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
 export const api = {
   logout: () => request("/api/logout", { method: "POST" }),
   me: () => request("/api/me", { method: "GET" }),
-  today: () => request("/api/game/today", { method: "GET" }),
+  markHexahackLaunchSeen: () => request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" }),
+  today: () => request("/api/hexaword/today", { method: "GET" }),
   selectMode: (mode: GameMode) =>
-    request("/api/game/today/mode", {
+    request("/api/hexaword/today/mode", {
       method: "POST",
       body: { mode }
     }),
   guess: (guess: string) =>
-    request("/api/game/today/guesses", {
+    request("/api/hexaword/today/guesses", {
       method: "POST",
       body: { guess }
     }),
   useKitten: () =>
-    request("/api/game/today/kitten", {
+    request("/api/hexaword/today/kitten", {
       method: "POST"
     }),
   useStar: () =>
-    request("/api/game/today/star", {
+    request("/api/hexaword/today/star", {
       method: "POST"
     }),
-  stats: () => request("/api/stats", { method: "GET" }),
+  stats: () => request("/api/hexaword/stats", { method: "GET" }),
+  hexahackToday: () => request("/api/hexahack/today", { method: "GET" }),
+  hexahackProbe: (probe: HexahackProbeRequestDto) => request("/api/hexahack/today/probes", { method: "POST", body: probe }),
+  hexahackSubmit: (submission: HexahackSubmissionRequestDto) => request("/api/hexahack/today/submissions", { method: "POST", body: submission }),
+  hexahackOverride: (overrideRequest: HexahackOverrideRequestDto) => request("/api/hexahack/today/overrides", { method: "POST", body: overrideRequest }),
+  hexahackStats: () => request("/api/hexahack/stats", { method: "GET" }),
+  overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {
       method: "PUT",
       body: profile
     }),
   globalStats: () => request("/api/stats/global", { method: "GET" }),
-  leaderboards: () => request("/api/leaderboards", { method: "GET" }),
+  leaderboards: () => request("/api/leaderboards/overall", { method: "GET" }),
+  hexawordLeaderboards: () => request("/api/hexaword/leaderboards", { method: "GET" }),
   publicPlayer: (nickname: string) =>
     request(`/api/player/${encodeURIComponent(nickname)}` as "/api/player/:nickname", { method: "GET" }),
   pushSettings: () => request("/api/push/settings", { method: "GET" }),

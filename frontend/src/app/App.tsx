@@ -2,15 +2,17 @@ import React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Heart, X } from "lucide-react";
 import { api, clearAccessToken, isAuthRequiredError, storeAccessToken } from "../api";
-import { AppThemeProvider } from "../theme";
+import { appThemes, AppThemeProvider, getAppTheme, getStoredThemeId, THEME_STORAGE_KEY } from "../theme";
 import type {
   GameDto,
   GameMode,
   GuessResult,
+  HexahackTodayDto,
   MeDto,
   ProfileUpdateDto,
   TodayGameDto,
-  TileState
+  TileState,
+  StatsSetDto
 } from "../types";
 import {
   APP_NAME,
@@ -23,15 +25,20 @@ import {
 import { AppHeader } from "./AppHeader";
 import {
   globalStatsQueryOptions,
+  hexahackStatsQueryOptions,
+  hexahackTodayQueryOptions,
   leaderboardsQueryOptions,
   meQueryOptions,
   publicPlayerQueryOptions,
   queryKeys,
   statsQueryOptions,
+  overallStatsQueryOptions,
   todayQueryOptions
 } from "./queries";
 import { playerHash, playerNicknameFromHash, useAppRoute } from "./routing";
+import { isHexahackHidden } from "./features";
 import { GameBoard } from "../features/game/components/GameBoard";
+import { DailyGameIntro } from "../features/game/components/DailyGameIntro";
 import { GameKeyboard } from "../features/game/components/GameKeyboard";
 import { LetterNavigator } from "../features/game/components/LetterNavigator";
 import { ModeSelection } from "../features/game/components/ModeSelection";
@@ -55,6 +62,10 @@ import { ProfileView } from "../features/profile/ProfileView";
 import { PublicProfileView } from "../features/profile/PublicProfileView";
 import { LeaderboardView } from "../features/leaderboard/LeaderboardView";
 import { StatsModal } from "../features/stats/StatsModal";
+import type { StatsGame } from "../features/stats/StatsModal";
+import { GameSelector } from "../features/game/GameSelector";
+import { HexahackView } from "../features/hexahack/HexahackView";
+import { HexahackLaunchModal } from "../features/notifications/HexahackLaunchModal";
 import { AdminView } from "../features/admin/AdminView";
 import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
@@ -74,6 +85,7 @@ export function App() {
   const [currentGuess, setCurrentGuess] = React.useState<string[]>([]);
   const [selectedCellIndex, setSelectedCellIndex] = React.useState<number | null>(0);
   const [showStats, setShowStats] = React.useState(false);
+  const [statsInitialGame, setStatsInitialGame] = React.useState<StatsGame>("overall");
   const [showInfo, setShowInfo] = React.useState(false);
   const [activeRoute, setActiveRoute] = useAppRoute();
   const publicPlayerNickname = activeRoute === "player" ? playerNicknameFromHash(window.location.hash) : null;
@@ -85,7 +97,8 @@ export function App() {
   const [dismissedFirstGuessSuggestionPuzzleDate, setDismissedFirstGuessSuggestionPuzzleDate] = React.useState<
     string | null
   >(null);
-  const [darkMode, setDarkMode] = React.useState(() => localStorage.getItem("darkMode") !== "false");
+  const [themeId, setThemeId] = React.useState(getStoredThemeId);
+  const [patternsEnabled, setPatternsEnabled] = React.useState(() => localStorage.getItem("patternsEnabled") === "true");
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(() => areGameNotificationsEnabled());
   const [notificationPermission, setNotificationPermission] = React.useState<NotificationPermission>(
     getNotificationPermission
@@ -95,7 +108,9 @@ export function App() {
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const notificationPromptHandledRef = React.useRef(false);
-  const themeConditions = React.useMemo(() => ({ preferredMode: darkMode ? "dark" : "light" } as const), [darkMode]);
+  const launchAnnouncementHandledRef = React.useRef(false);
+  const [showLaunchAnnouncement, setShowLaunchAnnouncement] = React.useState(false);
+  const appTheme = React.useMemo(() => getAppTheme(themeId), [themeId]);
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
   const isLoggedIn = Boolean(me?.loggedIn);
@@ -111,6 +126,9 @@ export function App() {
     ...statsQueryOptions(),
     enabled: isLoggedIn
   });
+  const hexahackTodayQuery = useQuery({ ...hexahackTodayQueryOptions(), enabled: isLoggedIn && !isHexahackHidden });
+  const hexahackStatsQuery = useQuery({ ...hexahackStatsQueryOptions(), enabled: isLoggedIn && !isHexahackHidden });
+  const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
   const leaderboardsQuery = useQuery({
     ...leaderboardsQueryOptions(),
     enabled: isLoggedIn && (activeRoute === "leaderboard" || activeRoute === "player")
@@ -124,7 +142,12 @@ export function App() {
   const modes = today?.modes ?? [];
   const todayPuzzleDate = today?.puzzleDate ?? null;
   const stats = isLoggedIn ? statsQuery.data ?? null : null;
-  const globalStats = globalStatsQuery.data ?? null;
+  const hexahackToday = hexahackTodayQuery.data ?? null;
+  const hexahackGame = hexahackToday?.game ?? null;
+  const statsSet: StatsSetDto = {
+    overall: overallStatsQuery.data ?? emptyStats,
+    hexaword: stats ?? emptyStats
+  };
   const canViewAdmin = Boolean(me?.user?.admin?.canViewPlayers);
   const canManagePlayers = Boolean(me?.user?.admin?.canManagePlayers);
   const loading =
@@ -132,7 +155,8 @@ export function App() {
     meQuery.isPending ||
     isAuthRequiredError(meQuery.error) ||
     globalStatsQuery.isPending ||
-    (isLoggedIn && (todayQuery.isPending || statsQuery.isPending));
+    (isLoggedIn && (todayQuery.isPending || statsQuery.isPending ||
+      (!isHexahackHidden && (hexahackTodayQuery.isPending || hexahackStatsQuery.isPending)) || overallStatsQuery.isPending));
 
   function setTodayGame(gameUpdate: GameDto | null) {
     queryClient.setQueryData<TodayGameDto | undefined>(queryKeys.today, (current) =>
@@ -146,7 +170,12 @@ export function App() {
   }
 
   function refreshStats() {
-    return Promise.all([queryClient.fetchQuery(statsQueryOptions()), queryClient.fetchQuery(globalStatsQueryOptions())]);
+    return Promise.all([
+      queryClient.fetchQuery(statsQueryOptions()),
+      ...(isHexahackHidden ? [] : [queryClient.fetchQuery(hexahackStatsQueryOptions())]),
+      queryClient.fetchQuery(overallStatsQueryOptions()),
+      queryClient.fetchQuery(globalStatsQueryOptions())
+    ]);
   }
 
   const selectModeMutation = useMutation({
@@ -161,6 +190,16 @@ export function App() {
   const guessMutation = useMutation({
     mutationFn: api.guess
   });
+
+  function setHexahackGame(updated: NonNullable<HexahackTodayDto["game"]>) {
+    queryClient.setQueryData<HexahackTodayDto | undefined>(queryKeys.hexahackToday, (current) =>
+      current ? { ...current, game: updated } : current
+    );
+  }
+
+  const hexahackProbeMutation = useMutation({ mutationFn: api.hexahackProbe, onSuccess: (action) => setHexahackGame(action.game) });
+  const hexahackSubmitMutation = useMutation({ mutationFn: api.hexahackSubmit, onSuccess: (action) => setHexahackGame(action.game) });
+  const hexahackOverrideMutation = useMutation({ mutationFn: api.hexahackOverride, onSuccess: (action) => setHexahackGame(action.game) });
 
   const useKittenMutation = useMutation({
     mutationFn: api.useKitten,
@@ -215,7 +254,7 @@ export function App() {
     setShowInfo(false);
     setProfileEditing(false);
     setShowActionsMenu(false);
-    setActiveRoute("game");
+    setActiveRoute("games");
     setStarReveal(null);
     clearAccessToken();
     return true;
@@ -227,17 +266,33 @@ export function App() {
       globalStatsQuery.error ??
       todayQuery.error ??
       statsQuery.error ??
+      (!isHexahackHidden ? hexahackTodayQuery.error : null) ??
+      (!isHexahackHidden ? hexahackStatsQuery.error : null) ??
+      overallStatsQuery.error ??
       leaderboardsQuery.error ??
       publicPlayerQuery.error;
     if (!error) return;
     if (handleAuthRequired(error)) return;
 
     showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
-  }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
+  }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error, hexahackTodayQuery.error,
+    hexahackStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
-    localStorage.setItem("darkMode", String(darkMode));
-  }, [darkMode]);
+    if (isHexahackHidden || !me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") || launchAnnouncementHandledRef.current) return;
+    launchAnnouncementHandledRef.current = true;
+    setShowNotificationPrompt(false);
+    setShowLaunchAnnouncement(true);
+  }, [me?.pendingAnnouncements]);
+
+  React.useEffect(() => {
+    localStorage.setItem(THEME_STORAGE_KEY, appTheme.id);
+  }, [appTheme.id]);
+
+  React.useEffect(() => {
+    localStorage.setItem("patternsEnabled", String(patternsEnabled));
+    document.documentElement.dataset.patterns = patternsEnabled ? "enabled" : "disabled";
+  }, [patternsEnabled]);
 
   React.useEffect(() => {
     function refreshNotificationState() {
@@ -256,6 +311,7 @@ export function App() {
   React.useEffect(() => {
     if (
       !isLoggedIn ||
+      showLaunchAnnouncement ||
       notificationsEnabled ||
       notificationPermission === "denied" ||
       isGameNotificationsPromptDismissed() ||
@@ -266,7 +322,7 @@ export function App() {
 
     notificationPromptHandledRef.current = true;
     setShowNotificationPrompt(true);
-  }, [isLoggedIn, notificationPermission, notificationsEnabled]);
+  }, [isLoggedIn, notificationPermission, notificationsEnabled, showLaunchAnnouncement]);
 
   React.useEffect(() => {
     if (!toast) return;
@@ -284,7 +340,7 @@ export function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (activeRoute !== "game" || showStats || showInfo || starReveal || showNotificationPrompt) return;
+      if (activeRoute !== "game" || showStats || showInfo || starReveal || showNotificationPrompt || showLaunchAnnouncement) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -306,7 +362,7 @@ export function App() {
 
   React.useEffect(() => {
     if (activeRoute === "admin" && me && !canViewAdmin) {
-      setActiveRoute("game");
+      setActiveRoute("games");
     }
   }, [activeRoute, canViewAdmin, me, setActiveRoute]);
 
@@ -351,10 +407,12 @@ export function App() {
   const canPlay = Boolean(game && game.status === "IN_PROGRESS");
   const shouldHideKeyboardHints = Boolean(game?.mode === "MISCHIEVOUS_MOUSE" && !game.kitten.used);
   const answerLength = game?.answerLength ?? 6;
-  const puzzleDate = formatPuzzleDate(game?.puzzleDate ?? todayPuzzleDate ?? undefined);
+  const puzzleDate = formatPuzzleDate(
+    activeRoute === "hexahack" ? hexahackGame?.puzzleDate ?? hexahackToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
+  );
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
-  const showStarButton = Boolean(game && game.status === "IN_PROGRESS" && game.guesses.length > 0);
+  const showStarButton = Boolean(activeRoute === "game" && game && game.status === "IN_PROGRESS" && game.guesses.length > 0);
   const lastGuess = game?.guesses[game.guesses.length - 1];
   const completedSolution =
     game?.status === "WON" || game?.status === "LOST" ? game.solution ?? lastGuess?.word ?? null : null;
@@ -611,9 +669,21 @@ export function App() {
     setSelectedCellIndex(null);
   }
 
+  function dismissLaunchAnnouncement(play: boolean) {
+    setShowLaunchAnnouncement(false);
+    queryClient.setQueryData<MeDto | undefined>(queryKeys.me, (current) => current ? {
+      ...current,
+      pendingAnnouncements: current.pendingAnnouncements.filter((campaign) => campaign !== "HEXAHACK_LAUNCH")
+    } : current);
+    void api.markHexahackLaunchSeen().catch(() => {
+      // The local close is immediate. A later identity refresh/access will retry via the persistent pending row.
+    });
+    if (play) setActiveRoute("hexahack");
+  }
+
   if ((me?.authEnabled === true && !me.loggedIn) || isAuthRequiredError(meQuery.error)) {
     return (
-      <AppThemeProvider conditions={themeConditions}>
+      <AppThemeProvider theme={appTheme}>
         <main className="app-shell">
           <GoogleLoginScreen
             onAccessToken={(token) => {
@@ -627,7 +697,7 @@ export function App() {
   }
 
   return (
-    <AppThemeProvider conditions={themeConditions}>
+    <AppThemeProvider theme={appTheme}>
       <main className="app-shell">
         <section className="game-surface" aria-busy={loading}>
           <AppHeader
@@ -638,11 +708,14 @@ export function App() {
             showProfileEdit={Boolean(activeRoute === "profile" && me?.user && !profileEditing)}
             showActionsMenu={showActionsMenu}
             actionsMenuRef={actionsMenuRef}
+            activeRoute={activeRoute}
             canUseGameActions={canUseGameActions}
             showAdmin={canViewAdmin}
             notificationsEnabled={notificationsEnabled}
             notificationMenuLabel={notificationMenuLabel}
-            darkMode={darkMode}
+            themes={appThemes}
+            selectedThemeId={appTheme.id}
+            patternsEnabled={patternsEnabled}
             showLogout={Boolean(me?.authEnabled && me.loggedIn)}
             onLogout={() => {
               void api
@@ -663,7 +736,12 @@ export function App() {
               setProfileEditing(false);
               setShowActionsMenu(false);
             }}
+            onOpenGames={() => {
+              setActiveRoute("games");
+              setShowActionsMenu(false);
+            }}
             onOpenStats={() => {
+              setStatsInitialGame(activeRoute === "game" ? "hexaword" : "overall");
               setShowStats(true);
               setShowActionsMenu(false);
             }}
@@ -680,10 +758,10 @@ export function App() {
               setShowActionsMenu(false);
             }}
             onToggleNotifications={() => void toggleGameNotifications()}
-            onToggleTheme={() => {
-              setDarkMode((value) => !value);
-              setShowActionsMenu(false);
+            onSelectTheme={(selectedThemeId) => {
+              setThemeId(selectedThemeId);
             }}
+            onTogglePatterns={() => setPatternsEnabled((value) => !value)}
             onCloseMenu={() => setShowActionsMenu(false)}
           />
 
@@ -697,7 +775,7 @@ export function App() {
             ) : leaderboardsQuery.data ? (
               <LeaderboardView
                 leaderboards={leaderboardsQuery.data}
-                onBack={() => setActiveRoute("game")}
+                onBack={() => setActiveRoute("games")}
                 onOpenPlayer={(nickname) => {
                   window.location.hash = playerHash(nickname);
                 }}
@@ -716,12 +794,12 @@ export function App() {
           ) : activeRoute === "profile" && me?.user ? (
             <ProfileView
               user={me.user}
-              stats={stats}
+              stats={statsSet}
               editing={profileEditing}
               onEditingChange={setProfileEditing}
               onBack={() => {
                 setProfileEditing(false);
-                setActiveRoute("game");
+                setActiveRoute("games");
               }}
               onSave={(profile) => updateProfile(profile)}
               onSuccess={(message) => showToast(message, "success")}
@@ -730,16 +808,47 @@ export function App() {
           ) : activeRoute === "admin" && canViewAdmin ? (
             <AdminView
               canManagePlayers={canManagePlayers}
+              showHexahack={!isHexahackHidden}
               onAuthRequired={handleAuthRequired}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}
             />
+          ) : activeRoute === "games" ? (
+            <GameSelector
+              hexawordCompleted={Boolean(game && game.status !== "IN_PROGRESS")}
+              showHexahack={!isHexahackHidden}
+              hexahackCompleted={Boolean(hexahackGame && hexahackGame.status === "COMPLETED")}
+              onHexaword={() => setActiveRoute("game")}
+              onHexahack={() => setActiveRoute("hexahack")}
+            />
+          ) : activeRoute === "hexahack" && hexahackToday && hexahackStatsQuery.data ? (
+            <HexahackView
+              today={hexahackToday}
+              stats={hexahackStatsQuery.data}
+              busy={hexahackProbeMutation.isPending || hexahackSubmitMutation.isPending || hexahackOverrideMutation.isPending}
+              onProbe={(probe) => hexahackProbeMutation.mutateAsync(probe)}
+              onSubmit={(submission) => hexahackSubmitMutation.mutateAsync(submission)}
+              onOverride={(overrideRequest) => hexahackOverrideMutation.mutateAsync(overrideRequest)}
+              onError={(message) => showToast(message, "warning")}
+              onComplete={(updated) => {
+                void refreshStats();
+                if (updated.rank === "GHOST") void launchVictoryConfetti();
+              }}
+            />
           ) : !game ? (
-            <div className="play-area">
-              <ModeSelection modes={modes} selectedMode={null} onSelect={(mode) => void selectGameMode(mode)} />
-            </div>
+            <>
+              <DailyGameIntro game="Hexaword" title="Trova la parola">
+                Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
+              </DailyGameIntro>
+              <div className="play-area">
+                <ModeSelection modes={modes} selectedMode={null} onSelect={(mode) => void selectGameMode(mode)} />
+              </div>
+            </>
           ) : (
             <>
+              <DailyGameIntro game="Hexaword" title="Trova la parola">
+                Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
+              </DailyGameIntro>
               <div className="play-area">
                 <GameBoard
                   game={game}
@@ -808,7 +917,7 @@ export function App() {
         </section>
 
         {showStats ? (
-          <StatsModal game={game} stats={stats} globalStats={globalStats} onClose={() => setShowStats(false)} />
+          <StatsModal game={game} stats={statsSet} initialGame={statsInitialGame} onClose={() => setShowStats(false)} />
         ) : null}
 
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
@@ -823,6 +932,10 @@ export function App() {
             }}
             onClose={() => setShowNotificationPrompt(false)}
           />
+        ) : null}
+
+        {showLaunchAnnouncement ? (
+          <HexahackLaunchModal onPlay={() => dismissLaunchAnnouncement(true)} onClose={() => dismissLaunchAnnouncement(false)} />
         ) : null}
 
         {starReveal ? (
@@ -842,6 +955,15 @@ export function App() {
     </AppThemeProvider>
   );
 }
+
+const emptyStats = {
+  played: 0,
+  won: 0,
+  lost: 0,
+  currentStreak: 0,
+  maxStreak: 0,
+  guessDistribution: {}
+} as const;
 
 function normalizeGuessCells(cells: readonly string[], answerLength: number) {
   return Array.from({ length: answerLength }, (_, index) => cells[index] ?? "");

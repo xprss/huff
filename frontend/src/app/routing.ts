@@ -1,18 +1,25 @@
 import React from "react";
+import { isHexahackHidden } from "./features";
 
-export type AppRoute = "game" | "profile" | "admin" | "leaderboard" | "player";
+export type AppRoute = "games" | "game" | "hexahack" | "profile" | "admin" | "leaderboard" | "player";
 
 function routeFromHash(hash: string): AppRoute {
   if (hash.startsWith("#/leaderboard/player/")) return "player";
   if (hash === "#/leaderboard") return "leaderboard";
   if (hash === "#/admin") return "admin";
-  return hash === "#/profile" ? "profile" : "game";
+  if (hash === "#/profile") return "profile";
+  if (hash === "#/hexaword") return "game";
+  if (hash === "#/hexahack" && !isHexahackHidden) return "hexahack";
+  return "games";
 }
 
 function hashFromRoute(route: AppRoute) {
   if (route === "leaderboard" || route === "player") return "#/leaderboard";
   if (route === "admin") return "#/admin";
-  return route === "profile" ? "#/profile" : "#/";
+  if (route === "profile") return "#/profile";
+  if (route === "game") return "#/hexaword";
+  if (route === "hexahack" && !isHexahackHidden) return "#/hexahack";
+  return "#/";
 }
 
 export function playerNicknameFromHash(hash: string): string | null {
@@ -31,10 +38,18 @@ export function playerHash(nickname: string) {
 }
 
 export function useAppRoute() {
-  const [route, setRouteState] = React.useState<AppRoute>(() => routeFromHash(window.location.hash));
+  const [route, setRouteState] = React.useState<AppRoute>(() => {
+    if (isHexahackHidden && window.location.hash === "#/hexahack") {
+      window.history.replaceState(null, "", "#/");
+    }
+    return routeFromHash(window.location.hash);
+  });
 
   React.useEffect(() => {
     function syncRoute() {
+      if (isHexahackHidden && window.location.hash === "#/hexahack") {
+        window.history.replaceState(null, "", "#/");
+      }
       setRouteState(routeFromHash(window.location.hash));
     }
 
