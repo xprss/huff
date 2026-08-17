@@ -1,0 +1,101 @@
+name: Delivery
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delivery-master
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  publish:
+    name: Publish immutable image and deploy staging
+    needs: tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Compose build version
+        id: version
+        shell: bash
+        run: |
+          app_version="$(scripts/version.sh compose \
+            --run-number "${GITHUB_RUN_NUMBER}" \
+            --commit "${GITHUB_SHA}")"
+          echo "app-version=${app_version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ vars.DOCKERHUB_IMAGE }}:sha-${{ github.sha }}
+            ${{ vars.DOCKERHUB_IMAGE }}:staging
+          build-args: |
+            APP_VERSION=${{ steps.version.outputs.app-version }}
+            GIT_COMMIT=${{ github.sha }}
+            GOOGLE_CLIENT_ID=${{ vars.GOOGLE_CLIENT_ID }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.app-version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Trigger Jenkins staging deployment
+        shell: bash
+        env:
+          IMAGE_REPOSITORY: ${{ vars.DOCKERHUB_IMAGE }}
+          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          APP_VERSION: ${{ steps.version.outputs.app-version }}
+          GIT_COMMIT: ${{ github.sha }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JENKINS_URL: ${{ vars.JENKINS_URL }}
+          JENKINS_STAGING_JOB: ${{ vars.JENKINS_STAGING_JOB }}
+          JENKINS_TRIGGER_USER: ${{ secrets.JENKINS_TRIGGER_USER }}
+          JENKINS_TRIGGER_TOKEN: ${{ secrets.JENKINS_TRIGGER_TOKEN }}
+        run: |
+          set +x
+          scripts/version.sh validate-full "${APP_VERSION}"
+          scripts/version.sh validate-repository "${IMAGE_REPOSITORY}"
+          scripts/version.sh validate-digest "${IMAGE_DIGEST}"
+          scripts/version.sh validate-commit "${GIT_COMMIT}"
+          [[ -n "${JENKINS_URL}" && -n "${JENKINS_STAGING_JOB}" ]]
+          [[ -n "${JENKINS_TRIGGER_USER}" && -n "${JENKINS_TRIGGER_TOKEN}" ]]
+
+          curl --fail-with-body --silent --show-error \
+            --connect-timeout 15 \
+            --max-time 60 \
+            --user "${JENKINS_TRIGGER_USER}:${JENKINS_TRIGGER_TOKEN}" \
+            --request POST \
+            --data-urlencode "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}" \
+            --data-urlencode "IMAGE_DIGEST=${IMAGE_DIGEST}" \
+            --data-urlencode "GIT_COMMIT=${GIT_COMMIT}" \
+            --data-urlencode "APP_VERSION=${APP_VERSION}" \
+            --data-urlencode "GITHUB_RUN_URL=${GITHUB_RUN_URL}" \
+            "${JENKINS_URL%/}/job/${JENKINS_STAGING_JOB}/buildWithParameters"

@@ -62,6 +62,10 @@
       <artifactId>quarkus-scheduler</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
+    <dependency>
       <groupId>nl.martijndwars</groupId>
       <artifactId>web-push</artifactId>
       <version>${web-push.version}</version>

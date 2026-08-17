@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "verify:version": "node scripts/assert-built-version.mjs",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },

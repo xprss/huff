@@ -1,0 +1,192 @@
+pipeline {
+  agent any
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 2, unit: 'HOURS')
+  }
+
+  parameters {
+    text(name: 'RELEASE_REASON', defaultValue: '', description: 'Required production deployment reason')
+    string(name: 'CONFIRMATION_TEXT', defaultValue: '', description: 'Type DEPLOY-PRODUCTION')
+  }
+
+  stages {
+    stage('Pin latest staging candidate') {
+      steps {
+        sh 'rm -f deployment.json production-result.json'
+        copyArtifacts(
+          projectName: 'huff-staging-deploy',
+          selector: lastSuccessful(),
+          filter: 'deployment.json',
+          fingerprintArtifacts: true
+        )
+        sh 'scripts/jenkins/validate-deployment-record.sh deployment.json staging'
+        script {
+          env.CANDIDATE_CHECKSUM = sh(
+            script: "sha256sum deployment.json | awk '{print \$1}'",
+            returnStdout: true
+          ).trim()
+
+          def configuration = sh(
+            script: '''#!/usr/bin/env bash
+              set +x
+              . scripts/load-env-file.sh
+              load_env_file /etc/huff/.env.jenkins
+              printf '%s\n%s\n' "${JENKINS_PRODUCTION_APPROVERS:-huff-admin}" "${JENKINS_STATE_DIR:-/var/lib/jenkins/huff/state}"
+            ''',
+            returnStdout: true
+          ).trim().readLines()
+          env.PRODUCTION_APPROVERS = configuration[0]
+          env.HUFF_STATE_DIR = configuration[1]
+
+          def userCauses = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')
+          env.REQUESTED_BY = userCauses ? userCauses[0].userId : 'unknown'
+        }
+      }
+    }
+
+    stage('Enforce production policy') {
+      steps {
+        sh '''#!/usr/bin/env bash
+          set -euo pipefail
+          mkdir -p "${HUFF_STATE_DIR}"
+          scripts/jenkins/check-production-policy.sh \
+            deployment.json "${HUFF_STATE_DIR}/production-deployment.json"
+        '''
+      }
+    }
+
+    stage('Review candidate') {
+      steps {
+        sh '''#!/usr/bin/env bash
+          jq '{
+            appVersion,
+            gitCommit,
+            imageDigest,
+            stagedAt,
+            githubRunUrl
+          }' deployment.json
+        '''
+      }
+    }
+
+    stage('Confirm production') {
+      steps {
+        script {
+          if (!params.RELEASE_REASON?.trim()) {
+            error('RELEASE_REASON is required')
+          }
+          if (params.CONFIRMATION_TEXT != 'DEPLOY-PRODUCTION') {
+            error('CONFIRMATION_TEXT must be DEPLOY-PRODUCTION')
+          }
+
+          def approval = input(
+            message: 'Deploy the pinned staging candidate to production?',
+            ok: 'Deploy production',
+            submitter: env.PRODUCTION_APPROVERS,
+            submitterParameter: 'APPROVER'
+          )
+          env.DEPLOY_APPROVER = approval instanceof Map ? approval.APPROVER : approval.toString()
+        }
+      }
+    }
+
+    stage('Deploy and verify production') {
+      steps {
+        lock(resource: 'huff-production') {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+            set +x
+
+            [[ "$(sha256sum deployment.json | awk '{print $1}')" == "${CANDIDATE_CHECKSUM}" ]] || {
+              echo "Pinned candidate changed during approval" >&2
+              exit 1
+            }
+
+            scripts/jenkins/check-production-policy.sh \
+              deployment.json "${HUFF_STATE_DIR}/production-deployment.json"
+
+            . scripts/load-env-file.sh
+            load_env_file /etc/huff/.env.jenkins
+
+            image_ref="$(jq -er '.imageRef' deployment.json)"
+            app_version="$(jq -er '.appVersion' deployment.json)"
+            git_commit="$(jq -er '.gitCommit' deployment.json)"
+
+            mkdir -p deployment-diagnostics/production
+            ENV_FILE="${PRODUCTION_ENV_FILE}" \
+            DIAGNOSTICS_DIR="${WORKSPACE}/deployment-diagnostics/production" \
+              scripts/redeploy-huff.sh \
+                --image-ref "${image_ref}" \
+                --app-version "${app_version}" \
+                --git-commit "${git_commit}"
+
+            curl --fail --silent --show-error --max-time 20 \
+              "${PRODUCTION_URL%/}/q/health/ready" \
+              > deployment-diagnostics/production/public-health-response.json
+            curl --fail --silent --show-error --max-time 20 \
+              "${PRODUCTION_URL%/}/" >/dev/null
+
+            deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            jq \
+              --arg environment production \
+              --arg deployedAt "${deployed_at}" \
+              --arg requestedBy "${REQUESTED_BY}" \
+              --arg deployApprover "${DEPLOY_APPROVER}" \
+              --arg releaseReason "${RELEASE_REASON}" \
+              --arg result SUCCESS \
+              '. + {
+                environment: $environment,
+                deployedAt: $deployedAt,
+                requestedBy: $requestedBy,
+                deployApprover: $deployApprover,
+                releaseReason: $releaseReason,
+                result: $result
+              }' deployment.json > production-result.json
+
+            scripts/jenkins/validate-deployment-record.sh production-result.json production
+            install -m 0640 production-result.json \
+              "${HUFF_STATE_DIR}/production-deployment.json"
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    unsuccessful {
+      script {
+        env.DEPLOY_RESULT = currentBuild.currentResult
+      }
+      sh '''#!/usr/bin/env bash
+        if [[ -f deployment.json && ! -f production-result.json ]]; then
+          jq \
+            --arg environment production \
+            --arg deployedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg requestedBy "${REQUESTED_BY:-unknown}" \
+            --arg deployApprover "${DEPLOY_APPROVER:-not-approved}" \
+            --arg releaseReason "${RELEASE_REASON:-}" \
+            --arg result "${DEPLOY_RESULT}" \
+            '. + {
+              environment: $environment,
+              deployedAt: $deployedAt,
+              requestedBy: $requestedBy,
+              deployApprover: $deployApprover,
+              releaseReason: $releaseReason,
+              result: $result
+            }' deployment.json > production-result.json
+        fi
+      '''
+    }
+    always {
+      archiveArtifacts(
+        artifacts: 'deployment.json,production-result.json,deployment-diagnostics/production/**',
+        allowEmptyArchive: true,
+        fingerprint: true
+      )
+    }
+  }
+}

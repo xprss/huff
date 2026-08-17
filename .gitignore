@@ -4,4 +4,6 @@ frontend/node_modules/
 data/
 .env
 .env.staging
+.env.jenkins
+deployment-diagnostics/
 *.log

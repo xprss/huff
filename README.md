@@ -20,6 +20,9 @@ npm run dev
 ```
 
 The frontend uses the Vite proxy to reach Quarkus on `localhost:8080`.
+During local development Vite reads the base SemVer from the repository's
+`VERSION` file. `VERSION` is the only versioned source and must contain exactly
+`MAJOR.MINOR.PATCH` without a `v` prefix, leading zeroes, or extra text.
 
 To build and run the complete Docker image locally with PostgreSQL:
 
@@ -91,24 +94,35 @@ The Hexahack launch push campaign is disabled by default. Set `PUSH_HEXAHACK_LAU
 
 The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 
-## Deploy
+## CI/CD and deployment
+
+Change the base version manually in `VERSION` in the pull request: `MAJOR` for
+incompatible changes, `MINOR` for backwards-compatible features, and `PATCH`
+for backwards-compatible fixes. Pull requests and non-`master` pushes only run
+tests. A successful `master` build creates a full version such as
+`3.2.1+gha.184.a1b2c3d`, publishes `linux/amd64` to Docker Hub as immutable
+`sha-<full-commit>` plus the informational `staging` tag, and triggers Jenkins.
+
+Jenkins always deploys `namespace/repository@sha256:digest`; no deployment uses
+`latest` or the movable tag. Staging is automatic after image publication.
+Production is manual and can promote only the artifact from the latest
+successful staging job, preserving the exact full SemVer and digest. See
+`jenkins/README.md` for installation, permissions, jobs, approvals, and smoke
+tests. The old `release` branch and webhook deployment are not part of this
+flow.
+
+The low-level deploy commands are reserved for Jenkins and require all immutable
+identity values:
 
 ```bash
-scripts/redeploy-huff.sh
+ENV_FILE=/etc/huff/staging.env scripts/redeploy-huff-staging.sh \
+  --image-ref namespace/repository@sha256:DIGEST \
+  --app-version 3.2.1+gha.184.a1b2c3d \
+  --git-commit FULL_COMMIT_SHA
 ```
 
-The script builds the Docker image, creates the Docker network if needed, starts PostgreSQL with persistent data in `POSTGRES_DATA_DIR`, and replaces the application container.
-
-## Staging Deploy
-
-Copy `.env.staging.example` to `.env.staging`, set `GOOGLE_CLIENT_ID` (and the
-remaining staging secrets), then run:
-
-```bash
-scripts/redeploy-huff-staging.sh
-```
-
-The staging deploy uses isolated Docker resources by default: `huff-hexaquot-staging`, `huff-postgres-staging`, `huff-hexaquot-staging` network, and `127.0.0.1:8084`.
+They validate image labels, run readiness checks at `/q/health/ready`, and never
+modify `VERSION`, `frontend/src/version.ts`, or the checkout.
 
 ## Quarkus Logs
 
@@ -208,10 +222,13 @@ scripts/set-user-nickname-huff.sh --id USER_ID --nickname nickname
 scripts/set-user-nickname-huff.sh --id USER_ID --nickname @nickname --yes
 ```
 
-To reset the live database, delete the PostgreSQL data directory and any old residual SQLite files, then redeploy the app:
+The database reset helpers are emergency maintenance tools. They require the
+same immutable image arguments as the deploy scripts and must only be run under
+the corresponding Jenkins environment lock:
 
 ```bash
-scripts/reset-db-huff.sh
+scripts/reset-db-huff.sh --image-ref namespace/repository@sha256:DIGEST \
+  --app-version VERSION --git-commit FULL_COMMIT_SHA
 ```
 
 You can also open an interactive `psql` shell:

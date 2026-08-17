@@ -43,4 +43,4 @@ echo "Deleting old SQLite database files, if present"
 rm -f "${DATA_DIR}/huff-hexaquot.sqlite" "${DATA_DIR}/huff-hexaquot.sqlite-wal" "${DATA_DIR}/huff-hexaquot.sqlite-shm"
 
 echo "Starting Indovena with a fresh database"
-"${SCRIPT_DIR}/redeploy-huff.sh"
+"${SCRIPT_DIR}/redeploy-huff.sh" "$@"

@@ -41,4 +41,4 @@ if [[ -d "${POSTGRES_DATA_DIR}" ]]; then
 fi
 
 echo "Recreating staging from Flyway V1-V12"
-"${SCRIPT_DIR}/redeploy-huff-staging.sh"
+"${SCRIPT_DIR}/redeploy-huff-staging.sh" "$@"

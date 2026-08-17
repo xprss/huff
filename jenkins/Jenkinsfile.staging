@@ -1,0 +1,94 @@
+pipeline {
+  agent any
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    disableConcurrentBuilds()
+    timestamps()
+    timeout(time: 30, unit: 'MINUTES')
+  }
+
+  parameters {
+    string(name: 'IMAGE_REPOSITORY', defaultValue: '', description: 'Docker Hub namespace/repository')
+    string(name: 'IMAGE_DIGEST', defaultValue: '', description: 'Immutable sha256 digest')
+    string(name: 'GIT_COMMIT', defaultValue: '', description: 'Full Git commit SHA')
+    string(name: 'APP_VERSION', defaultValue: '', description: 'Full CI SemVer')
+    string(name: 'GITHUB_RUN_URL', defaultValue: '', description: 'GitHub Actions run URL')
+  }
+
+  stages {
+    stage('Validate request') {
+      steps {
+        sh 'scripts/jenkins/validate-deployment-input.sh'
+      }
+    }
+
+    stage('Deploy and verify staging') {
+      steps {
+        lock(resource: 'huff-staging') {
+          sh '''#!/usr/bin/env bash
+            set -euo pipefail
+            set +x
+
+            rm -f deployment.json
+            mkdir -p deployment-diagnostics/staging
+
+            . scripts/load-env-file.sh
+            load_env_file /etc/huff/.env.jenkins
+
+            ENV_FILE="${STAGING_ENV_FILE}" \
+            DIAGNOSTICS_DIR="${WORKSPACE}/deployment-diagnostics/staging" \
+              scripts/redeploy-huff-staging.sh \
+                --image-ref "${IMAGE_REPOSITORY}@${IMAGE_DIGEST}" \
+                --app-version "${APP_VERSION}" \
+                --git-commit "${GIT_COMMIT}"
+
+            curl --fail --silent --show-error --max-time 20 \
+              "${STAGING_URL%/}/q/health/ready" \
+              > deployment-diagnostics/staging/public-health-response.json
+            curl --fail --silent --show-error --max-time 20 \
+              "${STAGING_URL%/}/" >/dev/null
+
+            staged_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            jq -n \
+              --arg imageRepository "${IMAGE_REPOSITORY}" \
+              --arg imageDigest "${IMAGE_DIGEST}" \
+              --arg imageRef "${IMAGE_REPOSITORY}@${IMAGE_DIGEST}" \
+              --arg gitCommit "${GIT_COMMIT}" \
+              --arg appVersion "${APP_VERSION}" \
+              --arg githubRunUrl "${GITHUB_RUN_URL}" \
+              --arg stagedAt "${staged_at}" \
+              '{
+                schemaVersion: 1,
+                environment: "staging",
+                imageRepository: $imageRepository,
+                imageDigest: $imageDigest,
+                imageRef: $imageRef,
+                gitCommit: $gitCommit,
+                appVersion: $appVersion,
+                githubRunUrl: $githubRunUrl,
+                stagedAt: $stagedAt
+              }' > deployment.json
+
+            scripts/jenkins/validate-deployment-record.sh deployment.json staging
+          '''
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts(
+        artifacts: 'deployment-diagnostics/staging/**',
+        allowEmptyArchive: true
+      )
+    }
+    success {
+      archiveArtifacts(
+        artifacts: 'deployment.json',
+        fingerprint: true
+      )
+    }
+  }
+}

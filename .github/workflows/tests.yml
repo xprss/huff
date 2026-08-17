@@ -1,0 +1,81 @@
+name: Tests
+
+on:
+  workflow_call:
+    outputs:
+      base-version:
+        description: Validated base SemVer from VERSION
+        value: ${{ jobs.semver.outputs.base-version }}
+
+permissions:
+  contents: read
+
+jobs:
+  semver:
+    name: Validate SemVer
+    runs-on: ubuntu-latest
+    outputs:
+      base-version: ${{ steps.version.outputs.base-version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Test version rules
+        run: |
+          scripts/test-version.sh
+          scripts/jenkins/test-production-policy.sh
+
+      - name: Export base version
+        id: version
+        shell: bash
+        run: |
+          base_version="$(scripts/version.sh read)"
+          echo "base-version=${base_version}" >> "${GITHUB_OUTPUT}"
+
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Java 17
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+
+      - name: Run Maven tests
+        working-directory: backend
+        run: mvn --batch-mode --no-transfer-progress test
+
+  frontend:
+    name: Frontend build
+    needs: semver
+    runs-on: ubuntu-latest
+    env:
+      VITE_APP_VERSION: ${{ needs.semver.outputs.base-version }}+gha.1.0000000
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build with the CI version
+        working-directory: frontend
+        run: npm run build
+
+      - name: Verify built version
+        working-directory: frontend
+        run: npm run verify:version -- "${VITE_APP_VERSION}"

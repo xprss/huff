@@ -1,0 +1,150 @@
+pipeline {
+  agent any
+
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    timestamps()
+    timeout(time: 1, unit: 'HOURS')
+  }
+
+  parameters {
+    choice(name: 'TARGET_ENVIRONMENT', choices: ['staging', 'production'], description: 'Application environment to restart')
+    text(name: 'RESTART_REASON', defaultValue: '', description: 'Required for production')
+    string(name: 'CONFIRMATION_TEXT', defaultValue: '', description: 'For production type RESTART-PRODUCTION')
+  }
+
+  stages {
+    stage('Validate request') {
+      steps {
+        script {
+          if (params.TARGET_ENVIRONMENT == 'production') {
+            if (!params.RESTART_REASON?.trim()) {
+              error('RESTART_REASON is required for production')
+            }
+            if (params.CONFIRMATION_TEXT != 'RESTART-PRODUCTION') {
+              error('CONFIRMATION_TEXT must be RESTART-PRODUCTION')
+            }
+          }
+
+          def userCauses = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')
+          env.REQUESTED_BY = userCauses ? userCauses[0].userId : 'unknown'
+        }
+      }
+    }
+
+    stage('Confirm production restart') {
+      when {
+        expression { params.TARGET_ENVIRONMENT == 'production' }
+      }
+      steps {
+        script {
+          def approvers = sh(
+            script: '''#!/usr/bin/env bash
+              set +x
+              . scripts/load-env-file.sh
+              load_env_file /etc/huff/.env.jenkins
+              printf '%s' "${JENKINS_PRODUCTION_APPROVERS:-huff-admin}"
+            ''',
+            returnStdout: true
+          ).trim()
+          def approval = input(
+            message: 'Restart the production application container?',
+            ok: 'Restart production',
+            submitter: approvers,
+            submitterParameter: 'APPROVER'
+          )
+          env.RESTART_APPROVER = approval instanceof Map ? approval.APPROVER : approval.toString()
+        }
+      }
+    }
+
+    stage('Restart application container') {
+      steps {
+        script {
+          lock(resource: "huff-${params.TARGET_ENVIRONMENT}") {
+            sh '''#!/usr/bin/env bash
+              set -euo pipefail
+              set +x
+
+              . scripts/load-env-file.sh
+              load_env_file /etc/huff/.env.jenkins
+
+              case "${TARGET_ENVIRONMENT}" in
+                staging)
+                  container_name=huff-hexaquot-staging
+                  host_port=8084
+                  public_url="${STAGING_URL}"
+                  ;;
+                production)
+                  container_name=huff-hexaquot
+                  host_port=8083
+                  public_url="${PRODUCTION_URL}"
+                  ;;
+                *)
+                  echo "Invalid target environment" >&2
+                  exit 2
+                  ;;
+              esac
+
+              mkdir -p restart-diagnostics
+              docker inspect "${container_name}" >/dev/null
+              docker restart "${container_name}" >/dev/null
+
+              for attempt in $(seq 1 60); do
+                if curl --fail --silent --show-error --max-time 5 \
+                  "http://127.0.0.1:${host_port}/q/health/ready" \
+                  > restart-diagnostics/health-response.json 2> restart-diagnostics/health-curl.log; then
+                  break
+                fi
+                if [[ "${attempt}" -eq 60 ]]; then
+                  echo "Application did not become ready after restart" >&2
+                  exit 1
+                fi
+                sleep 2
+              done
+
+              curl --fail --silent --show-error --max-time 20 \
+                "${public_url%/}/q/health/ready" \
+                > restart-diagnostics/public-health-response.json
+              curl --fail --silent --show-error --max-time 20 \
+                "${public_url%/}/" >/dev/null
+
+              docker inspect --format \
+                '{"name":{{json .Name}},"image":{{json .Config.Image}},"state":{{json .State}}}' \
+                "${container_name}" > restart-diagnostics/inspect.json
+              docker logs --tail 500 "${container_name}" \
+                > restart-diagnostics/container.log 2>&1
+
+              jq -n \
+                --arg environment "${TARGET_ENVIRONMENT}" \
+                --arg container "${container_name}" \
+                --arg requestedBy "${REQUESTED_BY}" \
+                --arg approver "${RESTART_APPROVER:-not-required}" \
+                --arg reason "${RESTART_REASON:-}" \
+                --arg restartedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --arg result SUCCESS \
+                '{
+                  environment: $environment,
+                  container: $container,
+                  requestedBy: $requestedBy,
+                  approver: $approver,
+                  reason: $reason,
+                  restartedAt: $restartedAt,
+                  result: $result
+                }' > restart.json
+            '''
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      archiveArtifacts(
+        artifacts: 'restart.json,restart-diagnostics/**',
+        allowEmptyArchive: true
+      )
+    }
+  }
+}
