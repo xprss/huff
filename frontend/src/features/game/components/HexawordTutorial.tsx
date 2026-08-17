@@ -5,8 +5,10 @@ export function HexawordTutorial({ onClose }: { onClose: () => void }) {
   return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="modal word-tutorial" role="dialog" aria-modal="true" aria-labelledby="word-tutorial-title" onMouseDown={(event) => event.stopPropagation()}>
-        <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
-        <h2 id="word-tutorial-title">Come si gioca a Hexaword</h2>
+        <header className="modal-head">
+          <h2 id="word-tutorial-title">Come si gioca a Hexaword</h2>
+          <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
+        </header>
         <p>Trova la parola italiana di sei lettere in sei tentativi. Ogni parola inserita deve essere valida.</p>
         <div className="word-tutorial-examples" aria-label="Esempi di indizi">
           <div><span className="correct">A</span><p><strong>Verde</strong>: la lettera è nella posizione giusta.</p></div>

@@ -1,7 +1,6 @@
 package dev.huff.hexaquot.game;
 
 import dev.huff.hexaquot.auth.AppUser;
-import dev.huff.hexaquot.game.HexahackDtos.OverrideRequest;
 import dev.huff.hexaquot.game.HexahackDtos.ProbeRequest;
 import dev.huff.hexaquot.game.HexahackDtos.ProbeType;
 import dev.huff.hexaquot.game.HexahackDtos.Rank;
@@ -28,7 +27,7 @@ class HexahackDailyGameServiceTest {
     @Inject DailyGameService clock;
 
     @Test @TestTransaction
-    void actionsAreIdempotentPersistAcrossReadsAndOverrideCapsTheRank() {
+    void actionsAreIdempotentAndPersistAcrossReads() {
         AppUser user = user();
         assertNull(service.today(user).game());
 
@@ -46,28 +45,20 @@ class HexahackDailyGameServiceTest {
         assertEquals(1, wrongReplay.game().wrongSubmissions());
         assertNull(wrongReplay.game().solution());
 
-        OverrideRequest override = new OverrideRequest("same-override", 1);
-        service.override(user, override);
-        var overrideReplay = service.override(user, override);
-        assertEquals(true, overrideReplay.replayed());
-        assertEquals(7, overrideReplay.game().totalCost());
-        assertEquals(1, overrideReplay.game().overrideCount());
-
         String solution = provider.solutionFor(clock.todayDate());
         var completed = service.submit(user, new SubmissionRequest("win", solution));
         assertEquals(Status.COMPLETED, completed.game().status());
-        assertEquals(Rank.TRACED, completed.game().rank());
+        assertEquals(Rank.SHADOW, completed.game().rank());
         assertEquals(solution, completed.game().solution());
-        assertEquals(81, completed.game().finalStealth());
-        assertEquals(4, service.today(user).game().log().size());
+        assertEquals(93, completed.game().finalStealth());
+        assertEquals(3, service.today(user).game().log().size());
         assertEquals(1, HexahackGameEntity.count("userId", user.id()));
         var stats = service.stats(user);
         assertEquals(1, stats.completedAccesses());
-        assertEquals(81.0, stats.averageStealth());
-        assertEquals(81, stats.bestStealth());
-        assertEquals(1, stats.rankDistribution().get(Rank.TRACED));
+        assertEquals(93.0, stats.averageStealth());
+        assertEquals(93, stats.bestStealth());
+        assertEquals(1, stats.rankDistribution().get(Rank.SHADOW));
         assertEquals(1, stats.currentStreak());
-        assertEquals(0, stats.noOverrideStreak());
         assertEquals(30, stats.last30Nodes().size());
     }
 
@@ -76,12 +67,11 @@ class HexahackDailyGameServiceTest {
         assertEquals(100, HexahackDailyGameService.stealth(0, 0));
         assertEquals(70, HexahackDailyGameService.stealth(15, 0));
         assertEquals(-5, HexahackDailyGameService.stealth(40, 5));
-        assertEquals(Rank.GHOST, HexahackDailyGameService.rank(70, 0, 0));
-        assertEquals(Rank.SHADOW, HexahackDailyGameService.rank(69, 0, 0));
-        assertEquals(Rank.SHADOW, HexahackDailyGameService.rank(55, 1, 0));
-        assertEquals(Rank.BREACH, HexahackDailyGameService.rank(35, 2, 0));
-        assertEquals(Rank.TRACED, HexahackDailyGameService.rank(34, 0, 0));
-        assertEquals(Rank.TRACED, HexahackDailyGameService.rank(100, 0, 1));
+        assertEquals(Rank.GHOST, HexahackDailyGameService.rank(70, 0));
+        assertEquals(Rank.SHADOW, HexahackDailyGameService.rank(69, 0));
+        assertEquals(Rank.SHADOW, HexahackDailyGameService.rank(55, 1));
+        assertEquals(Rank.BREACH, HexahackDailyGameService.rank(35, 2));
+        assertEquals(Rank.TRACED, HexahackDailyGameService.rank(34, 0));
     }
 
     @Test @TestTransaction

@@ -23,7 +23,6 @@ public class HexahackGameEntity extends PanacheEntityBase {
     @Column(name = "event_log_json", nullable = false, columnDefinition = "TEXT") public String eventLogJson;
     @Column(name = "total_cost", nullable = false) public int totalCost;
     @Column(name = "wrong_submissions", nullable = false) public int wrongSubmissions;
-    @Column(name = "override_count", nullable = false) public int overrideCount;
     @Enumerated(EnumType.STRING) @Column(name = "status", nullable = false, length = 20) public Status status;
     @Column(name = "stealth") public Integer stealth;
     @Enumerated(EnumType.STRING) @Column(name = "rank", length = 20) public Rank rank;
@@ -41,7 +40,6 @@ public class HexahackGameEntity extends PanacheEntityBase {
         entity.eventLogJson = record.eventLogJson();
         entity.totalCost = record.totalCost();
         entity.wrongSubmissions = record.wrongSubmissions();
-        entity.overrideCount = record.overrideCount();
         entity.status = record.status();
         entity.stealth = record.stealth();
         entity.rank = record.rank();
@@ -53,6 +51,6 @@ public class HexahackGameEntity extends PanacheEntityBase {
 
     public HexahackGameRecord toRecord() {
         return new HexahackGameRecord(id, userId, puzzleDate, rulesVersion, solution, eventLogJson, totalCost,
-            wrongSubmissions, overrideCount, status, stealth, rank, createdAt, updatedAt, completedAt);
+            wrongSubmissions, status, stealth, rank, createdAt, updatedAt, completedAt);
     }
 }

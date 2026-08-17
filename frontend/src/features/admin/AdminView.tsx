@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronLeft, ChevronRight, Eye, EyeOff, Search, Save, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api";
@@ -238,8 +239,9 @@ export function AdminView({
         </>
       )}
 
-      {selectedUserId ? (
-        <div className="modal-backdrop" role="presentation" onMouseDown={closeModal}>
+      {selectedUserId
+        ? createPortal(
+          <div className="modal-backdrop" role="presentation" onMouseDown={closeModal}>
           <section
             className="modal admin-modal"
             role="dialog"
@@ -377,8 +379,10 @@ export function AdminView({
               </div>
             )}
           </section>
-        </div>
-      ) : null}
+          </div>,
+          document.body
+        )
+        : null}
     </section>
   );
 }
@@ -569,12 +573,12 @@ function HexahackHistory({ games }: { games: readonly AdminHexahackGameDto[] }) 
       {games.map((game) => (
         <article className="admin-game-row" key={game.id}>
           <header><strong>{game.puzzleDate}</strong><span>{game.status}</span><span>{game.rank ?? "—"}</span></header>
-          <p>Soluzione: {game.solution} · Costo: {game.totalCost} · Errori: {game.wrongSubmissions} · Override: {game.overrideCount}</p>
+          <p>Soluzione: {game.solution} · Costo: {game.totalCost} · Errori: {game.wrongSubmissions}</p>
           <div className="admin-guesses">
             {game.log.map((entry) => (
               <div className="admin-guess" key={`${game.id}-${entry.sequence}`}>
                 <span>#{entry.sequence} {entry.kind}</span>
-                <span>{entry.probe?.summary ?? entry.submission?.code ?? (entry.override ? `P${entry.override.position}=${entry.override.digit}` : "")}</span>
+                <span>{entry.probe?.summary ?? entry.submission?.code ?? ""}</span>
               </div>
             ))}
           </div>

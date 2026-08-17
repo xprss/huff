@@ -17,8 +17,7 @@ import java.security.MessageDigest;
 @ApplicationScoped
 public class HexahackDailyGameProvider {
     public static final int CODE_LENGTH = 6;
-    public static final int RULES_VERSION = 1;
-    public static final int OVERRIDE_COST = 6;
+    public static final int RULES_VERSION = 2;
 
     @ConfigProperty(name = "app.hexahack.seed", defaultValue = "${app.word.seed}:hexahack")
     String seed;

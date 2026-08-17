@@ -1,9 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { Activity, ChevronRight, CircleHelp, Eye, Radio, Share2, ShieldCheck, X } from "lucide-react";
+import { Activity, ChevronRight, CircleHelp, Radio, Share2, ShieldCheck, X } from "lucide-react";
 import type {
   HexahackGameDto,
-  HexahackOverrideActionDto,
   HexahackProbeActionDto,
   HexahackProbeRequestDto,
   HexahackProbeType,
@@ -35,7 +34,6 @@ export function HexahackView({
   busy,
   onProbe,
   onSubmit,
-  onOverride,
   onError,
   onComplete
 }: {
@@ -44,7 +42,6 @@ export function HexahackView({
   busy: boolean;
   onProbe: (probe: HexahackProbeRequestDto) => Promise<HexahackProbeActionDto>;
   onSubmit: (request: { requestId: string; code: string }) => Promise<HexahackSubmissionActionDto>;
-  onOverride: (request: { requestId: string; position: number }) => Promise<HexahackOverrideActionDto>;
   onError: (message: string) => void;
   onComplete: (game: HexahackGameDto) => void;
 }) {
@@ -57,7 +54,6 @@ export function HexahackView({
   const [threshold, setThreshold] = React.useState(5);
   const [tutorialOpen, setTutorialOpen] = React.useState(() => localStorage.getItem(TUTORIAL_STORAGE_KEY) !== "done");
   const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
-  const knownDigits = knownDigitsFrom(game);
   const currentStealth = game?.currentStealth ?? 100;
   const projectedRank = game?.projectedRank ?? "GHOST";
 
@@ -94,13 +90,12 @@ export function HexahackView({
   }
 
   async function submitCode() {
-    const code = digits.map((digit, index) => knownDigits[index] || digit);
-    if (code.some((digit) => !digit)) {
+    if (digits.some((digit) => !digit)) {
       onError("Inserisci tutte e sei le cifre del codice.");
       return;
     }
     try {
-      const result = await onSubmit({ requestId: requestId(), code: code.join("") });
+      const result = await onSubmit({ requestId: requestId(), code: digits.join("") });
       if (!result.result.granted) {
         setDigits(emptyCode());
         inputRefs.current[0]?.focus();
@@ -109,14 +104,6 @@ export function HexahackView({
       }
     } catch (error) {
       onError(message(error, "Codice non valido."));
-    }
-  }
-
-  async function reveal(positionToReveal: number) {
-    try {
-      await onOverride({ requestId: requestId(), position: positionToReveal });
-    } catch (error) {
-      onError(message(error, "Override non disponibile."));
     }
   }
 
@@ -155,20 +142,19 @@ export function HexahackView({
 
       <div className="hack-code" role="group" aria-label="Codice di sei cifre">
         {digits.map((digit, index) => (
-          <label className={`hack-code-cell ${knownDigits[index] ? "known" : ""}`} key={index}>
+          <label className="hack-code-cell" key={index}>
             <span>{index + 1}</span>
             <input
               ref={(element) => { inputRefs.current[index] = element; }}
-              value={knownDigits[index] || digit}
+              value={digit}
               onChange={(event) => setDigit(index, event.target.value)}
               onKeyDown={(event) => handleCodeKey(event, index)}
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={1}
-              disabled={completed || busy || Boolean(knownDigits[index])}
-              aria-label={`Cifra ${index + 1}${knownDigits[index] ? ", rivelata" : ""}`}
+              disabled={completed || busy}
+              aria-label={`Cifra ${index + 1}`}
             />
-            {!completed ? <button type="button" disabled={busy || Boolean(knownDigits[index])} onClick={() => void reveal(index + 1)} aria-label={`Override cifra ${index + 1}, costo 6`}><Eye size={13} /> +6</button> : null}
           </label>
         ))}
       </div>
@@ -210,7 +196,7 @@ export function HexahackView({
         </div>
       )}
 
-      {!completed ? <button className="hack-inject" type="button" disabled={busy || digits.some((digit, index) => !digit && !knownDigits[index])} onClick={() => void submitCode()}>
+      {!completed ? <button className="hack-inject" type="button" disabled={busy || digits.some((digit) => !digit)} onClick={() => void submitCode()}>
         <ShieldCheck size={19} /> INJECT CODE
       </button> : null}
 
@@ -230,7 +216,6 @@ function LogLine({ entry }: { entry: NonNullable<HexahackGameDto["log"]>[number]
   if (entry.submission) line = entry.submission.granted
     ? "INJECT CODE · ACCESS GRANTED"
     : `INJECT CODE · ${entry.submission.correctPositions}/6 posizioni corrette`;
-  if (entry.override) line = `OVERRIDE · posizione ${entry.override.position} = ${entry.override.digit}`;
   return <p><span>{String(entry.sequence).padStart(3, "0")}</span>{line}</p>;
 }
 
@@ -262,7 +247,6 @@ function MasteryStats({ stats }: { stats: HexahackStatsDto }) {
       <div><strong>{stats.averageStealth}</strong><span>Media</span></div>
       <div><strong>{stats.bestStealth}</strong><span>Migliore</span></div>
       <div><strong>{stats.currentStreak}</strong><span>Serie</span></div>
-      <div><strong>{stats.noOverrideStreak}</strong><span>No Override</span></div>
     </div>
     <div className="hack-ranks" aria-label="Distribuzione ranghi">
       {(Object.keys(RANK_LABELS) as HexahackRank[]).map((rank) => <span key={rank}>{RANK_LABELS[rank]} <strong>{stats.rankDistribution[rank] ?? 0}</strong></span>)}
@@ -281,27 +265,21 @@ function Tutorial({ onClose }: { onClose: () => void }) {
     ["BIT SCAN · costo 1", "BIT SCAN rivela soltanto la parità della cifra scelta: pari o dispari. È utile per dimezzare le possibilità quando non ti serve un valore esatto."],
     ["LINK TRACE · costo 1", "Confronta due posizioni diverse: scopri se la prima cifra è minore, uguale o maggiore della seconda. Combina questi rapporti con PING e BIT SCAN."],
     ["CHECKSUM · costo 2", "Somma due posizioni diverse. Per esempio, se 1 + 2 = 5 e PING conferma che la posizione 1 è 2, allora la posizione 2 è 3."],
-    ["OVERRIDE · costo 6", "L'icona con l'occhio rivela una cifra senza ambiguità. È una rete di sicurezza, ma qualsiasi Override assegna il rango TRACED alla partita."],
     ["INJECT CODE", "Inserisci le sei cifre quando hai una soluzione. Un tentativo errato indica quante posizioni sono esatte, ma costa 5 Stealth; ogni punto costo delle sonde ne sottrae 2. Meno costo ed errori significano un rango migliore."]
   ] as const;
   const trainingCode = step >= 4 ? ["2", "3", "?", "?", "?", "?"] : step >= 1 ? ["2", "?", "?", "?", "?", "?"] : ["?", "?", "?", "?", "?", "?"];
   return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
     <section className="modal hack-tutorial" role="dialog" aria-modal="true" aria-labelledby="hack-tutorial-title" onMouseDown={(event) => event.stopPropagation()}>
-      <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
-      <span className="hack-kicker">TRAINING NODE · {step + 1}/{steps.length}</span><h2 id="hack-tutorial-title">Come si gioca a Hexahack</h2>
+      <header className="modal-head">
+        <h2 id="hack-tutorial-title">Come si gioca a Hexahack</h2>
+        <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
+      </header>
+      <span className="hack-kicker">TRAINING NODE · {step + 1}/{steps.length}</span>
       <div className="hack-tutorial-code" aria-hidden="true">{trainingCode.map((digit, index) => <i key={index}>{digit}</i>)}</div>
       <strong>{steps[step][0]}</strong><p>{steps[step][1]}</p>
       <button className="hack-execute" type="button" onClick={() => step === steps.length - 1 ? onClose() : setStep(step + 1)}>{step === steps.length - 1 ? "Entra nel nodo" : "Continua"} <ChevronRight size={16} /></button>
     </section>
   </div>, document.body);
-}
-
-function knownDigitsFrom(game: HexahackGameDto | null) {
-  const known = emptyCode();
-  game?.log.forEach((entry) => {
-    if (entry.override) known[entry.override.position - 1] = entry.override.digit;
-  });
-  return known;
 }
 
 function emptyCode() { return Array.from({ length: 6 }, () => ""); }

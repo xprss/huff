@@ -5,7 +5,6 @@ import type {
   GameMode,
   AdminPlayerSortDto,
   AdminPlayerUpdateDto,
-  HexahackOverrideRequestDto,
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
@@ -82,7 +81,6 @@ export type ApiClient = {
   readonly hexahackToday: EndpointHandler<"/api/hexahack/today", "GET">;
   readonly hexahackProbe: EndpointHandler<"/api/hexahack/today/probes", "POST", [probe: HexahackProbeRequestDto]>;
   readonly hexahackSubmit: EndpointHandler<"/api/hexahack/today/submissions", "POST", [submission: HexahackSubmissionRequestDto]>;
-  readonly hexahackOverride: EndpointHandler<"/api/hexahack/today/overrides", "POST", [request: HexahackOverrideRequestDto]>;
   readonly hexahackStats: EndpointHandler<"/api/hexahack/stats", "GET">;
   readonly hexaskyToday: EndpointHandler<"/api/hexasky/today", "GET">;
   readonly hexaskyCheck: EndpointHandler<"/api/hexasky/today/checks", "POST", [request: HexaskyCheckRequestDto]>;
@@ -177,7 +175,6 @@ export const api = {
   hexahackToday: () => request("/api/hexahack/today", { method: "GET" }),
   hexahackProbe: (probe: HexahackProbeRequestDto) => request("/api/hexahack/today/probes", { method: "POST", body: probe }),
   hexahackSubmit: (submission: HexahackSubmissionRequestDto) => request("/api/hexahack/today/submissions", { method: "POST", body: submission }),
-  hexahackOverride: (overrideRequest: HexahackOverrideRequestDto) => request("/api/hexahack/today/overrides", { method: "POST", body: overrideRequest }),
   hexahackStats: () => request("/api/hexahack/stats", { method: "GET" }),
   hexaskyToday: () => request("/api/hexasky/today", { method: "GET" }),
   hexaskyCheck: (checkRequest: HexaskyCheckRequestDto) => request("/api/hexasky/today/checks", { method: "POST", body: checkRequest }),

@@ -233,8 +233,8 @@ class AdminResourceTest {
                 .createNativeQuery(
                     "INSERT INTO hexahack_games "
                         + "(id, user_id, puzzle_date, rules_version, solution, event_log_json, total_cost, "
-                        + "wrong_submissions, override_count, status, stealth, rank, created_at, updated_at, completed_at) "
-                        + "VALUES (?1, ?2, '2099-01-02', 1, '012345', '[]', 0, 0, 0, 'COMPLETED', 100, "
+                        + "wrong_submissions, status, stealth, rank, created_at, updated_at, completed_at) "
+                        + "VALUES (?1, ?2, '2099-01-02', 1, '012345', '[]', 0, 0, 'COMPLETED', 100, "
                         + "'GHOST', ?3, ?3, ?3)"
                 )
                 .setParameter(1, UUID.randomUUID().toString())

@@ -12,7 +12,6 @@ public record HexahackGameRecord(
     String eventLogJson,
     int totalCost,
     int wrongSubmissions,
-    int overrideCount,
     Status status,
     Integer stealth,
     Rank rank,

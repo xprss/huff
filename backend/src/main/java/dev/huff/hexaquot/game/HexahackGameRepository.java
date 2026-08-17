@@ -39,7 +39,7 @@ public class HexahackGameRepository {
         String now = Instant.now().toString();
         HexahackGameRecord record = new HexahackGameRecord(
             UUID.randomUUID().toString(), userId, date, HexahackDailyGameProvider.RULES_VERSION, solution, "[]",
-            0, 0, 0, Status.IN_PROGRESS, null, null, now, now, null
+            0, 0, Status.IN_PROGRESS, null, null, now, now, null
         );
         HexahackGameEntity.fromRecord(record).persist();
         return record;
@@ -52,7 +52,6 @@ public class HexahackGameRepository {
         entity.eventLogJson = record.eventLogJson();
         entity.totalCost = record.totalCost();
         entity.wrongSubmissions = record.wrongSubmissions();
-        entity.overrideCount = record.overrideCount();
         entity.status = record.status();
         entity.stealth = record.stealth();
         entity.rank = record.rank();

@@ -214,7 +214,6 @@ export function App() {
 
   const hexahackProbeMutation = useMutation({ mutationFn: api.hexahackProbe, onSuccess: (action) => setHexahackGame(action.game) });
   const hexahackSubmitMutation = useMutation({ mutationFn: api.hexahackSubmit, onSuccess: (action) => setHexahackGame(action.game) });
-  const hexahackOverrideMutation = useMutation({ mutationFn: api.hexahackOverride, onSuccess: (action) => setHexahackGame(action.game) });
   function setHexaskyGame(updated: HexaskyGameDto) {
     queryClient.setQueryData<HexaskyTodayDto | undefined>(queryKeys.hexaskyToday, (current) => current ? { ...current, game: updated } : current);
   }
@@ -846,10 +845,9 @@ export function App() {
             <HexahackView
               today={hexahackToday}
               stats={hexahackStatsQuery.data}
-              busy={hexahackProbeMutation.isPending || hexahackSubmitMutation.isPending || hexahackOverrideMutation.isPending}
+              busy={hexahackProbeMutation.isPending || hexahackSubmitMutation.isPending}
               onProbe={(probe) => hexahackProbeMutation.mutateAsync(probe)}
               onSubmit={(submission) => hexahackSubmitMutation.mutateAsync(submission)}
-              onOverride={(overrideRequest) => hexahackOverrideMutation.mutateAsync(overrideRequest)}
               onError={(message) => showToast(message, "warning")}
               onComplete={(updated) => {
                 void refreshStats();
@@ -1011,8 +1009,6 @@ const emptyHexahackStats = {
   rankDistribution: { GHOST: 0, SHADOW: 0, BREACH: 0, TRACED: 0 },
   currentStreak: 0,
   maxStreak: 0,
-  noOverrideStreak: 0,
-  maxNoOverrideStreak: 0,
   last30Nodes: []
 } as const;
 

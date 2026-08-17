@@ -93,7 +93,7 @@ export type AnnouncementCampaign = "HEXAHACK_LAUNCH";
 export type HexahackStatus = "IN_PROGRESS" | "COMPLETED";
 export type HexahackRank = "GHOST" | "SHADOW" | "BREACH" | "TRACED";
 export type HexahackProbeType = "PING" | "BIT_SCAN" | "LINK_TRACE" | "CHECKSUM";
-export type HexahackEventKind = "PROBE" | "SUBMISSION" | "OVERRIDE";
+export type HexahackEventKind = "PROBE" | "SUBMISSION";
 export type HexahackProbeComparison = "BELOW" | "EQUAL" | "ABOVE";
 export type HexahackParity = "EVEN" | "ODD";
 
@@ -108,11 +108,6 @@ export interface HexahackProbeRequestDto {
 export interface HexahackSubmissionRequestDto {
   readonly requestId: string;
   readonly code: string;
-}
-
-export interface HexahackOverrideRequestDto {
-  readonly requestId: string;
-  readonly position: number;
 }
 
 export interface HexahackProbeResultDto {
@@ -135,20 +130,12 @@ export interface HexahackSubmissionResultDto {
   readonly granted: boolean;
 }
 
-export interface HexahackOverrideResultDto {
-  readonly requestId: string;
-  readonly position: number;
-  readonly digit: string;
-  readonly cost: number;
-}
-
 export interface HexahackEventDto {
   readonly sequence: number;
   readonly kind: HexahackEventKind;
   readonly occurredAt: string;
   readonly probe: HexahackProbeResultDto | null;
   readonly submission: HexahackSubmissionResultDto | null;
-  readonly override: HexahackOverrideResultDto | null;
 }
 
 export interface HexahackGameDto {
@@ -159,7 +146,6 @@ export interface HexahackGameDto {
   readonly log: readonly HexahackEventDto[];
   readonly totalCost: number;
   readonly wrongSubmissions: number;
-  readonly overrideCount: number;
   readonly currentStealth: number;
   readonly projectedRank: HexahackRank;
   readonly finalStealth: number | null;
@@ -188,12 +174,6 @@ export interface HexahackSubmissionActionDto {
   readonly replayed: boolean;
 }
 
-export interface HexahackOverrideActionDto {
-  readonly game: HexahackGameDto;
-  readonly result: HexahackOverrideResultDto;
-  readonly replayed: boolean;
-}
-
 export interface HexahackCalendarNodeDto {
   readonly puzzleDate: IsoDateString;
   readonly completed: boolean;
@@ -201,7 +181,6 @@ export interface HexahackCalendarNodeDto {
   readonly rank: HexahackRank | null;
   readonly totalCost: number | null;
   readonly wrongSubmissions: number | null;
-  readonly overrideUsed: boolean | null;
 }
 
 export interface HexahackStatsDto {
@@ -211,8 +190,6 @@ export interface HexahackStatsDto {
   readonly rankDistribution: Readonly<Record<HexahackRank, number>>;
   readonly currentStreak: number;
   readonly maxStreak: number;
-  readonly noOverrideStreak: number;
-  readonly maxNoOverrideStreak: number;
   readonly last30Nodes: readonly HexahackCalendarNodeDto[];
 }
 
@@ -391,7 +368,6 @@ export interface AdminHexahackGameDto {
   readonly log: readonly HexahackEventDto[];
   readonly totalCost: number;
   readonly wrongSubmissions: number;
-  readonly overrideCount: number;
   readonly status: HexahackStatus;
   readonly stealth: number | null;
   readonly rank: HexahackRank | null;
@@ -442,7 +418,6 @@ export type ApiEndpointMap = {
   "/api/hexahack/today": { GET: { response: HexahackTodayDto } };
   "/api/hexahack/today/probes": { POST: { body: HexahackProbeRequestDto; response: HexahackProbeActionDto } };
   "/api/hexahack/today/submissions": { POST: { body: HexahackSubmissionRequestDto; response: HexahackSubmissionActionDto } };
-  "/api/hexahack/today/overrides": { POST: { body: HexahackOverrideRequestDto; response: HexahackOverrideActionDto } };
   "/api/hexahack/stats": { GET: { response: HexahackStatsDto } };
   "/api/hexasky/today": { GET: { response: HexaskyTodayDto } };
   "/api/hexasky/today/checks": { POST: { body: HexaskyCheckRequestDto; response: HexaskyCheckActionDto } };

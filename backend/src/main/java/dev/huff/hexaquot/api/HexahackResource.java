@@ -3,7 +3,6 @@ package dev.huff.hexaquot.api;
 import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.game.HexahackDailyGameService;
-import dev.huff.hexaquot.game.HexahackDtos.OverrideRequest;
 import dev.huff.hexaquot.game.HexahackDtos.ProbeRequest;
 import dev.huff.hexaquot.game.HexahackDtos.SubmissionRequest;
 import jakarta.inject.Inject;
@@ -37,13 +36,6 @@ public class HexahackResource {
         ResolvedUser user = userService.resolve(sessionId);
         if (user.user() == null) return unauthorized();
         return withCookie(Response.ok(service.submit(user.user(), request)), user).build();
-    }
-
-    @POST @Path("/today/overrides")
-    public Response override(@CookieParam("huff_session") String sessionId, OverrideRequest request) {
-        ResolvedUser user = userService.resolve(sessionId);
-        if (user.user() == null) return unauthorized();
-        return withCookie(Response.ok(service.override(user.user(), request)), user).build();
     }
 
     @GET @Path("/stats")

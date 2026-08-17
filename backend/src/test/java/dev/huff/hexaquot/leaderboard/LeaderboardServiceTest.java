@@ -2,7 +2,9 @@ package dev.huff.hexaquot.leaderboard;
 
 import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
+import dev.huff.hexaquot.game.HexahackDtos;
 import dev.huff.hexaquot.persistence.GameEntity;
+import dev.huff.hexaquot.persistence.HexahackGameEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import dev.huff.hexaquot.persistence.WeeklyMedalEntity;
 import io.quarkus.test.TestTransaction;
@@ -34,11 +36,17 @@ class LeaderboardServiceTest {
             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         createWonGame(first, weekStart, "2026-08-07T10:00:00Z");
         createWonGame(first, weekStart.plusDays(1), "2026-08-07T11:00:00Z");
+        createCompletedHexahackGame(first, weekStart.plusDays(2), "2026-08-07T12:00:00Z");
         createWonGame(second, weekStart, "2026-08-07T09:00:00Z");
 
         LeaderboardsDto leaderboards = leaderboardService.leaderboards();
         assertTrue(leaderboards.weekly().entries().stream().anyMatch(entry ->
             entry.nickname().equals(first.nickname) && entry.wins() == 2
+        ));
+
+        LeaderboardsDto overallLeaderboards = leaderboardService.leaderboards(LeaderboardRepository.Board.OVERALL);
+        assertTrue(overallLeaderboards.weekly().entries().stream().anyMatch(entry ->
+            entry.nickname().equals(first.nickname) && entry.wins() == 3
         ));
 
         PublicPlayerProfileDto profile = leaderboardService.publicProfile(first.nickname);
@@ -85,6 +93,25 @@ class LeaderboardServiceTest {
         game.status = GameStatus.WON;
         game.mouseRevealed = true;
         game.kittenUnlocked = false;
+        game.createdAt = completedAt;
+        game.updatedAt = completedAt;
+        game.completedAt = completedAt;
+        game.persist();
+    }
+
+    private void createCompletedHexahackGame(UserEntity user, LocalDate date, String completedAt) {
+        HexahackGameEntity game = new HexahackGameEntity();
+        game.id = UUID.randomUUID().toString();
+        game.userId = user.id;
+        game.puzzleDate = date.toString();
+        game.rulesVersion = 1;
+        game.solution = "123456";
+        game.eventLogJson = "[]";
+        game.totalCost = 0;
+        game.wrongSubmissions = 0;
+        game.status = HexahackDtos.Status.COMPLETED;
+        game.stealth = 100;
+        game.rank = HexahackDtos.Rank.GHOST;
         game.createdAt = completedAt;
         game.updatedAt = completedAt;
         game.completedAt = completedAt;

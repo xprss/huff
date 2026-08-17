@@ -68,8 +68,8 @@ class UserIdShaMigrationTest {
             .createNativeQuery(
                 "INSERT INTO hexahack_games "
                     + "(id, user_id, puzzle_date, rules_version, solution, event_log_json, total_cost, "
-                    + "wrong_submissions, override_count, status, created_at, updated_at) "
-                    + "VALUES (?1, ?2, '2099-01-02', 1, '001122', '[]', 0, 0, 0, 'IN_PROGRESS', ?3, ?3)"
+                    + "wrong_submissions, status, created_at, updated_at) "
+                    + "VALUES (?1, ?2, '2099-01-02', 1, '001122', '[]', 0, 0, 'IN_PROGRESS', ?3, ?3)"
             )
             .setParameter(1, hackGameId)
             .setParameter(2, oldUserId)

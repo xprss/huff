@@ -179,7 +179,6 @@ class ApiSecurityFilterTest {
             Arguments.of(Method.GET, "/api/hexahack/today"),
             Arguments.of(Method.POST, "/api/hexahack/today/probes"),
             Arguments.of(Method.POST, "/api/hexahack/today/submissions"),
-            Arguments.of(Method.POST, "/api/hexahack/today/overrides"),
             Arguments.of(Method.GET, "/api/hexahack/stats"),
             Arguments.of(Method.POST, "/api/me/announcements/HEXAHACK_LAUNCH/seen"),
             Arguments.of(Method.POST, "/api/push/subscriptions"),

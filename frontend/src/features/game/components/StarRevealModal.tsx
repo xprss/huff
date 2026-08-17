@@ -25,23 +25,25 @@ export function StarRevealModal({
         className="modal star-reveal-modal"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="star-reveal-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
         <header className="modal-head star-reveal-head">
-          <div
-            className="star-reveal-timer"
-            role="progressbar"
-            aria-label="Tempo rimanente"
-            aria-valuemin={0}
-            aria-valuemax={Math.round(durationMs / 1000)}
-            style={timerStyle}
-          >
-            <span />
-          </div>
+          <h2 id="star-reveal-title">Rivelazione stella</h2>
           <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi">
             <X size={19} />
           </button>
         </header>
+        <div
+          className="star-reveal-timer"
+          role="progressbar"
+          aria-label="Tempo rimanente"
+          aria-valuemin={0}
+          aria-valuemax={Math.round(durationMs / 1000)}
+          style={timerStyle}
+        >
+          <span />
+        </div>
 
         <div className="star-reveal-grid" aria-label="Lettere rivelate">
           {guesses.map((guess, guessIndex) => (

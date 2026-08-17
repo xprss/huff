@@ -9,7 +9,7 @@ public final class HexahackDtos {
     public enum Status { IN_PROGRESS, COMPLETED }
     public enum Rank { GHOST, SHADOW, BREACH, TRACED }
     public enum ProbeType { PING, BIT_SCAN, LINK_TRACE, CHECKSUM }
-    public enum EventKind { PROBE, SUBMISSION, OVERRIDE }
+    public enum EventKind { PROBE, SUBMISSION }
     public enum ProbeComparison { BELOW, EQUAL, ABOVE }
     public enum Parity { EVEN, ODD }
 
@@ -22,7 +22,6 @@ public final class HexahackDtos {
     ) {}
 
     public record SubmissionRequest(String requestId, String code) {}
-    public record OverrideRequest(String requestId, Integer position) {}
 
     public record ProbeResultDto(
         String requestId,
@@ -44,25 +43,16 @@ public final class HexahackDtos {
         boolean granted
     ) {}
 
-    public record OverrideResultDto(
-        String requestId,
-        int position,
-        String digit,
-        int cost
-    ) {}
-
     public record EventDto(
         int sequence,
         EventKind kind,
         String occurredAt,
         ProbeResultDto probe,
-        SubmissionResultDto submission,
-        OverrideResultDto override
+        SubmissionResultDto submission
     ) {
         public String requestId() {
             if (probe != null) return probe.requestId();
-            if (submission != null) return submission.requestId();
-            return override == null ? null : override.requestId();
+            return submission == null ? null : submission.requestId();
         }
     }
 
@@ -76,7 +66,6 @@ public final class HexahackDtos {
         List<EventDto> log,
         int totalCost,
         int wrongSubmissions,
-        int overrideCount,
         int currentStealth,
         Rank projectedRank,
         Integer finalStealth,
@@ -95,7 +84,6 @@ public final class HexahackDtos {
 
     public record ProbeActionDto(GameDto game, ProbeResultDto result, boolean replayed) {}
     public record SubmissionActionDto(GameDto game, SubmissionResultDto result, boolean replayed) {}
-    public record OverrideActionDto(GameDto game, OverrideResultDto result, boolean replayed) {}
 
     public record CalendarNodeDto(
         String puzzleDate,
@@ -103,8 +91,7 @@ public final class HexahackDtos {
         Integer stealth,
         Rank rank,
         Integer totalCost,
-        Integer wrongSubmissions,
-        Boolean overrideUsed
+        Integer wrongSubmissions
     ) {}
 
     public record StatsDto(
@@ -114,8 +101,6 @@ public final class HexahackDtos {
         Map<Rank, Integer> rankDistribution,
         int currentStreak,
         int maxStreak,
-        int noOverrideStreak,
-        int maxNoOverrideStreak,
         List<CalendarNodeDto> last30Nodes
     ) {}
 }

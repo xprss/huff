@@ -7,9 +7,6 @@ import dev.huff.hexaquot.game.HexahackDtos.CalendarNodeDto;
 import dev.huff.hexaquot.game.HexahackDtos.EventDto;
 import dev.huff.hexaquot.game.HexahackDtos.EventKind;
 import dev.huff.hexaquot.game.HexahackDtos.GameDto;
-import dev.huff.hexaquot.game.HexahackDtos.OverrideActionDto;
-import dev.huff.hexaquot.game.HexahackDtos.OverrideRequest;
-import dev.huff.hexaquot.game.HexahackDtos.OverrideResultDto;
 import dev.huff.hexaquot.game.HexahackDtos.ProbeActionDto;
 import dev.huff.hexaquot.game.HexahackDtos.ProbeRequest;
 import dev.huff.hexaquot.game.HexahackDtos.ProbeResultDto;
@@ -23,7 +20,6 @@ import dev.huff.hexaquot.game.HexahackDtos.TodayDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
@@ -65,9 +61,9 @@ public class HexahackDailyGameService {
         requireInProgress(record);
         ProbeResultDto result = provider.probe(request, record.solution());
         String now = Instant.now().toString();
-        events.add(new EventDto(events.size() + 1, EventKind.PROBE, now, result, null, null));
+        events.add(new EventDto(events.size() + 1, EventKind.PROBE, now, result, null));
         HexahackGameRecord updated = updateProgress(record, events, record.totalCost() + result.cost(),
-            record.wrongSubmissions(), record.overrideCount(), now);
+            record.wrongSubmissions(), now);
         return new ProbeActionDto(toDto(repository.update(updated)), result, false);
     }
 
@@ -87,41 +83,19 @@ public class HexahackDailyGameService {
         boolean granted = correct == HexahackDailyGameProvider.CODE_LENGTH;
         SubmissionResultDto result = new SubmissionResultDto(requestId, code, correct, granted);
         String now = Instant.now().toString();
-        events.add(new EventDto(events.size() + 1, EventKind.SUBMISSION, now, null, result, null));
+        events.add(new EventDto(events.size() + 1, EventKind.SUBMISSION, now, null, result));
         int errors = record.wrongSubmissions() + (granted ? 0 : 1);
         HexahackGameRecord updated;
         if (granted) {
             int stealth = stealth(record.totalCost(), errors);
-            Rank rank = rank(stealth, errors, record.overrideCount());
+            Rank rank = rank(stealth, errors);
             updated = new HexahackGameRecord(record.id(), record.userId(), record.puzzleDate(), record.rulesVersion(),
-                record.solution(), writeEvents(events), record.totalCost(), errors, record.overrideCount(),
+                record.solution(), writeEvents(events), record.totalCost(), errors,
                 Status.COMPLETED, stealth, rank, record.createdAt(), now, now);
         } else {
-            updated = updateProgress(record, events, record.totalCost(), errors, record.overrideCount(), now);
+            updated = updateProgress(record, events, record.totalCost(), errors, now);
         }
         return new SubmissionActionDto(toDto(repository.update(updated)), result, false);
-    }
-
-    @Transactional
-    public OverrideActionDto override(AppUser user, OverrideRequest request) {
-        String requestId = provider.validateRequestId(request == null ? null : request.requestId());
-        int position = validateOverridePosition(request == null ? null : request.position());
-        HexahackGameRecord record = currentForUpdate(user);
-        List<EventDto> events = readEvents(record);
-        EventDto replay = findRequest(events, requestId);
-        if (replay != null) {
-            if (replay.kind() != EventKind.OVERRIDE) throw reusedRequestId();
-            return new OverrideActionDto(toDto(record), replay.override(), true);
-        }
-        requireInProgress(record);
-        OverrideResultDto result = new OverrideResultDto(requestId, position,
-            String.valueOf(record.solution().charAt(position - 1)), HexahackDailyGameProvider.OVERRIDE_COST);
-        String now = Instant.now().toString();
-        events.add(new EventDto(events.size() + 1, EventKind.OVERRIDE, now, null, null, result));
-        HexahackGameRecord updated = updateProgress(record, events,
-            record.totalCost() + HexahackDailyGameProvider.OVERRIDE_COST, record.wrongSubmissions(),
-            record.overrideCount() + 1, now);
-        return new OverrideActionDto(toDto(repository.update(updated)), result, false);
     }
 
     public StatsDto stats(AppUser user) {
@@ -143,18 +117,15 @@ public class HexahackDailyGameService {
             .divide(BigDecimal.valueOf(records.size()), 1, RoundingMode.HALF_UP).doubleValue();
         int maxStreak = maxDailyStreak(records);
         int currentStreak = currentDailyStreak(records, LocalDate.parse(dailyGameService.todayDate()));
-        int maxNoOverride = maxNoOverrideStreak(records);
-        int currentNoOverride = currentNoOverrideStreak(records, LocalDate.parse(dailyGameService.todayDate()));
         return new StatsDto(records.size(), average, bestStealth, Map.copyOf(distribution), currentStreak, maxStreak,
-            currentNoOverride, maxNoOverride, calendar(records, LocalDate.parse(dailyGameService.todayDate())));
+            calendar(records, LocalDate.parse(dailyGameService.todayDate())));
     }
 
     public static int stealth(int totalCost, int wrongSubmissions) {
         return 100 - 2 * totalCost - 5 * wrongSubmissions;
     }
 
-    public static Rank rank(int stealth, int wrongSubmissions, int overrideCount) {
-        if (overrideCount > 0) return Rank.TRACED;
+    public static Rank rank(int stealth, int wrongSubmissions) {
         if (stealth >= 70 && wrongSubmissions == 0) return Rank.GHOST;
         if (stealth >= 55) return Rank.SHADOW;
         if (stealth >= 35) return Rank.BREACH;
@@ -169,9 +140,9 @@ public class HexahackDailyGameService {
     }
 
     private HexahackGameRecord updateProgress(HexahackGameRecord record, List<EventDto> events, int cost,
-                                                int errors, int overrides, String now) {
+                                                int errors, String now) {
         return new HexahackGameRecord(record.id(), record.userId(), record.puzzleDate(), record.rulesVersion(),
-            record.solution(), writeEvents(events), cost, errors, overrides, Status.IN_PROGRESS, null, null,
+            record.solution(), writeEvents(events), cost, errors, Status.IN_PROGRESS, null, null,
             record.createdAt(), now, null);
     }
 
@@ -179,10 +150,10 @@ public class HexahackDailyGameService {
         int currentStealth = record.status() == Status.COMPLETED
             ? record.stealth() : stealth(record.totalCost(), record.wrongSubmissions());
         Rank projected = record.status() == Status.COMPLETED
-            ? record.rank() : rank(currentStealth, record.wrongSubmissions(), record.overrideCount());
+            ? record.rank() : rank(currentStealth, record.wrongSubmissions());
         return new GameDto(record.puzzleDate(), record.rulesVersion(), record.status(),
             HexahackDailyGameProvider.CODE_LENGTH, readEvents(record), record.totalCost(), record.wrongSubmissions(),
-            record.overrideCount(), currentStealth, projected, record.stealth(), record.rank(),
+            currentStealth, projected, record.stealth(), record.rank(),
             record.status() == Status.COMPLETED ? record.solution() : null, record.completedAt());
     }
 
@@ -211,13 +182,6 @@ public class HexahackDailyGameService {
 
     private WebApplicationException reusedRequestId() {
         return new WebApplicationException("requestId già usato per un'altra operazione.", Response.Status.CONFLICT);
-    }
-
-    private int validateOverridePosition(Integer position) {
-        if (position == null || position < 1 || position > HexahackDailyGameProvider.CODE_LENGTH) {
-            throw new BadRequestException("Posizione non valida: usa un valore da 1 a 6.");
-        }
-        return position;
     }
 
     private int correctPositions(String code, String solution) {
@@ -255,36 +219,6 @@ public class HexahackDailyGameService {
         return streak;
     }
 
-    private int maxNoOverrideStreak(List<HexahackGameRecord> records) {
-        int max = 0;
-        int current = 0;
-        LocalDate previous = null;
-        for (HexahackGameRecord record : records) {
-            LocalDate date = LocalDate.parse(record.puzzleDate());
-            boolean consecutive = previous != null && ChronoUnit.DAYS.between(previous, date) == 1;
-            current = record.overrideCount() == 0 ? (consecutive ? current + 1 : 1) : 0;
-            max = Math.max(max, current);
-            previous = date;
-        }
-        return max;
-    }
-
-    private int currentNoOverrideStreak(List<HexahackGameRecord> records, LocalDate today) {
-        if (records.isEmpty()) return 0;
-        int index = records.size() - 1;
-        LocalDate last = LocalDate.parse(records.get(index).puzzleDate());
-        if (last.isBefore(today.minusDays(1)) || records.get(index).overrideCount() > 0) return 0;
-        int streak = 1;
-        for (index -= 1; index >= 0; index--) {
-            HexahackGameRecord previousRecord = records.get(index);
-            LocalDate previous = LocalDate.parse(previousRecord.puzzleDate());
-            if (previousRecord.overrideCount() > 0 || ChronoUnit.DAYS.between(previous, last) != 1) break;
-            streak++;
-            last = previous;
-        }
-        return streak;
-    }
-
     private List<CalendarNodeDto> calendar(List<HexahackGameRecord> records, LocalDate today) {
         Map<String, HexahackGameRecord> byDate = new HashMap<>();
         records.forEach(record -> byDate.put(record.puzzleDate(), record));
@@ -293,9 +227,9 @@ public class HexahackDailyGameService {
             String date = today.minusDays(daysAgo).toString();
             HexahackGameRecord record = byDate.get(date);
             nodes.add(record == null
-                ? new CalendarNodeDto(date, false, null, null, null, null, null)
+                ? new CalendarNodeDto(date, false, null, null, null, null)
                 : new CalendarNodeDto(date, true, record.stealth(), record.rank(), record.totalCost(),
-                    record.wrongSubmissions(), record.overrideCount() > 0));
+                    record.wrongSubmissions()));
         }
         return List.copyOf(nodes);
     }

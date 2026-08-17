@@ -225,7 +225,7 @@ public class AdminService {
         try {
             List<EventDto> log = objectMapper.readValue(game.eventLogJson, new TypeReference<>() {});
             return new AdminHexahackGameDto(game.id, game.puzzleDate, game.rulesVersion, game.solution, log,
-                game.totalCost, game.wrongSubmissions, game.overrideCount, game.status, game.stealth, game.rank,
+                game.totalCost, game.wrongSubmissions, game.status, game.stealth, game.rank,
                 game.createdAt, game.updatedAt, game.completedAt);
         } catch (Exception error) {
             throw new IllegalStateException("Cannot parse Hexahack event log for admin view", error);
@@ -418,7 +418,6 @@ public class AdminService {
         List<EventDto> log,
         int totalCost,
         int wrongSubmissions,
-        int overrideCount,
         HexahackDtos.Status status,
         Integer stealth,
         HexahackDtos.Rank rank,

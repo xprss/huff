@@ -82,7 +82,23 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
 }
 
 function Clues({ clues, className, vertical = false }: { clues: readonly number[]; className: string; vertical?: boolean }) { return <div className={`sky-clues ${className}${vertical ? " vertical" : ""}`}>{clues.map((clue, index) => <span key={index}>{clue}</span>)}</div>; }
-function Tutorial({ onClose }: { onClose: () => void }) { return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}><section className="modal sky-tutorial" role="dialog" aria-modal="true" aria-labelledby="sky-tutorial-title" onMouseDown={(event) => event.stopPropagation()}><button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button><h2 id="sky-tutorial-title">Come si gioca a Hexasky</h2><p>Gli indizi ai quattro lati dicono quanti grattacieli vedi guardando quella riga o colonna: un edificio più alto nasconde quelli più bassi dietro di sé.</p><p>Inserisci i numeri da 1 a 4 senza ripetizioni in ogni riga e colonna. Tocca una cella, usa la tastiera virtuale e la selezione avanza automaticamente.</p><p>Hai due verifiche: le caselle errate vengono evidenziate; al secondo errore la partita termina e viene rivelata la soluzione.</p><button className="sky-check" type="button" onClick={onClose}>Ho capito</button></section></div>, document.body); }
+function Tutorial({ onClose }: { onClose: () => void }) {
+  return createPortal(
+    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
+      <section className="modal sky-tutorial" role="dialog" aria-modal="true" aria-labelledby="sky-tutorial-title" onMouseDown={(event) => event.stopPropagation()}>
+        <header className="modal-head">
+          <h2 id="sky-tutorial-title">Come si gioca a Hexasky</h2>
+          <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
+        </header>
+        <p>Gli indizi ai quattro lati dicono quanti grattacieli vedi guardando quella riga o colonna: un edificio più alto nasconde quelli più bassi dietro di sé.</p>
+        <p>Inserisci i numeri da 1 a 4 senza ripetizioni in ogni riga e colonna. Tocca una cella, usa la tastiera virtuale e la selezione avanza automaticamente.</p>
+        <p>Hai due verifiche: le caselle errate vengono evidenziate; al secondo errore la partita termina e viene rivelata la soluzione.</p>
+        <button className="sky-check" type="button" onClick={onClose}>Ho capito</button>
+      </section>
+    </div>,
+    document.body
+  );
+}
 function latestIncorrectCells(game: HexaskyTodayDto["game"]) { const check=game?.log[game.log.length - 1]?.check; return check?.status === "IN_PROGRESS" ? [...(check.incorrectCells ?? [])] : []; }
 function loadDraft(key: string, proposal: readonly number[] | null | undefined) { try { const stored=JSON.parse(localStorage.getItem(key) ?? "null"); if(Array.isArray(stored)&&stored.length===16&&stored.every((value)=>Number.isInteger(value)&&value>=0&&value<=4)) return stored; } catch { /* ignore malformed local state */ } return proposal ? [...proposal] : Array(16).fill(0); }
 function nextEmpty(cells: readonly number[], start: number) { for(let index=start;index<cells.length;index++)if(!cells[index])return index; for(let index=0;index<start;index++)if(!cells[index])return index; return null; }

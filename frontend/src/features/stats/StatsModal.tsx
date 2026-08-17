@@ -48,7 +48,6 @@ export function HexahackStatsPanel({ stats }: { stats: HexahackStatsDto }) {
       <div><strong>{stats.averageStealth}</strong><span>Media</span></div>
       <div><strong>{stats.bestStealth}</strong><span>Migliore</span></div>
       <div><strong>{stats.currentStreak}</strong><span>Serie</span></div>
-      <div><strong>{stats.noOverrideStreak}</strong><span>No Override</span></div>
     </div>
     <div className="hack-ranks" aria-label="Distribuzione ranghi">
       {(Object.keys(RANK_LABELS) as HexahackRank[]).map((rank) => <span key={rank}>{RANK_LABELS[rank]} <strong>{stats.rankDistribution[rank] ?? 0}</strong></span>)}
