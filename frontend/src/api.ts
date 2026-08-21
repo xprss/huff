@@ -8,6 +8,8 @@ import type {
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
+  LeaderboardGame,
+  LeaderboardsDto,
   ProfileUpdateDto,
   PushSubscriptionDto
 } from "./types";
@@ -88,8 +90,7 @@ export type ApiClient = {
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
-  readonly leaderboards: EndpointHandler<"/api/leaderboards/overall", "GET">;
-  readonly hexawordLeaderboards: EndpointHandler<"/api/hexaword/leaderboards", "GET">;
+  readonly leaderboards: (game: LeaderboardGame) => Promise<LeaderboardsDto>;
   readonly publicPlayer: EndpointHandler<"/api/player/:nickname", "GET", [nickname: string]>;
   readonly pushSettings: EndpointHandler<"/api/push/settings", "GET">;
   readonly savePushSubscription: EndpointHandler<"/api/push/subscriptions", "POST", [subscription: PushSubscriptionDto]>;
@@ -186,8 +187,15 @@ export const api = {
       body: profile
     }),
   globalStats: () => request("/api/stats/global", { method: "GET" }),
-  leaderboards: () => request("/api/leaderboards/overall", { method: "GET" }),
-  hexawordLeaderboards: () => request("/api/hexaword/leaderboards", { method: "GET" }),
+  leaderboards: (game: LeaderboardGame) => {
+    const paths = {
+      overall: "/api/leaderboards/overall",
+      hexaword: "/api/hexaword/leaderboards",
+      hexahack: "/api/hexahack/leaderboards",
+      hexasky: "/api/hexasky/leaderboards"
+    } as const;
+    return request(paths[game], { method: "GET" });
+  },
   publicPlayer: (nickname: string) =>
     request(`/api/player/${encodeURIComponent(nickname)}` as "/api/player/:nickname", { method: "GET" }),
   pushSettings: () => request("/api/push/settings", { method: "GET" }),

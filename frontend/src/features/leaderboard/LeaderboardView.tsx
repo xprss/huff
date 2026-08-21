@@ -1,6 +1,6 @@
 import React from "react";
 import { ChevronLeft, Trophy } from "lucide-react";
-import type { LeaderboardPeriodDto, LeaderboardsDto } from "../../types";
+import type { LeaderboardGame, LeaderboardPeriodDto, LeaderboardsDto } from "../../types";
 
 type LeaderboardTab = "allTime" | "yearly" | "monthly" | "weekly";
 
@@ -11,12 +11,23 @@ const TABS: ReadonlyArray<{ id: LeaderboardTab; label: string }> = [
   { id: "weekly", label: "Settimana" }
 ];
 
+const GAME_TABS: ReadonlyArray<{ id: LeaderboardGame; label: string }> = [
+  { id: "overall", label: "Tutti" },
+  { id: "hexaword", label: "Hexaword" },
+  { id: "hexahack", label: "Hexahack" },
+  { id: "hexasky", label: "Hexasky" }
+];
+
 export function LeaderboardView({
   leaderboards,
+  activeGame,
+  onChangeGame,
   onBack,
   onOpenPlayer
 }: {
   leaderboards: LeaderboardsDto;
+  activeGame: LeaderboardGame;
+  onChangeGame: (game: LeaderboardGame) => void;
   onBack: () => void;
   onOpenPlayer: (nickname: string) => void;
 }) {
@@ -34,6 +45,21 @@ export function LeaderboardView({
           <p>{periodLabel(period, activeTab)}</p>
         </div>
       </header>
+
+      <div className="leaderboard-games" role="tablist" aria-label="Gioco della classifica">
+        {GAME_TABS.map((game) => (
+          <button
+            key={game.id}
+            type="button"
+            role="tab"
+            aria-selected={activeGame === game.id}
+            className={activeGame === game.id ? "selected" : ""}
+            onClick={() => onChangeGame(game.id)}
+          >
+            {game.label}
+          </button>
+        ))}
+      </div>
 
       <div className="leaderboard-tabs" role="tablist" aria-label="Periodo classifica">
         {TABS.map((tab) => (

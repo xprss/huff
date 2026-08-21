@@ -6,6 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JENKINS_URL="${JENKINS_URL:-https://ci.ottonovembre.it}"
 JENKINS_USER="${JENKINS_USER:-}"
 JENKINS_API_TOKEN="${JENKINS_API_TOKEN:-}"
+if [[ -x /usr/lib/jvm/jre-21-openjdk/bin/java ]]; then
+  DEFAULT_JAVA_COMMAND=/usr/lib/jvm/jre-21-openjdk/bin/java
+else
+  DEFAULT_JAVA_COMMAND=java
+fi
+JAVA_COMMAND="${JENKINS_JAVA_COMMAND:-${DEFAULT_JAVA_COMMAND}}"
 
 usage() {
   cat <<'EOF'
@@ -23,7 +29,7 @@ fi
 
 [[ -n "${JENKINS_USER}" && -n "${JENKINS_API_TOKEN}" ]] || { usage >&2; exit 2; }
 command -v curl >/dev/null 2>&1 || { echo "curl is required" >&2; exit 1; }
-command -v java >/dev/null 2>&1 || { echo "Java is required" >&2; exit 1; }
+command -v "${JAVA_COMMAND}" >/dev/null 2>&1 || { echo "Java 21 is required" >&2; exit 1; }
 
 set +x
 cli_jar="$(mktemp /tmp/huff-jenkins-cli.XXXXXX.jar)"
@@ -36,7 +42,7 @@ curl --fail --silent --show-error \
   -o "${cli_jar}"
 
 mapfile -t plugins < <(sed -E '/^[[:space:]]*(#|$)/d' "${SCRIPT_DIR}/plugins.txt")
-java -jar "${cli_jar}" \
+"${JAVA_COMMAND}" -jar "${cli_jar}" \
   -s "${JENKINS_URL%/}/" \
   -auth "@${auth_file}" \
   install-plugin "${plugins[@]}" -deploy -restart

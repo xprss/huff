@@ -258,6 +258,8 @@ export interface LeaderboardsDto {
   readonly weekly: LeaderboardPeriodDto;
 }
 
+export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky";
+
 export interface PublicPlayerProfileDto {
   readonly displayName: string;
   readonly nickname: string;
@@ -472,6 +474,8 @@ export type ApiEndpointMap = {
     };
   };
   "/api/hexaword/leaderboards": { GET: { response: LeaderboardsDto } };
+  "/api/hexahack/leaderboards": { GET: { response: LeaderboardsDto } };
+  "/api/hexasky/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/leaderboards/overall": { GET: { response: LeaderboardsDto } };
   "/api/player/:nickname": {
     GET: {

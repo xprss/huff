@@ -10,6 +10,7 @@ import type {
   HexahackTodayDto,
   HexaskyGameDto,
   HexaskyTodayDto,
+  LeaderboardGame,
   MeDto,
   ProfileUpdateDto,
   TodayGameDto,
@@ -93,6 +94,7 @@ export function App() {
   const [selectedCellIndex, setSelectedCellIndex] = React.useState<number | null>(0);
   const [showStats, setShowStats] = React.useState(false);
   const [statsInitialGame, setStatsInitialGame] = React.useState<StatsGame>("overall");
+  const [leaderboardGame, setLeaderboardGame] = React.useState<LeaderboardGame>("overall");
   const [showInfo, setShowInfo] = React.useState(false);
   const [hexawordTutorialOpen, setHexawordTutorialOpen] = React.useState(() => localStorage.getItem(HEXAWORD_TUTORIAL_STORAGE_KEY) !== "true");
   const [activeRoute, setActiveRoute] = useAppRoute();
@@ -140,7 +142,7 @@ export function App() {
   const hexaskyStatsQuery = useQuery({ ...hexaskyStatsQueryOptions(), enabled: isLoggedIn });
   const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
   const leaderboardsQuery = useQuery({
-    ...leaderboardsQueryOptions(),
+    ...leaderboardsQueryOptions(leaderboardGame),
     enabled: isLoggedIn && (activeRoute === "leaderboard" || activeRoute === "player")
   });
   const publicPlayerQuery = useQuery({
@@ -259,12 +261,12 @@ export function App() {
     void queryClient.cancelQueries({ queryKey: queryKeys.today });
     void queryClient.cancelQueries({ queryKey: queryKeys.stats });
     void queryClient.cancelQueries({ queryKey: ["admin"] });
-    void queryClient.cancelQueries({ queryKey: queryKeys.leaderboards });
+    void queryClient.cancelQueries({ queryKey: queryKeys.leaderboards() });
     void queryClient.cancelQueries({ queryKey: ["player"] });
     queryClient.removeQueries({ queryKey: queryKeys.today });
     queryClient.removeQueries({ queryKey: queryKeys.stats });
     queryClient.removeQueries({ queryKey: ["admin"] });
-    queryClient.removeQueries({ queryKey: queryKeys.leaderboards });
+    queryClient.removeQueries({ queryKey: queryKeys.leaderboards() });
     queryClient.removeQueries({ queryKey: ["player"] });
     setCurrentGuess([]);
     setSelectedCellIndex(0);
@@ -795,6 +797,8 @@ export function App() {
             ) : leaderboardsQuery.data ? (
               <LeaderboardView
                 leaderboards={leaderboardsQuery.data}
+                activeGame={leaderboardGame}
+                onChangeGame={setLeaderboardGame}
                 onBack={() => setActiveRoute("games")}
                 onOpenPlayer={(nickname) => {
                   window.location.hash = playerHash(nickname);

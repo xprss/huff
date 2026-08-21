@@ -25,6 +25,18 @@ public class LeaderboardResource {
     }
 
     @GET
+    @Path("/hexahack/leaderboards")
+    public Object hexahackLeaderboards() {
+        return leaderboardService.leaderboards(LeaderboardRepository.Board.HEXAHACK);
+    }
+
+    @GET
+    @Path("/hexasky/leaderboards")
+    public Object hexaskyLeaderboards() {
+        return leaderboardService.leaderboards(LeaderboardRepository.Board.HEXASKY);
+    }
+
+    @GET
     @Path("/leaderboards/overall")
     public Object overallLeaderboards() {
         return leaderboardService.leaderboards(LeaderboardRepository.Board.OVERALL);

@@ -3,8 +3,6 @@ package dev.huff.hexaquot.leaderboard;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.game.HexahackDtos;
 import dev.huff.hexaquot.game.HexaskyDtos;
-import dev.huff.hexaquot.persistence.HexahackGameEntity;
-import dev.huff.hexaquot.persistence.HexaskyGameEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,7 +14,7 @@ import java.util.Set;
 
 @ApplicationScoped
 public class LeaderboardRepository {
-    public enum Board { HEXAWORD, OVERALL }
+    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY }
 
     public List<PlayerScore> winnerScores(String startDate, String endDate) {
         return winnerScores(Board.HEXAWORD, startDate, endDate);
@@ -24,9 +22,9 @@ public class LeaderboardRepository {
 
     public List<PlayerScore> winnerScores(Board board, String startDate, String endDate) {
         Map<String, MutableScore> scores = new HashMap<>();
-        merge(scores, rows(startDate, endDate));
-        if (board == Board.OVERALL) merge(scores, hexaskyRows(startDate, endDate));
-        if (board == Board.OVERALL) merge(scores, hexahackRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXAWORD) merge(scores, hexawordRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXAHACK) merge(scores, hexahackRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXASKY) merge(scores, hexaskyRows(startDate, endDate));
         if (scores.isEmpty()) return List.of();
         Set<String> ids = scores.keySet();
         Map<String, UserEntity> users = new HashMap<>();
@@ -37,7 +35,7 @@ public class LeaderboardRepository {
             .toList();
     }
 
-    private List<Object[]> rows(String startDate, String endDate) {
+    private List<Object[]> hexawordRows(String startDate, String endDate) {
         String query = "SELECT g.userId, COUNT(g), MAX(COALESCE(g.completedAt, g.updatedAt, g.createdAt)) "
             + "FROM GameEntity g WHERE g.status = ?1";
         if (startDate != null) query += " AND g.puzzleDate >= ?2 AND g.puzzleDate < ?3";

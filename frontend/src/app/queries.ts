@@ -1,6 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
-import type { AdminPlayerSortDto } from "../types";
+import type { AdminPlayerSortDto, LeaderboardGame } from "../types";
 
 export const queryKeys = {
   me: ["me"] as const,
@@ -12,8 +12,7 @@ export const queryKeys = {
   hexaskyStats: ["hexasky", "stats"] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
-  leaderboards: ["leaderboards"] as const,
-  hexawordLeaderboards: ["leaderboards", "hexaword"] as const,
+  leaderboards: (game?: LeaderboardGame) => game ? ["leaderboards", game] as const : ["leaderboards"] as const,
   publicPlayer: (nickname: string) => ["player", nickname] as const,
   adminPlayers: (query: string, sort: AdminPlayerSortDto, page: number) => ["admin", "players", query, sort, page] as const,
   adminPlayer: (userId: string) => ["admin", "players", "detail", userId] as const
@@ -67,16 +66,11 @@ export const globalStatsQueryOptions = () =>
     queryFn: api.globalStats
   });
 
-export const leaderboardsQueryOptions = () =>
+export const leaderboardsQueryOptions = (game: LeaderboardGame) =>
   queryOptions({
-    queryKey: queryKeys.leaderboards,
-    queryFn: api.leaderboards
+    queryKey: queryKeys.leaderboards(game),
+    queryFn: () => api.leaderboards(game)
   });
-
-export const hexawordLeaderboardsQueryOptions = () => queryOptions({
-  queryKey: queryKeys.hexawordLeaderboards,
-  queryFn: api.hexawordLeaderboards
-});
 
 export const publicPlayerQueryOptions = (nickname: string) =>
   queryOptions({

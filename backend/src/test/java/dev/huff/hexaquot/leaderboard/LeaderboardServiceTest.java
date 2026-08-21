@@ -3,8 +3,10 @@ package dev.huff.hexaquot.leaderboard;
 import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.game.HexahackDtos;
+import dev.huff.hexaquot.game.HexaskyDtos;
 import dev.huff.hexaquot.persistence.GameEntity;
 import dev.huff.hexaquot.persistence.HexahackGameEntity;
+import dev.huff.hexaquot.persistence.HexaskyGameEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import dev.huff.hexaquot.persistence.WeeklyMedalEntity;
 import io.quarkus.test.TestTransaction;
@@ -38,6 +40,7 @@ class LeaderboardServiceTest {
         createWonGame(first, weekStart.plusDays(1), "2026-08-07T11:00:00Z");
         createCompletedHexahackGame(first, weekStart.plusDays(2), "2026-08-07T12:00:00Z");
         createWonGame(second, weekStart, "2026-08-07T09:00:00Z");
+        createWonHexaskyGame(second, weekStart.plusDays(1), "2026-08-07T13:00:00Z");
 
         LeaderboardsDto leaderboards = leaderboardService.leaderboards();
         assertTrue(leaderboards.weekly().entries().stream().anyMatch(entry ->
@@ -47,6 +50,25 @@ class LeaderboardServiceTest {
         LeaderboardsDto overallLeaderboards = leaderboardService.leaderboards(LeaderboardRepository.Board.OVERALL);
         assertTrue(overallLeaderboards.weekly().entries().stream().anyMatch(entry ->
             entry.nickname().equals(first.nickname) && entry.wins() == 3
+        ));
+        assertTrue(overallLeaderboards.weekly().entries().stream().anyMatch(entry ->
+            entry.nickname().equals(second.nickname) && entry.wins() == 2
+        ));
+
+        LeaderboardsDto hexahackLeaderboards = leaderboardService.leaderboards(LeaderboardRepository.Board.HEXAHACK);
+        assertTrue(hexahackLeaderboards.weekly().entries().stream().anyMatch(entry ->
+            entry.nickname().equals(first.nickname) && entry.wins() == 1
+        ));
+        assertTrue(hexahackLeaderboards.weekly().entries().stream().noneMatch(entry ->
+            entry.nickname().equals(second.nickname)
+        ));
+
+        LeaderboardsDto hexaskyLeaderboards = leaderboardService.leaderboards(LeaderboardRepository.Board.HEXASKY);
+        assertTrue(hexaskyLeaderboards.weekly().entries().stream().anyMatch(entry ->
+            entry.nickname().equals(second.nickname) && entry.wins() == 1
+        ));
+        assertTrue(hexaskyLeaderboards.weekly().entries().stream().noneMatch(entry ->
+            entry.nickname().equals(first.nickname)
         ));
 
         PublicPlayerProfileDto profile = leaderboardService.publicProfile(first.nickname);
@@ -112,6 +134,23 @@ class LeaderboardServiceTest {
         game.status = HexahackDtos.Status.COMPLETED;
         game.stealth = 100;
         game.rank = HexahackDtos.Rank.GHOST;
+        game.createdAt = completedAt;
+        game.updatedAt = completedAt;
+        game.completedAt = completedAt;
+        game.persist();
+    }
+
+    private void createWonHexaskyGame(UserEntity user, LocalDate date, String completedAt) {
+        HexaskyGameEntity game = new HexaskyGameEntity();
+        game.id = UUID.randomUUID().toString();
+        game.userId = user.id;
+        game.puzzleDate = date.toString();
+        game.rulesVersion = 1;
+        game.solutionJson = "[1,2,3,4,2,3,4,1,3,4,1,2,4,1,2,3]";
+        game.proposalJson = game.solutionJson;
+        game.eventLogJson = "[]";
+        game.checksUsed = 1;
+        game.status = HexaskyDtos.Status.WON;
         game.createdAt = completedAt;
         game.updatedAt = completedAt;
         game.completedAt = completedAt;
