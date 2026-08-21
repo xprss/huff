@@ -3,6 +3,7 @@ pipeline {
 
   options {
     buildDiscarder(logRotator(numToKeepStr: '30'))
+    copyArtifactPermission('huff-production-deploy')
     disableConcurrentBuilds()
     timeout(time: 30, unit: 'MINUTES')
   }
