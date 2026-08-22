@@ -96,9 +96,12 @@ The word list is stored in `backend/src/main/resources/words/it-words.json`; eve
 
 ## CI/CD and deployment
 
-Change the base version manually in `VERSION` in the pull request: `MAJOR` for
+Increment the base version with `scripts/bump-version.sh`: `MAJOR` for
 incompatible changes, `MINOR` for backwards-compatible features, and `PATCH`
-for backwards-compatible fixes. Pull requests and non-`master` pushes only run
+for backwards-compatible fixes. With no arguments it increments `PATCH` by
+one; `--minor` and `--major` select the other components, and an optional
+positive integer sets the increment. Each invocation commits only `VERSION`
+with a message such as `bump patch 3.2.2`. Pull requests and non-`master` pushes only run
 tests. A successful `master` build creates a full version such as
 `3.2.1+gha.184.a1b2c3d`, publishes `linux/amd64` to Docker Hub as immutable
 `sha-<full-commit>` plus the informational `staging` tag, and triggers Jenkins.

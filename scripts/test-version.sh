@@ -38,27 +38,48 @@ trap 'rm -rf -- "${temporary_directory}"' EXIT
 printf '3.2.1\n\n' > "${temporary_directory}/VERSION"
 expect_failure "${VERSION_SCRIPT}" read "${temporary_directory}/VERSION"
 
-bump_version_file="${temporary_directory}/BUMP_VERSION"
-printf '3.2.1\n' > "${bump_version_file}"
+bump_repository="${temporary_directory}/bump-repository"
+mkdir -p "${bump_repository}/scripts"
+cp "${BUMP_VERSION_SCRIPT}" "${VERSION_SCRIPT}" "${bump_repository}/scripts/"
+printf '3.2.1\n' > "${bump_repository}/VERSION"
+git -C "${bump_repository}" init --quiet
+git -C "${bump_repository}" config user.name 'Version test'
+git -C "${bump_repository}" config user.email 'version-test@example.invalid'
+git -C "${bump_repository}" add VERSION scripts
+git -C "${bump_repository}" commit --quiet -m 'initial version'
+printf 'must not be committed by a version bump\n' > "${bump_repository}/UNRELATED"
+git -C "${bump_repository}" add UNRELATED
 
 bump_version() {
-  VERSION_FILE="${bump_version_file}" "${BUMP_VERSION_SCRIPT}" "$@" >/dev/null
+  "${bump_repository}/scripts/bump-version.sh" "$@" >/dev/null
 }
 
-bump_version --patch
-[[ "$(<"${bump_version_file}")" == 3.2.2 ]]
+expect_commit() {
+  [[ "$(git -C "${bump_repository}" log -1 --format=%s)" == "$1" ]]
+  [[ "$(git -C "${bump_repository}" show --format= --name-only HEAD)" == VERSION ]]
+}
+
+bump_version
+[[ "$(<"${bump_repository}/VERSION")" == 3.2.2 ]]
+expect_commit 'bump patch 3.2.2'
+[[ "$(git -C "${bump_repository}" diff --cached --name-only)" == UNRELATED ]]
 bump_version --patch 4
-[[ "$(<"${bump_version_file}")" == 3.2.6 ]]
+[[ "$(<"${bump_repository}/VERSION")" == 3.2.6 ]]
+expect_commit 'bump patch 3.2.6'
 bump_version --minor
-[[ "$(<"${bump_version_file}")" == 3.3.0 ]]
+[[ "$(<"${bump_repository}/VERSION")" == 3.3.0 ]]
+expect_commit 'bump minor 3.3.0'
 bump_version --minor 7
-[[ "$(<"${bump_version_file}")" == 3.10.0 ]]
+[[ "$(<"${bump_repository}/VERSION")" == 3.10.0 ]]
+expect_commit 'bump minor 3.10.0'
 bump_version --major
-[[ "$(<"${bump_version_file}")" == 4.0.0 ]]
+[[ "$(<"${bump_repository}/VERSION")" == 4.0.0 ]]
+expect_commit 'bump major 4.0.0'
 bump_version --major 3
-[[ "$(<"${bump_version_file}")" == 7.0.0 ]]
-expect_failure env VERSION_FILE="${bump_version_file}" "${BUMP_VERSION_SCRIPT}" --patch 0
-expect_failure env VERSION_FILE="${bump_version_file}" "${BUMP_VERSION_SCRIPT}" --patch 1 2
-expect_failure env VERSION_FILE="${bump_version_file}" "${BUMP_VERSION_SCRIPT}" --invalid
+[[ "$(<"${bump_repository}/VERSION")" == 7.0.0 ]]
+expect_commit 'bump major 7.0.0'
+expect_failure "${bump_repository}/scripts/bump-version.sh" --patch 0
+expect_failure "${bump_repository}/scripts/bump-version.sh" --patch 1 2
+expect_failure "${bump_repository}/scripts/bump-version.sh" --invalid
 
 echo "Version checks passed"

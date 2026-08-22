@@ -9,12 +9,14 @@ VERSION_FILE="${VERSION_FILE:-${PROJECT_ROOT}/VERSION}"
 
 usage() {
   cat <<'EOF'
-Usage: scripts/bump-version.sh --patch|--minor|--major [DELTA]
+Usage: scripts/bump-version.sh [--patch|--minor|--major] [DELTA]
 
 Updates VERSION according to Semantic Versioning. DELTA must be a positive
-integer and defaults to 1.
+integer and defaults to 1. With no arguments, increments PATCH by 1.
+After updating VERSION, creates a commit containing only that file.
 
 Examples:
+  scripts/bump-version.sh               # 3.0.8 -> 3.0.9
   scripts/bump-version.sh --patch       # 3.0.8 -> 3.0.9
   scripts/bump-version.sh --minor 2     # 3.0.8 -> 3.2.0
   scripts/bump-version.sh --major       # 3.0.8 -> 4.0.0
@@ -51,10 +53,12 @@ add_decimal() {
   printf '%s\n' "${result}"
 }
 
-[[ $# -ge 1 ]] || { usage >&2; exit 2; }
-
-bump_type="$1"
-shift
+if [[ $# -eq 0 ]]; then
+  bump_type="--patch"
+else
+  bump_type="$1"
+  shift
+fi
 case "${bump_type}" in
   --patch|--minor|--major) ;;
   -h|--help|help)
@@ -95,5 +99,10 @@ printf '%s\n' "${next_version}" > "${temporary_file}"
 chmod --reference="${VERSION_FILE}" "${temporary_file}"
 mv -f -- "${temporary_file}" "${VERSION_FILE}"
 trap - EXIT
+
+commit_type="${bump_type#--}"
+git -C "${PROJECT_ROOT}" add -- "${VERSION_FILE}"
+git -C "${PROJECT_ROOT}" commit --only \
+  -m "bump ${commit_type} ${next_version}" -- "${VERSION_FILE}"
 
 printf 'Bumped version: %s -> %s\n' "${current_version}" "${next_version}"
