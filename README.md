@@ -92,6 +92,8 @@ The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification pe
 
 The Hexahack launch push campaign is disabled by default. Set `PUSH_HEXAHACK_LAUNCH_ENABLED=true` to send pending campaign deliveries through the existing scheduler.
 
+The Hexasquare launch campaign is also opt-in. Set `PUSH_HEXASQUARE_LAUNCH_ENABLED=true` to dispatch its queued Web Push deliveries; the notification opens `/#/hexasquare`.
+
 The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 
 ## CI/CD and deployment
@@ -102,12 +104,16 @@ for backwards-compatible fixes. With no arguments it increments `PATCH` by
 one; `--minor` and `--major` select the other components, and an optional
 positive integer sets the increment. Each invocation commits only `VERSION`
 with a message such as `bump patch 3.2.2`. Pull requests and non-`master` pushes only run
-tests. A successful `master` build creates a full version such as
+tests. A successful `master` build, or a manual **Delivery** workflow run,
+creates a full version such as
 `3.2.1+gha.184.a1b2c3d`, publishes `linux/amd64` to Docker Hub as immutable
 `sha-<full-commit>` plus the informational `staging` tag, and triggers Jenkins.
+To deploy a branch to staging before it is merged, open **Actions → Delivery →
+Run workflow** and select the branch in **Use workflow from**. The tests, image,
+and Jenkins deployment all use the selected branch's commit.
 
 Jenkins always deploys `namespace/repository@sha256:digest`; no deployment uses
-`latest` or the movable tag. Staging is automatic after image publication.
+`latest` or the movable tag. Each published image is deployed to staging.
 Production is manual and can promote only the artifact from the latest
 successful staging job, preserving the exact full SemVer and digest. See
 `jenkins/README.md` for installation, permissions, jobs, approvals, and smoke
