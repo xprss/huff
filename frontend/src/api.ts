@@ -188,13 +188,7 @@ export const api = {
     }),
   globalStats: () => request("/api/stats/global", { method: "GET" }),
   leaderboards: (game: LeaderboardGame) => {
-    const paths = {
-      overall: "/api/leaderboards/overall",
-      hexaword: "/api/hexaword/leaderboards",
-      hexahack: "/api/hexahack/leaderboards",
-      hexasky: "/api/hexasky/leaderboards"
-    } as const;
-    return request(paths[game], { method: "GET" });
+    return request(`/api/leaderboards?game=${game}` as "/api/leaderboards", { method: "GET" });
   },
   publicPlayer: (nickname: string) =>
     request(`/api/player/${encodeURIComponent(nickname)}` as "/api/player/:nickname", { method: "GET" }),
