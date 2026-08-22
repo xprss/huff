@@ -7,10 +7,14 @@ import jakarta.ws.rs.NotFoundException;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 @ApplicationScoped
 public class AnnouncementService {
     public static final String HEXAHACK_LAUNCH = "HEXAHACK_LAUNCH";
+    public static final String HEXASKY_LAUNCH = "HEXASKY_LAUNCH";
+    public static final String HEXASQUARE_LAUNCH = "HEXASQUARE_LAUNCH";
+    private static final Set<String> KNOWN_CAMPAIGNS = Set.of(HEXAHACK_LAUNCH, HEXASKY_LAUNCH, HEXASQUARE_LAUNCH);
 
     public List<String> pending(String userId) {
         return UserAnnouncementEntity.<UserAnnouncementEntity>list(
@@ -20,7 +24,7 @@ public class AnnouncementService {
 
     @Transactional
     public void markSeen(String userId, String campaign) {
-        if (!HEXAHACK_LAUNCH.equals(campaign)) throw new NotFoundException("Annuncio non trovato.");
+        if (!KNOWN_CAMPAIGNS.contains(campaign)) throw new NotFoundException("Annuncio non trovato.");
         UserAnnouncementEntity row = UserAnnouncementEntity.<UserAnnouncementEntity>find(
             "userId = ?1 and campaign = ?2", userId, campaign
         ).firstResult();

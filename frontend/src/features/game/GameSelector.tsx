@@ -1,19 +1,23 @@
-import { Binary, Check, SpellCheck2, Building2 } from "lucide-react";
+import { Binary, Check, SpellCheck2, Building2, Map } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
   hexahackCompleted,
   hexaskyCompleted,
+  hexasquareCompleted,
   onHexaword,
   onHexahack,
-  onHexasky
+  onHexasky,
+  onHexasquare
 }: {
   hexawordCompleted: boolean;
   hexahackCompleted: boolean;
   hexaskyCompleted: boolean;
+  hexasquareCompleted: boolean;
   onHexaword: () => void;
   onHexahack: () => void;
   onHexasky: () => void;
+  onHexasquare: () => void;
 }) {
   return (
     <section className="game-selector" aria-labelledby="game-selector-title">
@@ -43,6 +47,11 @@ export function GameSelector({
           <Building2 className="game-selector-icon" aria-hidden="true" />
           <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
           <span>Risolvi il grattacielo quotidiano 4×4.</span>
+        </button>
+        <button className={hexasquareCompleted ? "completed" : ""} type="button" onClick={onHexasquare}>
+          <Map className="game-selector-icon" aria-hidden="true" />
+          <span className="game-selector-name"><strong>Hexasquare</strong>{hexasquareCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
+          <span>Progetta la rete urbana quotidiana 24×24.</span>
         </button>
       </div>
     </section>

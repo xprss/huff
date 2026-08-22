@@ -3,6 +3,7 @@ package dev.huff.hexaquot.leaderboard;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.game.HexahackDtos;
 import dev.huff.hexaquot.game.HexaskyDtos;
+import dev.huff.hexaquot.game.HexasquareDtos;
 import dev.huff.hexaquot.persistence.UserEntity;
 import io.quarkus.hibernate.orm.panache.Panache;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,7 +15,7 @@ import java.util.Set;
 
 @ApplicationScoped
 public class LeaderboardRepository {
-    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY }
+    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY, HEXASQUARE }
 
     public List<PlayerScore> winnerScores(String startDate, String endDate) {
         return winnerScores(Board.HEXAWORD, startDate, endDate);
@@ -25,6 +26,7 @@ public class LeaderboardRepository {
         if (board == Board.OVERALL || board == Board.HEXAWORD) merge(scores, hexawordRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXAHACK) merge(scores, hexahackRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXASKY) merge(scores, hexaskyRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXASQUARE) merge(scores, hexasquareRows(startDate, endDate));
         if (scores.isEmpty()) return List.of();
         Set<String> ids = scores.keySet();
         Map<String, UserEntity> users = new HashMap<>();
@@ -62,6 +64,17 @@ public class LeaderboardRepository {
         query += " GROUP BY g.userId";
         var typed = Panache.getEntityManager().createQuery(query, Object[].class)
             .setParameter(1, HexahackDtos.Status.COMPLETED);
+        if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
+        return typed.getResultList();
+    }
+
+    private List<Object[]> hexasquareRows(String startDate, String endDate) {
+        String query = "SELECT g.userId, COUNT(g), MAX(COALESCE(g.completedAt, g.updatedAt, g.createdAt)) "
+            + "FROM HexasquareGameEntity g WHERE g.status = ?1";
+        if (startDate != null) query += " AND g.puzzleDate >= ?2 AND g.puzzleDate < ?3";
+        query += " GROUP BY g.userId";
+        var typed = Panache.getEntityManager().createQuery(query, Object[].class)
+            .setParameter(1, HexasquareDtos.Status.COMPLETED);
         if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
         return typed.getResultList();
     }

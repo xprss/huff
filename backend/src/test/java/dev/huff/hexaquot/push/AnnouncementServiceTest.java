@@ -38,4 +38,18 @@ class AnnouncementServiceTest {
         service.markSeen(userId, AnnouncementService.HEXAHACK_LAUNCH);
         assertEquals(0, service.pending(userId).size());
     }
+
+    @Test @TestTransaction
+    void acceptsEveryKnownLaunchCampaign() {
+        String userId = "announcement-square-" + UUID.randomUUID();
+        UserEntity user = new UserEntity(); user.id=userId; user.displayName="Square";
+        user.nickname="@square-"+UUID.randomUUID().toString().substring(0,8); user.profileEmoji="🏙️";
+        user.createdAt=Instant.now().toString(); user.persist();
+        UserAnnouncementEntity row=new UserAnnouncementEntity(); row.id=UUID.randomUUID().toString(); row.userId=userId;
+        row.campaign=AnnouncementService.HEXASQUARE_LAUNCH; row.createdAt=Instant.now().toString(); row.persist();
+        assertEquals(java.util.List.of(AnnouncementService.HEXASQUARE_LAUNCH),service.pending(userId));
+        service.markSeen(userId,AnnouncementService.HEXASQUARE_LAUNCH);
+        service.markSeen(userId,AnnouncementService.HEXASQUARE_LAUNCH);
+        assertEquals(0,service.pending(userId).size());
+    }
 }

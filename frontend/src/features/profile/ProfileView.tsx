@@ -3,7 +3,7 @@ import { Check, ChevronLeft, Edit3, X } from "lucide-react";
 import { PROFILE_EMOJIS } from "../../app/constants";
 import { MedalCounts } from "../../shared/components/MedalCounts";
 import type { InputHandPreference, ProfileUpdateDto, StatsSetDto, UserDto } from "../../types";
-import { HexahackStatsPanel, HexaskyStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
+import { HexahackStatsPanel, HexaskyStatsPanel, HexasquareStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
 
 export function ProfileView({
   user,
@@ -179,7 +179,7 @@ export function ProfileView({
       <div className="profile-stats" aria-label="Statistiche personali">
         <MedalCounts medals={user.medals} />
         <StatsTabs active={activeStats} onChange={setActiveStats} />
-        {activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : <StatsPanel stats={stats[activeStats]} />}
+        {activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : activeStats === "hexasquare" ? <HexasquareStatsPanel stats={stats.hexasquare} /> : <StatsPanel stats={stats[activeStats]} />}
       </div>
 
       {showEmojiPicker ? (

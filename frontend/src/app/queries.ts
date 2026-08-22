@@ -10,6 +10,8 @@ export const queryKeys = {
   hexahackStats: ["hexahack", "stats"] as const,
   hexaskyToday: ["hexasky", "today"] as const,
   hexaskyStats: ["hexasky", "stats"] as const,
+  hexasquareToday: ["hexasquare", "today"] as const,
+  hexasquareStats: ["hexasquare", "stats"] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: (game?: LeaderboardGame) => game ? ["leaderboards", game] as const : ["leaderboards"] as const,
@@ -54,6 +56,8 @@ export const hexahackStatsQueryOptions = () => queryOptions({
 
 export const hexaskyTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaskyToday, queryFn: api.hexaskyToday });
 export const hexaskyStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaskyStats, queryFn: api.hexaskyStats });
+export const hexasquareTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexasquareToday, queryFn: api.hexasquareToday });
+export const hexasquareStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexasquareStats, queryFn: api.hexasquareStats });
 
 export const overallStatsQueryOptions = () => queryOptions({
   queryKey: queryKeys.overallStats,

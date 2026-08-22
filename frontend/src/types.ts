@@ -89,7 +89,7 @@ export interface MeDto {
   readonly pendingAnnouncements: readonly AnnouncementCampaign[];
 }
 
-export type AnnouncementCampaign = "HEXAHACK_LAUNCH";
+export type AnnouncementCampaign = "HEXAHACK_LAUNCH" | "HEXASKY_LAUNCH" | "HEXASQUARE_LAUNCH";
 export type HexahackStatus = "IN_PROGRESS" | "COMPLETED";
 export type HexahackRank = "GHOST" | "SHADOW" | "BREACH" | "TRACED";
 export type HexahackProbeType = "PING" | "BIT_SCAN" | "LINK_TRACE" | "CHECKSUM";
@@ -203,11 +203,33 @@ export interface HexaskyTodayDto { readonly puzzleDate: IsoDateString; readonly 
 export interface HexaskyCheckActionDto { readonly game: HexaskyGameDto; readonly result: HexaskyCheckResultDto; readonly replayed: boolean; }
 export interface HexaskyStatsDto { readonly played: number; readonly won: number; readonly lost: number; readonly currentStreak: number; readonly maxStreak: number; readonly checkDistribution: Readonly<Record<"1" | "2", number>>; }
 
+export type HexasquareStatus = "IN_PROGRESS" | "COMPLETED";
+export type HexasquareRoadType = "STRAIGHT" | "CURVE" | "T_JUNCTION" | "CROSS";
+export type HexasquareQuadrant = "BRUMAVIA" | "SOLARIA" | "VERDOMBRA" | "LUNARGENTO";
+export type HexasquareGoalType = "EXACT_CELL" | "QUADRANT";
+export type HexasquareCharacterResult = "REACHED" | "UNREACHABLE" | "FORBIDDEN_QUADRANT" | "CONFLICT";
+export interface HexasquareCoordinateDto { readonly row: number; readonly column: number; }
+export interface HexasquareQuadrantDto { readonly id: HexasquareQuadrant; readonly name: string; readonly rowStart: number; readonly rowEnd: number; readonly columnStart: number; readonly columnEnd: number; }
+export interface HexasquareTerminalDto { readonly id: string; readonly characterId: string; readonly kind: "START" | "DESTINATION"; readonly coordinate: HexasquareCoordinateDto; }
+export interface HexasquareGoalDto { readonly type: HexasquareGoalType; readonly coordinate: HexasquareCoordinateDto | null; readonly quadrant: HexasquareQuadrant | null; }
+export interface HexasquareCharacterDto { readonly id: string; readonly name: string; readonly emoji: string; readonly start: HexasquareCoordinateDto; readonly goal: HexasquareGoalDto; readonly forbiddenQuadrants: readonly HexasquareQuadrant[]; }
+export interface HexasquareIncompatiblePairDto { readonly firstCharacterId: string; readonly secondCharacterId: string; }
+export interface HexasquarePlacementDto extends HexasquareCoordinateDto { readonly type: HexasquareRoadType; readonly rotation: 0 | 90 | 180 | 270; }
+export interface HexasquarePathDto { readonly characterId: string; readonly cells: readonly HexasquareCoordinateDto[]; }
+export interface HexasquareGameDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly status: HexasquareStatus; readonly lastPlacements: readonly HexasquarePlacementDto[]; readonly simulationsCount: number; readonly usedCells: number | null; readonly remainingCells: number | null; readonly paths: readonly HexasquarePathDto[]; readonly completedAt: string | null; }
+export interface HexasquareTodayDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly size: number; readonly quadrants: readonly HexasquareQuadrantDto[]; readonly obstacles: readonly HexasquareCoordinateDto[]; readonly terminals: readonly HexasquareTerminalDto[]; readonly characters: readonly HexasquareCharacterDto[]; readonly incompatiblePairs: readonly HexasquareIncompatiblePairDto[]; readonly inventory: Readonly<Record<HexasquareRoadType, number>>; readonly game: HexasquareGameDto | null; }
+export interface HexasquareSimulationRequestDto { readonly requestId: string; readonly placements: readonly HexasquarePlacementDto[]; }
+export interface HexasquareCharacterOutcomeDto { readonly characterId: string; readonly result: HexasquareCharacterResult; readonly conflictsWith: readonly string[]; }
+export interface HexasquareSimulationResultDto { readonly requestId: string; readonly success: boolean; readonly characters: readonly HexasquareCharacterOutcomeDto[]; readonly paths: readonly HexasquarePathDto[]; readonly usedCells: number; readonly remainingCells: number; }
+export interface HexasquareSimulationActionDto { readonly game: HexasquareGameDto; readonly result: HexasquareSimulationResultDto; readonly replayed: boolean; }
+export interface HexasquareStatsDto { readonly gamesStarted: number; readonly completed: number; readonly completionPercentage: number; readonly currentStreak: number; readonly maxStreak: number; readonly averageCellsUsed: number; readonly averageCellsSaved: number; readonly bestCellsSaved: number; readonly averageSimulationsPerWin: number; }
+
 export interface StatsSetDto {
   readonly overall: StatsDto;
   readonly hexaword: StatsDto;
   readonly hexahack: HexahackStatsDto;
   readonly hexasky: HexaskyStatsDto;
+  readonly hexasquare: HexasquareStatsDto;
 }
 
 export interface AdminPrivilegesDto {
@@ -258,7 +280,7 @@ export interface LeaderboardsDto {
   readonly weekly: LeaderboardPeriodDto;
 }
 
-export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky";
+export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexasquare";
 
 export interface PublicPlayerProfileDto {
   readonly displayName: string;
@@ -270,6 +292,7 @@ export interface PublicPlayerProfileDto {
   readonly hexawordStats: StatsDto;
   readonly hexahackStats: HexahackStatsDto;
   readonly hexaskyStats: HexaskyStatsDto;
+  readonly hexasquareStats: HexasquareStatsDto;
   readonly medals: MedalCountsDto;
 }
 
@@ -411,6 +434,8 @@ export type ApiEndpointMap = {
   "/api/me/announcements/HEXAHACK_LAUNCH/seen": {
     POST: { response: void };
   };
+  "/api/me/announcements/HEXASKY_LAUNCH/seen": { POST: { response: void } };
+  "/api/me/announcements/HEXASQUARE_LAUNCH/seen": { POST: { response: void } };
   "/api/hexaword/today": { GET: { response: TodayGameDto } };
   "/api/hexaword/today/mode": { POST: { body: ModeRequestDto; response: GameDto } };
   "/api/hexaword/today/guesses": { POST: { body: GuessRequestDto; response: GameDto } };
@@ -424,6 +449,9 @@ export type ApiEndpointMap = {
   "/api/hexasky/today": { GET: { response: HexaskyTodayDto } };
   "/api/hexasky/today/checks": { POST: { body: HexaskyCheckRequestDto; response: HexaskyCheckActionDto } };
   "/api/hexasky/stats": { GET: { response: HexaskyStatsDto } };
+  "/api/hexasquare/today": { GET: { response: HexasquareTodayDto } };
+  "/api/hexasquare/today/simulations": { POST: { body: HexasquareSimulationRequestDto; response: HexasquareSimulationActionDto } };
+  "/api/hexasquare/stats": { GET: { response: HexasquareStatsDto } };
   "/api/overall/stats": { GET: { response: StatsDto } };
   "/api/game/today": {
     GET: {
@@ -476,6 +504,7 @@ export type ApiEndpointMap = {
   "/api/hexaword/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/hexahack/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/hexasky/leaderboards": { GET: { response: LeaderboardsDto } };
+  "/api/hexasquare/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/leaderboards/overall": { GET: { response: LeaderboardsDto } };
   "/api/player/:nickname": {
     GET: {

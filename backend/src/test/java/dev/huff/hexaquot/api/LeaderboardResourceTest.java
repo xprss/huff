@@ -10,7 +10,7 @@ import static org.hamcrest.Matchers.notNullValue;
 @QuarkusTest
 class LeaderboardResourceTest {
     @ParameterizedTest
-    @ValueSource(strings = { "overall", "hexaword", "hexahack", "hexasky" })
+    @ValueSource(strings = { "overall", "hexaword", "hexahack", "hexasky", "hexasquare" })
     void servesEveryLeaderboardGameFromTheSharedEndpoint(String game) {
         String cookie = given().when().get("/api/me").then().statusCode(200).extract().header("Set-Cookie");
 

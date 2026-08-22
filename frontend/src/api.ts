@@ -8,6 +8,8 @@ import type {
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
+  HexasquareSimulationRequestDto,
+  AnnouncementCampaign,
   LeaderboardGame,
   LeaderboardsDto,
   ProfileUpdateDto,
@@ -74,6 +76,7 @@ export type ApiClient = {
   readonly logout: EndpointHandler<"/api/logout", "POST">;
   readonly me: EndpointHandler<"/api/me", "GET">;
   readonly markHexahackLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAHACK_LAUNCH/seen", "POST">;
+  readonly markAnnouncementSeen: (campaign: AnnouncementCampaign) => Promise<void>;
   readonly today: EndpointHandler<"/api/hexaword/today", "GET">;
   readonly selectMode: EndpointHandler<"/api/hexaword/today/mode", "POST", [mode: GameMode]>;
   readonly guess: EndpointHandler<"/api/hexaword/today/guesses", "POST", [guess: string]>;
@@ -87,6 +90,9 @@ export type ApiClient = {
   readonly hexaskyToday: EndpointHandler<"/api/hexasky/today", "GET">;
   readonly hexaskyCheck: EndpointHandler<"/api/hexasky/today/checks", "POST", [request: HexaskyCheckRequestDto]>;
   readonly hexaskyStats: EndpointHandler<"/api/hexasky/stats", "GET">;
+  readonly hexasquareToday: EndpointHandler<"/api/hexasquare/today", "GET">;
+  readonly hexasquareSimulate: EndpointHandler<"/api/hexasquare/today/simulations", "POST", [request: HexasquareSimulationRequestDto]>;
+  readonly hexasquareStats: EndpointHandler<"/api/hexasquare/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
@@ -153,6 +159,11 @@ export const api = {
   logout: () => request("/api/logout", { method: "POST" }),
   me: () => request("/api/me", { method: "GET" }),
   markHexahackLaunchSeen: () => request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" }),
+  markAnnouncementSeen: (campaign: AnnouncementCampaign) => {
+    if (campaign === "HEXAHACK_LAUNCH") return request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" });
+    if (campaign === "HEXASKY_LAUNCH") return request("/api/me/announcements/HEXASKY_LAUNCH/seen", { method: "POST" });
+    return request("/api/me/announcements/HEXASQUARE_LAUNCH/seen", { method: "POST" });
+  },
   today: () => request("/api/hexaword/today", { method: "GET" }),
   selectMode: (mode: GameMode) =>
     request("/api/hexaword/today/mode", {
@@ -180,6 +191,9 @@ export const api = {
   hexaskyToday: () => request("/api/hexasky/today", { method: "GET" }),
   hexaskyCheck: (checkRequest: HexaskyCheckRequestDto) => request("/api/hexasky/today/checks", { method: "POST", body: checkRequest }),
   hexaskyStats: () => request("/api/hexasky/stats", { method: "GET" }),
+  hexasquareToday: () => request("/api/hexasquare/today", { method: "GET" }),
+  hexasquareSimulate: (simulation: HexasquareSimulationRequestDto) => request("/api/hexasquare/today/simulations", { method: "POST", body: simulation }),
+  hexasquareStats: () => request("/api/hexasquare/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {

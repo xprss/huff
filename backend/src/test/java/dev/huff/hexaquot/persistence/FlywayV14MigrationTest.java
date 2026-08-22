@@ -22,15 +22,36 @@ class FlywayV14MigrationTest {
     @Inject AgroalDataSource dataSource;
 
     @Test
-    void migratesAnEmptyDatabaseDirectlyToTheNewV14() throws Exception {
+    void migratesAnEmptyDatabaseDirectlyToV15() throws Exception {
         withSchema(schema -> {
             flyway(schema, null).migrate();
-            assertEquals("14", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
+            assertEquals("15", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
             assertTrue(tableExists(schema, "hexaword_games"));
             assertTrue(tableExists(schema, "hexahack_games"));
             assertTrue(tableExists(schema, "hexasky_games"));
+            assertTrue(tableExists(schema, "hexasquare_games"));
+            assertTrue(tableExists(schema, "hexasquare_simulations"));
+            assertTrue(constraintExists(schema,"hexasquare_games","hexasquare_games_user_puzzle_date_unique"));
+            assertTrue(constraintExists(schema,"hexasquare_simulations","hexasquare_simulations_game_request_unique"));
             assertFalse(columnExists(schema, "hexahack_games", "override_count"));
             assertFalse(tableExists(schema, "games"));
+        });
+    }
+
+    @Test
+    void upgradesV14AndBuildsTheHexasquareLaunchAudience() throws Exception {
+        withSchema(schema -> {
+            flyway(schema, MigrationVersion.fromVersion("14")).migrate();
+            execute(schema, """
+                INSERT INTO users (id, display_name, nickname, profile_emoji, created_at, star_available, input_hand_preference)
+                VALUES ('v14-user', 'V14 User', '@v14-user', '😀', '2026-01-01T00:00:00Z', false, 'RIGHT');
+                INSERT INTO push_subscriptions (id, user_id, endpoint, p256dh, auth, created_at, updated_at)
+                VALUES ('v14-push', 'v14-user', 'https://example.test/v14', 'key', 'auth', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+                """);
+            flyway(schema, null).migrate();
+            assertTrue(tableExists(schema,"hexasquare_games"));
+            assertEquals(1L,scalarLong(schema,"SELECT COUNT(*) FROM user_announcements WHERE campaign = 'HEXASQUARE_LAUNCH'"));
+            assertEquals(1L,scalarLong(schema,"SELECT COUNT(*) FROM push_campaign_deliveries WHERE campaign = 'HEXASQUARE_LAUNCH'"));
         });
     }
 
@@ -146,6 +167,16 @@ class FlywayV14MigrationTest {
             statement.setString(2, table);
             statement.setString(3, column);
             try (ResultSet result = statement.executeQuery()) { result.next(); return result.getBoolean(1); }
+        }
+    }
+
+    private boolean constraintExists(String schema,String table,String constraint) throws Exception {
+        try(Connection connection=dataSource.getConnection();var statement=connection.prepareStatement("""
+            SELECT EXISTS (SELECT 1 FROM information_schema.table_constraints
+              WHERE table_schema = ? AND table_name = ? AND constraint_name = ?)
+            """)) {
+            statement.setString(1,schema); statement.setString(2,table); statement.setString(3,constraint);
+            try(ResultSet result=statement.executeQuery()){result.next();return result.getBoolean(1);}
         }
     }
 

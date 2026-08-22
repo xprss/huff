@@ -110,6 +110,7 @@ public class LeaderboardService {
             stats.hexaword(),
             stats.hexahack(),
             stats.hexasky(),
+            stats.hexasquare(),
             medalCounts(user.id)
         );
     }

@@ -57,6 +57,7 @@ public class LeaderboardResource {
             case "overall" -> LeaderboardRepository.Board.OVERALL;
             case "hexahack" -> LeaderboardRepository.Board.HEXAHACK;
             case "hexasky" -> LeaderboardRepository.Board.HEXASKY;
+            case "hexasquare" -> LeaderboardRepository.Board.HEXASQUARE;
             default -> throw new jakarta.ws.rs.BadRequestException("Gioco della leaderboard non valido.");
         };
     }

@@ -5,6 +5,7 @@ import dev.huff.hexaquot.game.GameRecord;
 import dev.huff.hexaquot.game.GameRepository;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
+import dev.huff.hexaquot.persistence.PushCampaignDeliveryEntity;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -80,6 +81,19 @@ class PushNotificationServiceTest {
 
         assertTrue(subscriptionIds.contains(pending.id));
         assertTrue(!subscriptionIds.contains(alreadyReminded.id));
+    }
+
+    @Test @TestTransaction
+    void createsOnlyOneHexasquareLaunchDeliveryPerSubscription() {
+        PushSubscriptionEntity subscription=subscription("square-push-"+UUID.randomUUID(),"2099-02-09",false);
+        PushNotificationService service=io.quarkus.arc.ClientProxy.unwrap(pushNotificationService);
+        boolean previous=service.hexasquareLaunchEnabled;
+        try {
+            service.hexasquareLaunchEnabled=true;
+            service.createHexasquareLaunchDeliveries();
+            service.createHexasquareLaunchDeliveries();
+            assertEquals(1,PushCampaignDeliveryEntity.count("subscriptionId = ?1 and campaign = ?2",subscription.id,AnnouncementService.HEXASQUARE_LAUNCH));
+        } finally { service.hexasquareLaunchEnabled=previous; }
     }
 
     private PushSubscriptionEntity subscription(String userId, String puzzleDate, boolean alreadyReminded) {
