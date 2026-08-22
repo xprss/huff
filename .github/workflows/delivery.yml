@@ -4,12 +4,13 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: delivery-master
+  group: delivery-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:
