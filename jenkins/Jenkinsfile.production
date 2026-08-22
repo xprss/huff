@@ -34,12 +34,11 @@ pipeline {
               set +x
               . scripts/load-env-file.sh
               load_env_file /etc/huff/.env.jenkins
-              printf '%s\n%s\n' "${JENKINS_PRODUCTION_APPROVERS:-huff-admin}" "${JENKINS_STATE_DIR:-/var/lib/jenkins/huff/state}"
+              printf '%s' "${JENKINS_STATE_DIR:-/var/lib/jenkins/huff/state}"
             ''',
             returnStdout: true
-          ).trim().readLines()
-          env.PRODUCTION_APPROVERS = configuration[0]
-          env.HUFF_STATE_DIR = configuration[1]
+          ).trim()
+          env.HUFF_STATE_DIR = configuration
 
           def userCauses = currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause')
           env.REQUESTED_BY = userCauses ? userCauses[0].userId : 'unknown'
@@ -72,7 +71,7 @@ pipeline {
       }
     }
 
-    stage('Confirm production') {
+    stage('Validate production confirmation') {
       steps {
         script {
           if (!params.RELEASE_REASON?.trim()) {
@@ -81,14 +80,6 @@ pipeline {
           if (params.CONFIRMATION_TEXT != 'DEPLOY-PRODUCTION') {
             error('CONFIRMATION_TEXT must be DEPLOY-PRODUCTION')
           }
-
-          def approval = input(
-            message: 'Deploy the pinned staging candidate to production?',
-            ok: 'Deploy production',
-            submitter: env.PRODUCTION_APPROVERS,
-            submitterParameter: 'APPROVER'
-          )
-          env.DEPLOY_APPROVER = approval instanceof Map ? approval.APPROVER : approval.toString()
         }
       }
     }
@@ -134,14 +125,12 @@ pipeline {
               --arg environment production \
               --arg deployedAt "${deployed_at}" \
               --arg requestedBy "${REQUESTED_BY}" \
-              --arg deployApprover "${DEPLOY_APPROVER}" \
               --arg releaseReason "${RELEASE_REASON}" \
               --arg result SUCCESS \
               '. + {
                 environment: $environment,
                 deployedAt: $deployedAt,
                 requestedBy: $requestedBy,
-                deployApprover: $deployApprover,
                 releaseReason: $releaseReason,
                 result: $result
               }' deployment.json > production-result.json
@@ -166,14 +155,12 @@ pipeline {
             --arg environment production \
             --arg deployedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             --arg requestedBy "${REQUESTED_BY:-unknown}" \
-            --arg deployApprover "${DEPLOY_APPROVER:-not-approved}" \
             --arg releaseReason "${RELEASE_REASON:-}" \
             --arg result "${DEPLOY_RESULT}" \
             '. + {
               environment: $environment,
               deployedAt: $deployedAt,
               requestedBy: $requestedBy,
-              deployApprover: $deployApprover,
               releaseReason: $releaseReason,
               result: $result
             }' deployment.json > production-result.json

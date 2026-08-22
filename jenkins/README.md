@@ -89,10 +89,9 @@ variables.
 Production pins the newest successful staging artifact at job start, compares it
 with `/var/lib/jenkins/huff/state/production-deployment.json`, displays its
 SemVer, commit, digest, staging time and GitHub workflow, then requires a reason,
-the exact text `DEPLOY-PRODUCTION`, and a final authorized approval. It refuses
-downgrades and refuses reuse of the same base SemVer with another digest. The
-first successful run bootstraps the production state. Repeating the same
-version/digest is idempotent.
+and the exact text `DEPLOY-PRODUCTION`. It refuses downgrades and refuses reuse
+of the same base SemVer with another digest. The first successful run bootstraps
+the production state. Repeating the same version/digest is idempotent.
 
 Restart exposes only `staging` (`huff-hexaquot-staging`) and `production`
 (`huff-hexaquot`). Production requires a reason, `RESTART-PRODUCTION`, and final
