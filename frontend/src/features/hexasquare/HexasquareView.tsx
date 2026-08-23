@@ -1,5 +1,5 @@
 import React from "react";
-import { Eraser, Hand, HelpCircle, Maximize2, Play, Redo2, RotateCw, Share2, Undo2, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Eraser, HelpCircle, Maximize2, Play, Redo2, RotateCw, Share2, Undo2, X, ZoomIn, ZoomOut } from "lucide-react";
 import type {
   HexasquareCharacterOutcomeDto,
   HexasquarePlacementDto,
@@ -14,7 +14,7 @@ const TUTORIAL_KEY = "huff.hexasquare.tutorial.v1";
 const ROAD_TYPES: readonly HexasquareRoadType[] = ["STRAIGHT", "CURVE", "T_JUNCTION", "CROSS"];
 const ROAD_LABELS: Record<HexasquareRoadType, string> = { STRAIGHT: "Rettilineo", CURVE: "Curva", T_JUNCTION: "Incrocio a T", CROSS: "Incrocio" };
 const QUADRANT_LABELS = { BRUMAVIA: "Brumavia", SOLARIA: "Solaria", VERDOMBRA: "Verdombra", LUNARGENTO: "Lunargento" } as const;
-type Tool = HexasquareRoadType | "ERASER" | "PAN";
+type Tool = HexasquareRoadType | "ERASER";
 type Rotation = 0 | 90 | 180 | 270;
 
 export function HexasquareView({ today, stats, busy, onSimulate, onError, onComplete, onOpenStats }: {
@@ -35,9 +35,7 @@ export function HexasquareView({ today, stats, busy, onSimulate, onError, onComp
   const [result, setResult] = React.useState<HexasquareSimulationActionDto["result"] | null>(null);
   const [tutorialOpen, setTutorialOpen] = React.useState(() => localStorage.getItem(TUTORIAL_KEY) !== "true");
   const [zoom, setZoom] = React.useState(.75);
-  const [offset, setOffset] = React.useState({ x: 12, y: 12 });
   const viewportRef = React.useRef<HTMLDivElement | null>(null);
-  const dragRef = React.useRef<{ pointerId: number; x: number; y: number; originX: number; originY: number } | null>(null);
   const complete = today.game?.status === "COMPLETED";
   const blocked = React.useMemo(() => new Set([...today.obstacles, ...today.terminals.map((terminal) => terminal.coordinate)].map(coordinateKey)), [today.obstacles, today.terminals]);
   const obstacleSet = React.useMemo(() => new Set(today.obstacles.map(coordinateKey)), [today.obstacles]);
@@ -69,10 +67,14 @@ export function HexasquareView({ today, stats, busy, onSimulate, onError, onComp
   }
 
   function editCell(row: number, column: number) {
-    if (complete || tool === "PAN" || blocked.has(`${row}:${column}`)) return;
+    if (complete || blocked.has(`${row}:${column}`)) return;
     const current = placementMap.get(`${row}:${column}`);
     if (tool === "ERASER") {
       if (current) commit(placements.filter((placement) => placement !== current));
+      return;
+    }
+    if (current?.type === tool) {
+      rotateCell(row, column);
       return;
     }
     if ((!current || current.type !== tool) && usedByType[tool] >= (today.inventory[tool] ?? 0)) { onError(`Hai esaurito: ${ROAD_LABELS[tool]}.`); return; }
@@ -107,19 +109,9 @@ export function HexasquareView({ today, stats, busy, onSimulate, onError, onComp
   function fitBoard() {
     const viewport=viewportRef.current; if(!viewport)return;
     const next=Math.max(.32,Math.min(1,(Math.min(viewport.clientWidth,viewport.clientHeight)-24)/(today.size*CELL_SIZE)));
-    setZoom(next); setOffset({x:12,y:12});
+    setZoom(next);
+    viewport.scrollTo({ left: 0, top: 0, behavior: "smooth" });
   }
-
-  function onPointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    if(tool!=="PAN"&&event.target!==event.currentTarget)return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current={pointerId:event.pointerId,x:event.clientX,y:event.clientY,originX:offset.x,originY:offset.y};
-  }
-  function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    const drag=dragRef.current;if(!drag||drag.pointerId!==event.pointerId)return;
-    setOffset({x:drag.originX+event.clientX-drag.x,y:drag.originY+event.clientY-drag.y});
-  }
-  function stopDragging(event: React.PointerEvent<HTMLDivElement>) { if(dragRef.current?.pointerId===event.pointerId)dragRef.current=null; }
 
   async function share() {
     const saved=today.game?.remainingCells??result?.remainingCells??0;
@@ -132,23 +124,26 @@ export function HexasquareView({ today, stats, busy, onSimulate, onError, onComp
     <header className="hexasquare-intro"><div><p className="eyebrow">Pianificazione quotidiana</p><h2>Hexasquare</h2><p>Collega ogni viaggiatore al suo obiettivo rispettando quartieri vietati e incompatibilità.</p></div><button className="icon-button" type="button" onClick={()=>setTutorialOpen(true)} aria-label="Apri il tutorial"><HelpCircle /></button></header>
     <div className="hexasquare-layout">
       <div className="hexasquare-workspace">
-        <div className="hexasquare-tools" aria-label="Strumenti di costruzione">
-          {ROAD_TYPES.map((type)=><button key={type} type="button" disabled={complete||usedByType[type]>=today.inventory[type]} className={tool===type?"selected":""} onClick={()=>setTool(type)} aria-pressed={tool===type}><RoadGlyph type={type} rotation={rotation}/><span>{ROAD_LABELS[type]}</span><strong>{today.inventory[type]-usedByType[type]}</strong></button>)}
-          <button type="button" className={tool==="ERASER"?"selected":""} onClick={()=>setTool("ERASER")}><Eraser/><span>Gomma</span></button>
-          <button type="button" className={tool==="PAN"?"selected":""} onClick={()=>setTool("PAN")}><Hand/><span>Sposta</span></button>
+        <div className="hexasquare-tools" aria-label="Scegli lo strumento da usare sulla griglia">
+          {ROAD_TYPES.map((type)=><button key={type} type="button" disabled={complete||usedByType[type]>=today.inventory[type]} className={tool===type?"selected":""} onClick={()=>setTool(type)} aria-pressed={tool===type} title={`${ROAD_LABELS[type]}: ${today.inventory[type]-usedByType[type]} disponibili`}><RoadGlyph type={type} rotation={rotation}/><span>{ROAD_LABELS[type]}</span><strong aria-label={`${today.inventory[type]-usedByType[type]} disponibili`}>{today.inventory[type]-usedByType[type]}</strong></button>)}
+          <button type="button" disabled={complete} className={tool==="ERASER"?"selected":""} onClick={()=>setTool("ERASER")} aria-pressed={tool==="ERASER"}><Eraser/><span>Rimuovi</span></button>
         </div>
         <div className="hexasquare-commandbar">
-          <button type="button" onClick={()=>setRotation(((rotation+90)%360) as Rotation)} disabled={complete}><RotateCw/> Ruota <span>{rotation}°</span></button>
-          <button type="button" onClick={undoEdit} disabled={complete||!undo.length}><Undo2/> Annulla</button>
-          <button type="button" onClick={redoEdit} disabled={complete||!redo.length}><Redo2/> Ripristina</button>
+          <p className="hexasquare-active-tool">{tool === "ERASER" ? <><Eraser/> Rimuovi strade</> : <><RoadGlyph type={tool} rotation={rotation}/> <span>{ROAD_LABELS[tool]}</span></>}</p>
+          <button className="hexasquare-rotate" type="button" onClick={()=>setRotation(((rotation+90)%360) as Rotation)} disabled={complete||tool==="ERASER"} title="Ruota lo strumento attivo di 90 gradi"><RotateCw/> Ruota <span>{rotation}°</span></button>
+          <button type="button" onClick={undoEdit} disabled={complete||!undo.length} title="Annulla l'ultima modifica" aria-label="Annulla l'ultima modifica"><Undo2/><span>Annulla</span></button>
+          <button type="button" onClick={redoEdit} disabled={complete||!redo.length} title="Ripristina l'ultima modifica" aria-label="Ripristina l'ultima modifica"><Redo2/><span>Ripristina</span></button>
           <span className="hexasquare-zoom"><button type="button" onClick={()=>setZoom((value)=>Math.max(.3,value-.1))} aria-label="Riduci zoom"><ZoomOut/></button><strong>{Math.round(zoom*100)}%</strong><button type="button" onClick={()=>setZoom((value)=>Math.min(1.8,value+.1))} aria-label="Aumenta zoom"><ZoomIn/></button><button type="button" onClick={fitBoard} aria-label="Adatta tabellone"><Maximize2/></button></span>
         </div>
-        <div ref={viewportRef} className={`hexasquare-viewport ${tool==="PAN"?"panning":""}`} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={stopDragging} onPointerCancel={stopDragging}>
-          <div className="hexasquare-board" role="grid" aria-label="Griglia urbana 24 per 24" style={{width:today.size*CELL_SIZE,height:today.size*CELL_SIZE,gridTemplateColumns:`repeat(${today.size}, ${CELL_SIZE}px)`,transform:`translate(${offset.x}px, ${offset.y}px) scale(${zoom})`}}>
+        <p className="hexasquare-navigation-hint">Scorri la mappa con mouse o dito. Seleziona una strada e tocca una casella per posarla; ritocca la stessa strada per ruotarla.</p>
+        <div ref={viewportRef} className="hexasquare-viewport">
+          <div className="hexasquare-canvas" style={{width:today.size*CELL_SIZE*zoom+24,height:today.size*CELL_SIZE*zoom+24}}>
+            <div className="hexasquare-board" role="grid" aria-label="Griglia urbana 24 per 24" style={{width:today.size*CELL_SIZE,height:today.size*CELL_SIZE,gridTemplateColumns:`repeat(${today.size}, ${CELL_SIZE}px)`,transform:`scale(${zoom})`}}>
             {Array.from({length:today.size*today.size},(_,index)=>{const row=Math.floor(index/today.size),column=index%today.size,key=`${row}:${column}`,placement=placementMap.get(key),terminal=terminalMap.get(key),character=terminal?today.characters.find((entry)=>entry.id===terminal.characterId):null,paths=pathMap.get(key)??[];return <button type="button" role="gridcell" key={key} data-row={row} data-column={column} className={`hexasquare-cell quadrant-${quadrantFor(row,column).toLowerCase()} ${obstacleSet.has(key)?"obstacle":""} ${terminal?"terminal":""} ${terminal&&failedCharacterIds.has(terminal.characterId)?"failed-character":""} ${paths.length?"routed":""}`} aria-label={cellLabel(row,column,placement,terminal?.kind,character?.name)} onClick={()=>editCell(row,column)} onKeyDown={(event)=>handleCellKey(event,row,column,()=>editCell(row,column),()=>rotateCell(row,column),()=>eraseCell(row,column))} disabled={false}>
               {obstacleSet.has(key)?<span aria-hidden="true">▦</span>:terminal?<span className="terminal-marker" aria-hidden="true">{character?.emoji}<small>{terminal.kind==="START"?"P":"D"}</small></span>:placement?<RoadGlyph type={placement.type} rotation={placement.rotation}/>:null}
               {paths.map((path)=><i className={`route-dot route-${path%6}`} key={path} aria-hidden="true"/>)}
             </button>;})}
+            </div>
           </div>
         </div>
         {!complete?<button className="hexasquare-simulate" type="button" onClick={()=>void simulate()} disabled={busy}><Play/> {busy?"Simulazione…":"Simula"}</button>:null}
