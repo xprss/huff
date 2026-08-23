@@ -74,7 +74,10 @@ jobs:
           IMAGE_REPOSITORY: ${{ vars.DOCKERHUB_IMAGE }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
           APP_VERSION: ${{ steps.version.outputs.app-version }}
-          GIT_COMMIT: ${{ github.sha }}
+          # Jenkins sets GIT_COMMIT while it checks out its own SCM branch.
+          # Keep the artifact identity in a distinct variable so a manual
+          # workflow dispatch cannot be verified against Jenkins' master SHA.
+          DEPLOY_GIT_COMMIT: ${{ github.sha }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           JENKINS_URL: ${{ vars.JENKINS_URL }}
           JENKINS_STAGING_JOB: ${{ vars.JENKINS_STAGING_JOB }}
@@ -85,7 +88,7 @@ jobs:
           scripts/version.sh validate-full "${APP_VERSION}"
           scripts/version.sh validate-repository "${IMAGE_REPOSITORY}"
           scripts/version.sh validate-digest "${IMAGE_DIGEST}"
-          scripts/version.sh validate-commit "${GIT_COMMIT}"
+          scripts/version.sh validate-commit "${DEPLOY_GIT_COMMIT}"
           [[ -n "${JENKINS_URL}" && -n "${JENKINS_STAGING_JOB}" ]]
           [[ -n "${JENKINS_TRIGGER_USER}" && -n "${JENKINS_TRIGGER_TOKEN}" ]]
 
@@ -96,7 +99,7 @@ jobs:
             --request POST \
             --data-urlencode "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}" \
             --data-urlencode "IMAGE_DIGEST=${IMAGE_DIGEST}" \
-            --data-urlencode "GIT_COMMIT=${GIT_COMMIT}" \
+            --data-urlencode "DEPLOY_GIT_COMMIT=${DEPLOY_GIT_COMMIT}" \
             --data-urlencode "APP_VERSION=${APP_VERSION}" \
             --data-urlencode "GITHUB_RUN_URL=${GITHUB_RUN_URL}" \
             "${JENKINS_URL%/}/job/${JENKINS_STAGING_JOB}/buildWithParameters"
