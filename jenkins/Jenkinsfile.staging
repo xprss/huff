@@ -14,6 +14,9 @@ pipeline {
     // Do not use GIT_COMMIT: Jenkins' checkout step injects that variable with
     // the SCM (master) SHA and overrides the value supplied by GitHub Actions.
     string(name: 'DEPLOY_GIT_COMMIT', defaultValue: '', description: 'Full Git commit SHA for the image to deploy')
+    // Kept temporarily so branches with the previous Delivery workflow can
+    // still deploy. Read it through params, never through the environment.
+    string(name: 'GIT_COMMIT', defaultValue: '', description: 'Legacy full Git commit SHA')
     string(name: 'APP_VERSION', defaultValue: '', description: 'Full CI SemVer')
     string(name: 'GITHUB_RUN_URL', defaultValue: '', description: 'GitHub Actions run URL')
   }
@@ -21,6 +24,13 @@ pipeline {
   stages {
     stage('Validate request') {
       steps {
+        script {
+          def requestedCommit = params.DEPLOY_GIT_COMMIT?.trim() ?: params.GIT_COMMIT?.trim()
+          if (!requestedCommit) {
+            error 'Missing deployment parameter: DEPLOY_GIT_COMMIT'
+          }
+          env.DEPLOY_GIT_COMMIT = requestedCommit
+        }
         sh 'scripts/jenkins/validate-deployment-input.sh'
       }
     }
