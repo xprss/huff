@@ -50,15 +50,21 @@ only `staging` mutable; the pipelines never use either tag as a deploy target.
 After obtaining the TLS certificate, install the Nginx virtual host:
 
 ```bash
+sudo install -m 0644 jenkins/nginx-ci.hexaquot.it.conf \
+  /etc/nginx/conf.d/ci.hexaquot.it.conf
 sudo install -m 0644 jenkins/nginx-ci.ottonovembre.it.conf \
   /etc/nginx/conf.d/ci.ottonovembre.it.conf
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-Set the Jenkins URL to `https://ci.ottonovembre.it/`. Keep the default CSRF crumb
+Set the Jenkins URL to `https://ci.hexaquot.it/`. Keep the default CSRF crumb
 issuer enabled. Jenkins API tokens authenticate remote build requests without
 disabling CSRF protection.
+
+Before requesting the certificate, create an `A`/`AAAA` record for
+`ci.hexaquot.it` pointing to this host. The former `ci.ottonovembre.it` virtual
+host remains only as a redirect to the new canonical URL.
 
 ## Security configuration
 

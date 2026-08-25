@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-JENKINS_URL="${JENKINS_URL:-https://ci.ottonovembre.it}"
+JENKINS_URL="${JENKINS_URL:-https://ci.hexaquot.it}"
 JENKINS_USER="${JENKINS_USER:-}"
 JENKINS_API_TOKEN="${JENKINS_API_TOKEN:-}"
 if [[ -x /usr/lib/jvm/jre-21-openjdk/bin/java ]]; then

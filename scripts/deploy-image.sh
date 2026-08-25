@@ -73,7 +73,7 @@ if [[ "${ENVIRONMENT}" == "staging" ]]; then
   DEFAULT_POSTGRES_PASSWORD="huff-staging"
   DEFAULT_APP_MEMORY="320m"
   DEFAULT_APP_MEMORY_SWAP="448m"
-  DEFAULT_VAPID_SUBJECT="mailto:notifications@staging.huff.ottonovembre.it"
+  DEFAULT_VAPID_SUBJECT="mailto:notifications@staging.hexaquot.it"
 else
   DEFAULT_ENV_FILE="${PROJECT_ROOT}/.env"
   DEFAULT_CONTAINER_NAME="huff-hexaquot"
@@ -86,7 +86,7 @@ else
   DEFAULT_POSTGRES_PASSWORD="huff"
   DEFAULT_APP_MEMORY="384m"
   DEFAULT_APP_MEMORY_SWAP="512m"
-  DEFAULT_VAPID_SUBJECT="mailto:notifications@huff.ottonovembre.it"
+  DEFAULT_VAPID_SUBJECT="mailto:notifications@hexaquot.it"
 fi
 
 ENV_FILE="${ENV_FILE:-${DEFAULT_ENV_FILE}}"

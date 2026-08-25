@@ -81,7 +81,7 @@ node scripts/generate-vapid-keys.mjs
 ```bash
 VAPID_PUBLIC_KEY=...
 VAPID_PRIVATE_KEY=...
-VAPID_SUBJECT=mailto:notifications@huff.ottonovembre.it
+VAPID_SUBJECT=mailto:notifications@hexaquot.it
 PUSH_NEW_GAME_CRON=0 2 0 * * ?
 PUSH_DAILY_REMINDER_CRON=0 0 23 * * ?
 PUSH_WEEKLY_AWARDS_REMINDER_CRON=0 10 20 ? * MON
