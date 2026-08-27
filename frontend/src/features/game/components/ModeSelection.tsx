@@ -23,7 +23,13 @@ export function ModeSelection({
             onClick={() => onSelect(mode.mode)}
             aria-pressed={selectedMode === mode.mode}
           >
-            {mode.mode === "MISCHIEVOUS_MOUSE" ? <span>🐭</span> : <span className="classic-mark" aria-hidden="true" />}
+            {mode.mode === "MISCHIEVOUS_MOUSE" ? (
+              <span aria-hidden="true">🐭</span>
+            ) : mode.mode === "STUBBORN_CRAB" ? (
+              <span aria-hidden="true">🦀</span>
+            ) : (
+              <span className="classic-mark" aria-hidden="true" />
+            )}
             <span>{mode.label}</span>
           </button>
         ))}

@@ -48,7 +48,13 @@ import { GameKeyboard } from "../features/game/components/GameKeyboard";
 import { LetterNavigator } from "../features/game/components/LetterNavigator";
 import { ModeSelection } from "../features/game/components/ModeSelection";
 import { StarRevealModal } from "../features/game/components/StarRevealModal";
-import { buildColumns, buildShareText, hasAlreadyGuessed } from "../features/game/gameUtils";
+import {
+  buildColumns,
+  buildCrabConstraints,
+  buildShareText,
+  crabConstraintViolation,
+  hasAlreadyGuessed
+} from "../features/game/gameUtils";
 import { launchVictoryConfetti } from "../features/game/confetti";
 import { InfoModal } from "../features/info/InfoModal";
 import {
@@ -86,7 +92,7 @@ import {
   getRemainingMilliseconds
 } from "../shared/utils/date";
 
-const HEXAWORD_TUTORIAL_STORAGE_KEY = "huff.hexaword.tutorial.closed";
+const HEXAWORD_TUTORIAL_STORAGE_KEY = "huff.hexaword.tutorial.v2.closed";
 
 export function App() {
   const queryClient = useQueryClient();
@@ -151,6 +157,15 @@ export function App() {
   });
   const today = todayQuery.data;
   const game = today?.game ?? null;
+  const crabConstraints = React.useMemo(() => buildCrabConstraints(game), [game]);
+  const lockedCellIndices = React.useMemo(
+    () => crabConstraints.lockedLetters.flatMap((letter, index) => (letter ? [index] : [])),
+    [crabConstraints]
+  );
+  const selectableCellIndices = React.useMemo(
+    () => Array.from({ length: game?.answerLength ?? 6 }, (_, index) => index).filter((index) => !lockedCellIndices.includes(index)),
+    [game?.answerLength, lockedCellIndices]
+  );
   const modes = today?.modes ?? [];
   const todayPuzzleDate = today?.puzzleDate ?? null;
   const stats = isLoggedIn ? statsQuery.data ?? null : null;
@@ -235,6 +250,17 @@ export function App() {
       setStarReveal(reveal.guesses);
     }
   });
+
+  React.useEffect(() => {
+    if (!game || game.mode !== "STUBBORN_CRAB" || game.status !== "IN_PROGRESS") return;
+
+    setCurrentGuess((current) => mergeLockedLetters(current, crabConstraints.lockedLetters, game.answerLength));
+    setSelectedCellIndex((current) => {
+      if (current !== null && !crabConstraints.lockedLetters[current]) return current;
+      const seeded = mergeLockedLetters([], crabConstraints.lockedLetters, game.answerLength);
+      return findNextEmptyCell(seeded, 0);
+    });
+  }, [game?.puzzleDate, game?.mode, game?.guesses.length, game?.status]);
 
   const updateProfileMutation = useMutation({
     mutationFn: api.updateProfile,
@@ -495,12 +521,13 @@ export function App() {
     if (!shouldHideKeyboardHints && keyStates.get(letter.toUpperCase()) === "ABSENT") return;
     clearToast();
     setCurrentGuess((value) => {
-      const cells = normalizeGuessCells(value, game.answerLength);
+      const cells = mergeLockedLetters(value, crabConstraints.lockedLetters, game.answerLength);
       const index = selectedCellIndex ?? cells.findIndex((cell) => !cell);
-      if (index < 0) return cells;
+      const editableIndex = index >= 0 && !crabConstraints.lockedLetters[index] ? index : findNextEmptyCell(cells, 0);
+      if (editableIndex === null || editableIndex < 0) return cells;
 
-      cells[index] = letter.toUpperCase();
-      setSelectedCellIndex(findNextEmptyCell(cells, index + 1));
+      cells[editableIndex] = letter.toUpperCase();
+      setSelectedCellIndex(findNextEmptyCell(cells, editableIndex + 1));
       return cells;
     });
   }
@@ -509,13 +536,20 @@ export function App() {
     if (!game || game.status !== "IN_PROGRESS") return;
     clearToast();
     setCurrentGuess((value) => {
-      const cells = normalizeGuessCells(value, game.answerLength);
+      const cells = mergeLockedLetters(value, crabConstraints.lockedLetters, game.answerLength);
       // A manually selected filled cell is the explicit deletion target.  When
       // the cursor is on an empty cell, retain the usual Backspace behavior.
       const index =
         selectedCellIndex !== null && cells[selectedCellIndex]
           ? selectedCellIndex
-          : findPreviousFilledCell(cells, selectedCellIndex ?? game.answerLength);
+          : findPreviousFilledCell(cells, selectedCellIndex ?? game.answerLength, lockedCellIndices);
+      if (index !== null && crabConstraints.lockedLetters[index]) {
+        const previousEditable = findPreviousFilledCell(cells, index, lockedCellIndices);
+        if (previousEditable === null) return cells;
+        cells[previousEditable] = "";
+        setSelectedCellIndex(previousEditable);
+        return cells;
+      }
       if (index === null) return cells;
 
       cells[index] = "";
@@ -526,6 +560,7 @@ export function App() {
 
   function selectGuessCell(index: number) {
     if (!game || game.status !== "IN_PROGRESS") return;
+    if (crabConstraints.lockedLetters[index]) return;
     clearToast();
     setSelectedCellIndex(index);
   }
@@ -541,12 +576,21 @@ export function App() {
       showToast("Hai già inserito questa parola.", "warning");
       return;
     }
+    if (game.mode === "STUBBORN_CRAB") {
+      const violation = crabConstraintViolation(crabConstraints, guess);
+      if (violation) {
+        showToast(violation, "warning");
+        return;
+      }
+    }
 
     try {
       const updated = await guessMutation.mutateAsync(guess);
       setTodayGame(updated);
-      setCurrentGuess([]);
-      setSelectedCellIndex(0);
+      const nextConstraints = buildCrabConstraints(updated);
+      const nextGuess = mergeLockedLetters([], nextConstraints.lockedLetters, updated.answerLength);
+      setCurrentGuess(nextGuess);
+      setSelectedCellIndex(findNextEmptyCell(nextGuess, 0));
       if (updated.star.justAwarded) {
         showToast("Hai conquistato una stella.", "success");
       }
@@ -895,6 +939,8 @@ export function App() {
                   canPlay={canPlay}
                   isSubmitting={guessMutation.isPending}
                   terminalResult={terminalResult}
+                  lockedCellIndices={lockedCellIndices}
+                  yellowRequirements={crabConstraints.yellowRequirements}
                   selectedCellIndex={selectedCellIndex}
                   completedSolution={completedSolution}
                   nextChallengeCountdown={nextChallengeCountdown}
@@ -935,6 +981,7 @@ export function App() {
                     canPlay={canPlay}
                     hand={me.user.inputHandPreference}
                     selectedCellIndex={selectedCellIndex}
+                    selectableCellIndices={selectableCellIndices}
                     onSelectCell={selectGuessCell}
                   />
                 ) : null}
@@ -1029,6 +1076,18 @@ function normalizeGuessCells(cells: readonly string[], answerLength: number) {
   return Array.from({ length: answerLength }, (_, index) => cells[index] ?? "");
 }
 
+function mergeLockedLetters(
+  cells: readonly string[],
+  lockedLetters: readonly (string | null)[],
+  answerLength: number
+) {
+  const merged = normalizeGuessCells(cells, answerLength);
+  lockedLetters.forEach((letter, index) => {
+    if (letter) merged[index] = letter;
+  });
+  return merged;
+}
+
 function findNextEmptyCell(cells: readonly string[], startIndex: number) {
   for (let index = startIndex; index < cells.length; index += 1) {
     if (!cells[index]) return index;
@@ -1039,15 +1098,16 @@ function findNextEmptyCell(cells: readonly string[], startIndex: number) {
   return null;
 }
 
-function findPreviousFilledCell(cells: readonly string[], startIndex: number) {
+function findPreviousFilledCell(cells: readonly string[], startIndex: number, lockedCellIndices: readonly number[] = []) {
+  const lockedCells = new Set(lockedCellIndices);
   for (let index = Math.min(startIndex - 1, cells.length - 1); index >= 0; index -= 1) {
-    if (cells[index]) return index;
+    if (cells[index] && !lockedCells.has(index)) return index;
   }
 
   // The cursor can wrap to an earlier empty cell after a user fills a later one.
   // Continue from the end so Backspace still removes the character just entered.
   for (let index = cells.length - 1; index >= startIndex; index -= 1) {
-    if (cells[index]) return index;
+    if (cells[index] && !lockedCells.has(index)) return index;
   }
 
   return null;

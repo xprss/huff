@@ -1,6 +1,6 @@
 export type TileState = "CORRECT" | "PRESENT" | "ABSENT" | "HIDDEN";
 export type GameStatus = "IN_PROGRESS" | "WON" | "LOST";
-export type GameMode = "CLASSIC" | "MISCHIEVOUS_MOUSE";
+export type GameMode = "CLASSIC" | "MISCHIEVOUS_MOUSE" | "STUBBORN_CRAB";
 export type IsoDateString = `${number}-${number}-${number}`;
 export type GuessAttempt = "1" | "2" | "3" | "4" | "5" | "6";
 export type GuessDistributionDto = Partial<Record<GuessAttempt, number>>;

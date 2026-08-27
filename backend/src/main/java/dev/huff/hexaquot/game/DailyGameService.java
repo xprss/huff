@@ -20,9 +20,11 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @ApplicationScoped
 public class DailyGameService {
@@ -91,7 +93,7 @@ public class DailyGameService {
             record.guessesJson(),
             record.status(),
             null,
-            mode == GameMode.CLASSIC,
+            mode != GameMode.MISCHIEVOUS_MOUSE,
             false,
             null,
             record.createdAt(),
@@ -116,6 +118,9 @@ public class DailyGameService {
         }
         if (record.mode() == GameMode.MISCHIEVOUS_MOUSE && alreadyGuessed(guesses, guess)) {
             throw new BadRequestException("Hai gia' inserito questa parola.");
+        }
+        if (record.mode() == GameMode.STUBBORN_CRAB) {
+            validateStubbornCrabGuess(guesses, guess);
         }
 
         GuessResult scoredGuess = score(guess, record.solution());
@@ -495,6 +500,59 @@ public class DailyGameService {
     private boolean alreadyGuessed(List<GuessResult> guesses, String guess) {
         return guesses.stream()
             .anyMatch(submittedGuess -> submittedGuess.word().equals(guess));
+    }
+
+    private void validateStubbornCrabGuess(List<GuessResult> guesses, String guess) {
+        Map<Integer, String> lockedLetters = new HashMap<>();
+        Map<String, Set<Integer>> forbiddenYellowPositions = new HashMap<>();
+        Map<String, Integer> requiredLetterCounts = new HashMap<>();
+
+        for (GuessResult previousGuess : guesses) {
+            Map<String, Integer> confirmedInGuess = new HashMap<>();
+            for (int index = 0; index < previousGuess.tiles().size(); index++) {
+                TileResult tile = previousGuess.tiles().get(index);
+                if (tile.state() != TileState.CORRECT && tile.state() != TileState.PRESENT) {
+                    continue;
+                }
+
+                String letter = tile.letter();
+                confirmedInGuess.merge(letter, 1, Integer::sum);
+                if (tile.state() == TileState.CORRECT) {
+                    lockedLetters.put(index, letter);
+                } else {
+                    forbiddenYellowPositions.computeIfAbsent(letter, ignored -> new HashSet<>()).add(index);
+                }
+            }
+            confirmedInGuess.forEach((letter, count) -> requiredLetterCounts.merge(letter, count, Math::max));
+        }
+
+        for (Map.Entry<Integer, String> locked : lockedLetters.entrySet()) {
+            if (!letterAt(guess, locked.getKey()).equals(locked.getValue())) {
+                throw new BadRequestException("Il granchio non lascia spostare le lettere verdi.");
+            }
+        }
+
+        for (Map.Entry<String, Set<Integer>> forbidden : forbiddenYellowPositions.entrySet()) {
+            for (int position : forbidden.getValue()) {
+                if (letterAt(guess, position).equals(forbidden.getKey())) {
+                    throw new BadRequestException("Le lettere gialle devono cambiare posizione.");
+                }
+            }
+        }
+
+        Map<String, Integer> guessCounts = new HashMap<>();
+        for (int index = 0; index < guess.length(); index++) {
+            guessCounts.merge(letterAt(guess, index), 1, Integer::sum);
+        }
+        for (Map.Entry<String, Integer> required : requiredLetterCounts.entrySet()) {
+            if (guessCounts.getOrDefault(required.getKey(), 0) < required.getValue()) {
+                throw new BadRequestException("Il granchio vuole che tu riutilizzi tutte le lettere gialle.");
+            }
+        }
+    }
+
+    private String letterAt(String word, int index) {
+        return word.substring(index, index + 1);
     }
 
     private int chooseMouseTileIndex(GameRecord record) {

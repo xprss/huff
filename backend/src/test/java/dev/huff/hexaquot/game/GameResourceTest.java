@@ -160,7 +160,9 @@ class GameResourceTest {
             .header("Set-Cookie", notNullValue())
             .body("game", equalTo(null))
             .body("modes[0].mode", equalTo("CLASSIC"))
-            .body("modes[1].mode", equalTo("MISCHIEVOUS_MOUSE"));
+            .body("modes[1].mode", equalTo("MISCHIEVOUS_MOUSE"))
+            .body("modes[2].mode", equalTo("STUBBORN_CRAB"))
+            .body("modes[2].label", equalTo("Granchio testardo"));
     }
 
     @Test

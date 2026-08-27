@@ -135,6 +135,63 @@ class DailyGameServiceTest {
     }
 
     @Test
+    void stubbornCrabRequiresGreenLettersToStayInPlace() {
+        AppUser user = testUser("crab-green");
+        String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
+        gameRepository.create(user.id(), today, "abbaco", GameMode.STUBBORN_CRAB);
+        dailyGameService.guess(user, "abachi");
+
+        BadRequestException error = assertThrows(
+            BadRequestException.class,
+            () -> dailyGameService.guess(user, "barche")
+        );
+
+        assertEquals("Il granchio non lascia spostare le lettere verdi.", error.getMessage());
+        assertEquals(1, dailyGameService.today(user).game().guesses().size());
+    }
+
+    @Test
+    void stubbornCrabRequiresYellowLettersAndMovesThem() {
+        AppUser missingYellowUser = testUser("crab-yellow-missing");
+        String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
+        gameRepository.create(missingYellowUser.id(), today, "abbaco", GameMode.STUBBORN_CRAB);
+        dailyGameService.guess(missingYellowUser, "abachi");
+
+        BadRequestException missingYellow = assertThrows(
+            BadRequestException.class,
+            () -> dailyGameService.guess(missingYellowUser, "abbada")
+        );
+        assertEquals("Il granchio vuole che tu riutilizzi tutte le lettere gialle.", missingYellow.getMessage());
+
+        AppUser unmovedYellowUser = testUser("crab-yellow-position");
+        gameRepository.create(unmovedYellowUser.id(), today, "abbaco", GameMode.STUBBORN_CRAB);
+        dailyGameService.guess(unmovedYellowUser, "abachi");
+
+        BadRequestException unmovedYellow = assertThrows(
+            BadRequestException.class,
+            () -> dailyGameService.guess(unmovedYellowUser, "abachi")
+        );
+        assertEquals("Le lettere gialle devono cambiare posizione.", unmovedYellow.getMessage());
+    }
+
+    @Test
+    void stubbornCrabRequiresEveryConfirmedCopyOfYellowLetters() {
+        AppUser user = testUser("crab-yellow-copies");
+        String today = LocalDate.now(ZoneId.of("Europe/Rome")).toString();
+        gameRepository.create(user.id(), today, "abbaco", GameMode.STUBBORN_CRAB);
+        dailyGameService.guess(user, "banana");
+
+        BadRequestException error = assertThrows(
+            BadRequestException.class,
+            () -> dailyGameService.guess(user, "cubato")
+        );
+
+        assertEquals("Il granchio vuole che tu riutilizzi tutte le lettere gialle.", error.getMessage());
+        GameDto completed = dailyGameService.guess(user, "abbaco");
+        assertEquals(GameStatus.WON, completed.status());
+    }
+
+    @Test
     @TestTransaction
     void awardsStarAfterThreeConsecutiveCompletedGamesRegardlessOfOutcome() throws Exception {
         AppUser user = createPersistedUser("star-award");
@@ -291,6 +348,18 @@ class DailyGameServiceTest {
         return (int) guess.tiles().stream()
             .filter(tile -> tile.state() == state)
             .count();
+    }
+
+    private AppUser testUser(String label) {
+        return new AppUser(
+            "test-" + label + "-" + UUID.randomUUID(),
+            null,
+            label,
+            "@" + label,
+            "😀",
+            null,
+            false
+        );
     }
 
     private AppUser createPersistedUser(String label) {

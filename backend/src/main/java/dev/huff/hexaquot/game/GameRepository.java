@@ -32,7 +32,7 @@ public class GameRepository {
             "[]",
             GameStatus.IN_PROGRESS,
             null,
-            mode == GameMode.CLASSIC,
+            mode != GameMode.MISCHIEVOUS_MOUSE,
             false,
             null,
             now,

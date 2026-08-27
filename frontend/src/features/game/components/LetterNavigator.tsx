@@ -10,6 +10,7 @@ export function LetterNavigator({
   hand,
   label = "Navigazione lettere",
   selectedCellIndex,
+  selectableCellIndices,
   onSelectCell
 }: {
   answerLength: number;
@@ -17,6 +18,7 @@ export function LetterNavigator({
   hand: InputHandPreference;
   label?: string;
   selectedCellIndex: number | null;
+  selectableCellIndices: readonly number[];
   onSelectCell: (index: number) => void;
 }) {
   const originX = React.useRef(0);
@@ -29,9 +31,12 @@ export function LetterNavigator({
   const [isFocused, setIsFocused] = React.useState(false);
 
   function moveSelection(direction: -1 | 1) {
-    if (!canPlay) return;
+    if (!canPlay || selectableCellIndices.length === 0) return;
     const current = selectedCellIndex ?? (direction > 0 ? -1 : answerLength);
-    onSelectCell(Math.max(0, Math.min(answerLength - 1, current + direction)));
+    const next = direction > 0
+      ? selectableCellIndices.find((index) => index > current)
+      : [...selectableCellIndices].reverse().find((index) => index < current);
+    if (next !== undefined) onSelectCell(next);
   }
 
   function thumbOffsetFor(index: number) {
@@ -43,9 +48,13 @@ export function LetterNavigator({
     const offset = clientX - originX.current;
     const halfTravel = THUMB_TRAVEL_PX / 2;
     setDragOffset(Math.max(-halfTravel - startThumbOffset.current, Math.min(halfTravel - startThumbOffset.current, offset)));
-    const nextCellIndex = Math.max(
+    const rawCellIndex = Math.max(
       0,
       Math.min(answerLength - 1, startCellIndex.current + Math.round(offset / CELL_STEP_PX))
+    );
+    const nextCellIndex = selectableCellIndices.reduce(
+      (closest, index) => Math.abs(index - rawCellIndex) < Math.abs(closest - rawCellIndex) ? index : closest,
+      selectableCellIndices[0] ?? rawCellIndex
     );
     if (nextCellIndex === lastCellIndex.current) return;
     lastCellIndex.current = nextCellIndex;

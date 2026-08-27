@@ -15,7 +15,33 @@ export function HexawordTutorial({ onClose }: { onClose: () => void }) {
           <div><span className="present">R</span><p><strong>Giallo</strong>: la lettera c'è, ma va spostata.</p></div>
           <div><span className="absent">T</span><p><strong>Grigio</strong>: la lettera non è nella parola.</p></div>
         </div>
-        <p>Puoi scegliere la modalità prima del primo tentativo. In <strong>Topolino dispettoso</strong>, il primo risultato nasconde una casella: ottieni almeno tre verdi per sbloccare il gattino e rivelarla.</p>
+        <div className="word-mode-tutorials">
+          <section>
+            <h3><span className="classic-mark" aria-hidden="true" /> Classica</h3>
+            <p>Usa liberamente gli indizi ottenuti per trovare la soluzione.</p>
+          </section>
+          <section>
+            <h3><span aria-hidden="true">🐭</span> Topolino dispettoso</h3>
+            <p>Il primo risultato nasconde una casella. Ottieni almeno tre verdi per sbloccare il gattino e rivelarla.</p>
+          </section>
+          <section className="crab-tutorial">
+            <h3><span aria-hidden="true">🦀</span> Granchio testardo</h3>
+            <p>Dal tentativo successivo, ogni indizio scoperto diventa obbligatorio e continua a valere fino alla fine:</p>
+            <ul>
+              <li><strong>Verde:</strong> la lettera resta bloccata nella stessa casella.</li>
+              <li><strong>Giallo:</strong> devi riutilizzare la lettera, spostandola dalle caselle in cui è risultata gialla.</li>
+              <li><strong>Copie:</strong> due lettere confermate richiedono due copie nei tentativi successivi.</li>
+              <li><strong>Grigio:</strong> non aggiunge un nuovo obbligo.</li>
+            </ul>
+            <div className="crab-tutorial-example" aria-label="Esempio: A verde bloccata e due R gialle obbligatorie">
+              <span className="correct">A</span>
+              <span className="present">R</span>
+              <span className="present">R</span>
+              <small>→ A bloccata, R ×2 da spostare</small>
+            </div>
+          </section>
+        </div>
+        <p>Puoi scegliere e cambiare modalità soltanto prima del primo tentativo.</p>
         <button className="sky-check" type="button" onClick={onClose}>Ho capito</button>
       </section>
     </div>,

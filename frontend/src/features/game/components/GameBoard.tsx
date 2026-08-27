@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Share2 } from "lucide-react";
 import type { GameDto, GameMode, GameModeDto } from "../../../types";
-import type { BoardColumn } from "../gameUtils";
+import type { BoardColumn, CrabYellowRequirement } from "../gameUtils";
 import { ModeSelection } from "./ModeSelection";
 import { TerminalInput } from "./TerminalInput";
 
@@ -14,6 +14,8 @@ export function GameBoard({
   canPlay,
   isSubmitting,
   terminalResult,
+  lockedCellIndices,
+  yellowRequirements,
   selectedCellIndex,
   completedSolution,
   nextChallengeCountdown,
@@ -30,6 +32,8 @@ export function GameBoard({
   canPlay: boolean;
   isSubmitting: boolean;
   terminalResult: "won" | "lost" | null;
+  lockedCellIndices: readonly number[];
+  yellowRequirements: readonly CrabYellowRequirement[];
   selectedCellIndex: number | null;
   completedSolution: string | null;
   nextChallengeCountdown: string;
@@ -70,12 +74,26 @@ export function GameBoard({
           <span>Condividi risultato</span>
         </button>
       ) : null}
+      {game.mode === "STUBBORN_CRAB" && game.status === "IN_PROGRESS" && game.guesses.length > 0 ? (
+        <div className="crab-constraints" aria-label="Indizi obbligatori del Granchio testardo">
+          <span aria-hidden="true">🦀</span>
+          <strong>Indizi obbligatori</strong>
+          {yellowRequirements.length > 0 ? (
+            <span className="crab-yellow-list">
+              Gialle: {yellowRequirements.map(({ letter, count }) => `${letter}${count > 1 ? ` ×${count}` : ""}`).join(", ")}
+            </span>
+          ) : (
+            <span className="crab-yellow-list">Le verdi restano bloccate</span>
+          )}
+        </div>
+      ) : null}
       <div className={`board ${isSubmitting ? "is-submitting" : ""}`} aria-label="Griglia tentativi">
         <TerminalInput
           cells={terminalCells}
           answerLength={answerLength}
           canPlay={canPlay}
           result={terminalResult}
+          lockedCellIndices={lockedCellIndices}
           selectedCellIndex={selectedCellIndex}
           onSelectCell={onSelectCell}
         />
