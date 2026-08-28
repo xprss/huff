@@ -59,7 +59,6 @@ secret_names=(
 )
 variable_names=(
   DOCKERHUB_IMAGE
-  JENKINS_URL
   JENKINS_STAGING_JOB
   GOOGLE_CLIENT_ID
 )

@@ -106,7 +106,9 @@ per-environment locks.
 
 ## GitHub settings and smoke test
 
-Synchronize the four Secrets and four Variables without printing values:
+Synchronize the four Secrets and three Variables without printing values. The
+public Jenkins endpoint is versioned directly in `delivery.yml`, so moving it
+cannot leave GitHub Actions silently posting to a redirecting legacy host:
 
 ```bash
 scripts/sync-github-settings.sh --repo OWNER/REPOSITORY \

@@ -79,7 +79,10 @@ jobs:
           # workflow dispatch cannot be verified against Jenkins' master SHA.
           DEPLOY_GIT_COMMIT: ${{ github.sha }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          JENKINS_URL: ${{ vars.JENKINS_URL }}
+          # Keep the public endpoint versioned with the workflow. A stale
+          # repository variable previously sent this POST to the legacy host,
+          # whose 301 response made curl report success without queueing a job.
+          JENKINS_URL: https://ci.hexaquot.it
           JENKINS_STAGING_JOB: ${{ vars.JENKINS_STAGING_JOB }}
           JENKINS_TRIGGER_USER: ${{ secrets.JENKINS_TRIGGER_USER }}
           JENKINS_TRIGGER_TOKEN: ${{ secrets.JENKINS_TRIGGER_TOKEN }}
@@ -92,9 +95,11 @@ jobs:
           [[ -n "${JENKINS_URL}" && -n "${JENKINS_STAGING_JOB}" ]]
           [[ -n "${JENKINS_TRIGGER_USER}" && -n "${JENKINS_TRIGGER_TOKEN}" ]]
 
-          curl --fail-with-body --silent --show-error \
+          jenkins_status="$(curl --fail-with-body --silent --show-error \
             --connect-timeout 15 \
             --max-time 60 \
+            --output "${RUNNER_TEMP}/jenkins-trigger-response.txt" \
+            --write-out '%{http_code}' \
             --user "${JENKINS_TRIGGER_USER}:${JENKINS_TRIGGER_TOKEN}" \
             --request POST \
             --data-urlencode "IMAGE_REPOSITORY=${IMAGE_REPOSITORY}" \
@@ -102,4 +107,9 @@ jobs:
             --data-urlencode "DEPLOY_GIT_COMMIT=${DEPLOY_GIT_COMMIT}" \
             --data-urlencode "APP_VERSION=${APP_VERSION}" \
             --data-urlencode "GITHUB_RUN_URL=${GITHUB_RUN_URL}" \
-            "${JENKINS_URL%/}/job/${JENKINS_STAGING_JOB}/buildWithParameters"
+            "${JENKINS_URL%/}/job/${JENKINS_STAGING_JOB}/buildWithParameters")"
+
+          if [[ "${jenkins_status}" != "201" ]]; then
+            echo "Jenkins did not queue the staging build (HTTP ${jenkins_status})." >&2
+            exit 1
+          fi
