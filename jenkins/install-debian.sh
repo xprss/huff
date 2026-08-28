@@ -36,6 +36,7 @@ install -d -o jenkins -g jenkins -m 0750 /var/lib/jenkins/init.groovy.d
 install -o jenkins -g jenkins -m 0644 "${SCRIPT_DIR}/init.groovy.d/10-executors.groovy" \
   /var/lib/jenkins/init.groovy.d/10-executors.groovy
 install -d -o jenkins -g jenkins -m 0750 /var/lib/jenkins/huff/state
+install -d -o jenkins -g jenkins -m 0750 /var/lib/jenkins/huff/data/staging
 install -d -o root -g jenkins -m 0750 /etc/huff
 
 if command -v jenkins-plugin-cli >/dev/null 2>&1; then

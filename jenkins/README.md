@@ -41,6 +41,10 @@ sudo install -o root -g jenkins -m 0640 staging.env /etc/huff/staging.env
 sudo install -o root -g jenkins -m 0640 production.env /etc/huff/production.env
 ```
 
+Keep staging data under `/var/lib/jenkins/huff/data/staging`, as configured in
+`.env.staging.example`. The installer creates this directory for the Jenkins
+service account; paths below `/root` are not traversable by that account.
+
 Create `.env.jenkins` from `.env.jenkins.example`. The staging and production
 files contain only application runtime settings. Docker Hub is public, so the
 Jenkins host has no Docker Hub credential and pulls by digest anonymously.
