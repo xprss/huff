@@ -246,6 +246,26 @@ button {
   transition: background var(--motion-slow) var(--ease-out), color var(--motion-slow) var(--ease-out);
 }
 
+/* The game views are deliberately viewport-locked, whereas the CMS editor can
+   be taller than any screen. Let the admin route use the document-sized scroll
+   container instead of clipping its lower editor controls. */
+.app-shell.admin-shell {
+  grid-template-rows: auto auto;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
+.admin-shell .admin-surface {
+  height: auto;
+  min-height: calc(var(--app-height) - (var(--viewport-padding) * 2));
+  overflow: visible;
+}
+
+.admin-shell .admin-view {
+  overflow: visible;
+}
+
 .game-surface {
   width: min(100%, 520px);
   height: 100%;

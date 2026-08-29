@@ -802,8 +802,8 @@ export function App() {
 
   return (
     <AppThemeProvider theme={appTheme}>
-      <main className="app-shell">
-        <section className="game-surface" aria-busy={loading}>
+      <main className={`app-shell${activeRoute === "admin" ? " admin-shell" : ""}`}>
+        <section className={`game-surface${activeRoute === "admin" ? " admin-surface" : ""}`} aria-busy={loading}>
           <AppHeader
             puzzleDate={puzzleDate}
             toast={toast}
