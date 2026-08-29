@@ -38,4 +38,27 @@ class AnnouncementServiceTest {
         service.markSeen(userId, AnnouncementService.HEXAHACK_LAUNCH);
         assertEquals(0, service.pending(userId).size());
     }
+
+    @Test @TestTransaction
+    void exposesAndIdempotentlyMarksHexaflowAnnouncementSeen() {
+        String userId = "hexaflow-announcement-test-" + UUID.randomUUID();
+        UserEntity user = new UserEntity();
+        user.id = userId;
+        user.displayName = "Annuncio Hexaflow";
+        user.nickname = "@flow-news-" + UUID.randomUUID().toString().substring(0, 8);
+        user.profileEmoji = "🌊";
+        user.createdAt = Instant.now().toString();
+        user.persist();
+        UserAnnouncementEntity row = new UserAnnouncementEntity();
+        row.id = UUID.randomUUID().toString();
+        row.userId = userId;
+        row.campaign = AnnouncementService.HEXAFLOW_LAUNCH;
+        row.createdAt = Instant.now().toString();
+        row.persist();
+
+        assertEquals(java.util.List.of(AnnouncementService.HEXAFLOW_LAUNCH), service.pending(userId));
+        service.markSeen(userId, AnnouncementService.HEXAFLOW_LAUNCH);
+        service.markSeen(userId, AnnouncementService.HEXAFLOW_LAUNCH);
+        assertEquals(0, service.pending(userId).size());
+    }
 }

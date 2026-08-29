@@ -1,19 +1,25 @@
-import { Binary, Check, SpellCheck2, Building2 } from "lucide-react";
+import { Binary, Check, SpellCheck2, Building2, Waves } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
   hexahackCompleted,
   hexaskyCompleted,
+  hexaflowCompleted,
+  hexaflowAvailable,
   onHexaword,
   onHexahack,
-  onHexasky
+  onHexasky,
+  onHexaflow
 }: {
   hexawordCompleted: boolean;
   hexahackCompleted: boolean;
   hexaskyCompleted: boolean;
+  hexaflowCompleted: boolean;
+  hexaflowAvailable: boolean;
   onHexaword: () => void;
   onHexahack: () => void;
   onHexasky: () => void;
+  onHexaflow: () => void;
 }) {
   return (
     <section className="game-selector" aria-labelledby="game-selector-title">
@@ -43,6 +49,11 @@ export function GameSelector({
           <Building2 className="game-selector-icon" aria-hidden="true" />
           <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
           <span>Risolvi il grattacielo quotidiano 4×4.</span>
+        </button>
+        <button className={hexaflowCompleted ? "completed" : ""} type="button" onClick={onHexaflow} disabled={!hexaflowAvailable}>
+          <Waves className="game-selector-icon" aria-hidden="true" />
+          <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
+          <span>{hexaflowAvailable ? "Collega le parole del tema e trova il Flusso." : "Non disponibile oggi"}</span>
         </button>
       </div>
     </section>

@@ -16,6 +16,7 @@ import type {
   AdminPlayerSummaryDto,
   AdminPlayerUpdateDto
 } from "../../types";
+import { HexaflowPuzzleAdmin } from "./HexaflowPuzzleAdmin";
 
 type ConfirmAction = { readonly kind: "save" } | { readonly kind: "delete"; readonly typedValue: string };
 
@@ -27,27 +28,32 @@ const adminPlayerSortOptions: readonly { readonly value: AdminPlayerSortDto; rea
 const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
+  canViewPlayers,
   canManagePlayers,
+  canManageHexaflowPuzzles,
   onAuthRequired,
   onSuccess,
   onError
 }: {
+  canViewPlayers: boolean;
   canManagePlayers: boolean;
+  canManageHexaflowPuzzles: boolean;
   onAuthRequired: (error: unknown) => boolean;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }) {
   const queryClient = useQueryClient();
+  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow">(canViewPlayers ? "players" : "hexaflow");
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [playerSort, setPlayerSort] = React.useState<AdminPlayerSortDto>("alphabetical");
   const [page, setPage] = React.useState(0);
   const [selectedUserId, setSelectedUserId] = React.useState<string | null>(null);
   const [confirmAction, setConfirmAction] = React.useState<ConfirmAction | null>(null);
-  const playersQuery = useQuery(adminPlayersQueryOptions(search, playerSort, page));
+  const playersQuery = useQuery({ ...adminPlayersQueryOptions(search, playerSort, page), enabled: canViewPlayers });
   const detailQuery = useQuery({
     ...adminPlayerQueryOptions(selectedUserId ?? ""),
-    enabled: Boolean(selectedUserId)
+    enabled: canViewPlayers && Boolean(selectedUserId)
   });
   const detail = detailQuery.data ?? null;
   const [draft, setDraft] = React.useState<AdminPlayerUpdateDto | null>(null);
@@ -146,8 +152,13 @@ export function AdminView({
   const totalPages = playersPage?.totalPages ?? 1;
   const currentPage = playersPage?.page ?? page;
 
+  if (adminSection === "hexaflow") return <>
+    <nav className="admin-sections">{canViewPlayers ? <button type="button" onClick={() => setAdminSection("players")}>Giocatori</button> : null}<button className="selected" type="button">Puzzle Hexaflow</button></nav>
+    <HexaflowPuzzleAdmin onSuccess={onSuccess} onError={onError} />
+  </>;
+
   return (
-    <section className="admin-view" aria-label="Admin">
+    <><nav className="admin-sections"><button className="selected" type="button">Giocatori</button>{canManageHexaflowPuzzles ? <button type="button" onClick={() => setAdminSection("hexaflow")}>Puzzle Hexaflow</button> : null}</nav><section className="admin-view" aria-label="Admin">
       <div className="admin-toolbar">
         <div>
           <h2>Admin</h2>
@@ -383,7 +394,7 @@ export function AdminView({
           document.body
         )
         : null}
-    </section>
+    </section></>
   );
 }
 

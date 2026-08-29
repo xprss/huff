@@ -8,6 +8,9 @@ import type {
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
+  HexaflowPathRequestDto,
+  HexaflowHintActionDto,
+  HexaflowPuzzleDraftDto,
   LeaderboardGame,
   LeaderboardsDto,
   ProfileUpdateDto,
@@ -74,6 +77,7 @@ export type ApiClient = {
   readonly logout: EndpointHandler<"/api/logout", "POST">;
   readonly me: EndpointHandler<"/api/me", "GET">;
   readonly markHexahackLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAHACK_LAUNCH/seen", "POST">;
+  readonly markHexaflowLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAFLOW_LAUNCH/seen", "POST">;
   readonly today: EndpointHandler<"/api/hexaword/today", "GET">;
   readonly selectMode: EndpointHandler<"/api/hexaword/today/mode", "POST", [mode: GameMode]>;
   readonly guess: EndpointHandler<"/api/hexaword/today/guesses", "POST", [guess: string]>;
@@ -87,6 +91,10 @@ export type ApiClient = {
   readonly hexaskyToday: EndpointHandler<"/api/hexasky/today", "GET">;
   readonly hexaskyCheck: EndpointHandler<"/api/hexasky/today/checks", "POST", [request: HexaskyCheckRequestDto]>;
   readonly hexaskyStats: EndpointHandler<"/api/hexasky/stats", "GET">;
+  readonly hexaflowToday: EndpointHandler<"/api/hexaflow/today", "GET">;
+  readonly hexaflowPath: EndpointHandler<"/api/hexaflow/today/paths", "POST", [request: HexaflowPathRequestDto]>;
+  readonly hexaflowHint: () => Promise<HexaflowHintActionDto>;
+  readonly hexaflowStats: EndpointHandler<"/api/hexaflow/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
@@ -111,6 +119,12 @@ export type ApiClient = {
     [userId: string, player: AdminPlayerUpdateDto]
   >;
   readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
+  readonly adminHexaflowPuzzles: (month: string) => Promise<import("./types").HexaflowPuzzleMonthDto>;
+  readonly adminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
+  readonly saveAdminHexaflowPuzzle: (date: string, draft: HexaflowPuzzleDraftDto) => Promise<import("./types").HexaflowPuzzleAdminDto>;
+  readonly publishAdminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
+  readonly draftAdminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
+  readonly deleteAdminHexaflowPuzzle: (date: string) => Promise<void>;
 };
 
 async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
@@ -153,6 +167,7 @@ export const api = {
   logout: () => request("/api/logout", { method: "POST" }),
   me: () => request("/api/me", { method: "GET" }),
   markHexahackLaunchSeen: () => request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" }),
+  markHexaflowLaunchSeen: () => request("/api/me/announcements/HEXAFLOW_LAUNCH/seen", { method: "POST" }),
   today: () => request("/api/hexaword/today", { method: "GET" }),
   selectMode: (mode: GameMode) =>
     request("/api/hexaword/today/mode", {
@@ -180,6 +195,10 @@ export const api = {
   hexaskyToday: () => request("/api/hexasky/today", { method: "GET" }),
   hexaskyCheck: (checkRequest: HexaskyCheckRequestDto) => request("/api/hexasky/today/checks", { method: "POST", body: checkRequest }),
   hexaskyStats: () => request("/api/hexasky/stats", { method: "GET" }),
+  hexaflowToday: () => request("/api/hexaflow/today", { method: "GET" }),
+  hexaflowPath: (pathRequest: HexaflowPathRequestDto) => request("/api/hexaflow/today/paths", { method: "POST", body: pathRequest }),
+  hexaflowHint: () => request("/api/hexaflow/today/hints", { method: "POST", body: { requestId: crypto.randomUUID() } }),
+  hexaflowStats: () => request("/api/hexaflow/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {
@@ -227,5 +246,11 @@ export const api = {
   deleteAdminPlayer: (userId: string) =>
     request(`/api/admin/players/${encodeURIComponent(userId)}` as "/api/admin/players/:userId", {
       method: "DELETE"
-    })
+    }),
+  adminHexaflowPuzzles: (month: string) => request(`/api/admin/hexaflow/puzzles?month=${encodeURIComponent(month)}` as "/api/admin/hexaflow/puzzles", { method: "GET" }),
+  adminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "GET" }),
+  saveAdminHexaflowPuzzle: (date: string, draft: HexaflowPuzzleDraftDto) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "PUT", body: draft }),
+  publishAdminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}/publish` as "/api/admin/hexaflow/puzzles/:date/publish", { method: "POST" }),
+  draftAdminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}/draft` as "/api/admin/hexaflow/puzzles/:date/draft", { method: "POST" }),
+  deleteAdminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "DELETE" })
 } satisfies ApiClient;

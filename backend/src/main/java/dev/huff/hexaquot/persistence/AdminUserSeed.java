@@ -24,6 +24,7 @@ public class AdminUserSeed {
             admin.canViewPlayerDetails = true;
             admin.canManagePlayers = true;
             admin.canManageAdmins = true;
+            admin.canManageHexaflowPuzzles = true;
             admin.updatedAt = now;
             admin.persist();
             return;
@@ -33,6 +34,7 @@ public class AdminUserSeed {
         admin.canViewPlayerDetails = true;
         admin.canManagePlayers = true;
         admin.canManageAdmins = true;
+        admin.canManageHexaflowPuzzles = true;
         admin.updatedAt = now;
     }
 }

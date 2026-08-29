@@ -1,12 +1,12 @@
 import { ChevronLeft } from "lucide-react";
 import { MedalCounts } from "../../shared/components/MedalCounts";
 import React from "react";
-import { HexahackStatsPanel, HexaskyStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
+import { HexahackStatsPanel, HexaskyStatsPanel, HexaflowStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
 import type { PublicPlayerProfileDto } from "../../types";
 
 export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerProfileDto; onBack: () => void }) {
   const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
-  const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats, hexahack: profile.hexahackStats, hexasky: profile.hexaskyStats };
+  const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats, hexahack: profile.hexahackStats, hexasky: profile.hexaskyStats, hexaflow: profile.hexaflowStats };
   return (
     <section className="profile-view public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
       <div className="profile-summary">
@@ -27,7 +27,7 @@ export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerPr
       <div className="profile-stats" aria-label="Statistiche pubbliche">
         <MedalCounts medals={profile.medals} />
         <StatsTabs active={activeStats} onChange={setActiveStats} />
-        {activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : <StatsPanel stats={stats[activeStats]} />}
+        {activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : activeStats === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : <StatsPanel stats={stats[activeStats]} />}
       </div>
     </section>
   );

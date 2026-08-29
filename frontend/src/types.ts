@@ -89,7 +89,7 @@ export interface MeDto {
   readonly pendingAnnouncements: readonly AnnouncementCampaign[];
 }
 
-export type AnnouncementCampaign = "HEXAHACK_LAUNCH";
+export type AnnouncementCampaign = "HEXAHACK_LAUNCH" | "HEXAFLOW_LAUNCH";
 export type HexahackStatus = "IN_PROGRESS" | "COMPLETED";
 export type HexahackRank = "GHOST" | "SHADOW" | "BREACH" | "TRACED";
 export type HexahackProbeType = "PING" | "BIT_SCAN" | "LINK_TRACE" | "CHECKSUM";
@@ -203,11 +203,33 @@ export interface HexaskyTodayDto { readonly puzzleDate: IsoDateString; readonly 
 export interface HexaskyCheckActionDto { readonly game: HexaskyGameDto; readonly result: HexaskyCheckResultDto; readonly replayed: boolean; }
 export interface HexaskyStatsDto { readonly played: number; readonly won: number; readonly lost: number; readonly currentStreak: number; readonly maxStreak: number; readonly checkDistribution: Readonly<Record<"1" | "2", number>>; }
 
+export type HexaflowPuzzleStatus = "DRAFT" | "PUBLISHED";
+export type HexaflowAnswerType = "THEME" | "FLOW";
+export type HexaflowGameStatus = "IN_PROGRESS" | "COMPLETED";
+export type HexaflowPathOutcome = "THEME" | "FLOW" | "EXTRA" | "DUPLICATE";
+export interface HexaflowAnswerDto { readonly id: string; readonly label: string; readonly type: HexaflowAnswerType; readonly path: readonly number[]; }
+export interface HexaflowFoundAnswerDto { readonly id: string; readonly label: string; readonly type: HexaflowAnswerType; readonly cells: readonly number[]; }
+export interface HexaflowGameDto { readonly puzzleDate: IsoDateString; readonly status: HexaflowGameStatus; readonly foundAnswers: readonly HexaflowFoundAnswerDto[]; readonly extraCount: number; readonly hintCredits: number; readonly hintsUsed: number; readonly hintedCells: readonly (readonly number[])[]; readonly completedAt: string | null; }
+export interface HexaflowTodayDto { readonly puzzleDate: IsoDateString; readonly available: boolean; readonly themeClue: string | null; readonly grid: readonly string[]; readonly totalAnswers: number; readonly game: HexaflowGameDto | null; }
+export interface HexaflowPathRequestDto { readonly requestId: string; readonly cells: readonly number[]; }
+export interface HexaflowHintRequestDto { readonly requestId: string; }
+export interface HexaflowPathResultDto { readonly requestId: string; readonly outcome: HexaflowPathOutcome; readonly answer: HexaflowFoundAnswerDto | null; readonly sequence: string; readonly extraCount: number; readonly hintCredits: number; }
+export interface HexaflowHintResultDto { readonly requestId: string; readonly cells: readonly number[]; readonly hintCredits: number; }
+export interface HexaflowPathActionDto { readonly game: HexaflowGameDto; readonly result: HexaflowPathResultDto; readonly replayed: boolean; }
+export interface HexaflowHintActionDto { readonly game: HexaflowGameDto; readonly result: HexaflowHintResultDto; readonly replayed: boolean; }
+export interface HexaflowStatsDto { readonly started: number; readonly completed: number; readonly currentStreak: number; readonly maxStreak: number; readonly hintsUsed: number; readonly hintlessCompletions: number; }
+export interface HexaflowValidationErrorDto { readonly code: string; readonly field: string; readonly message: string; readonly answerIndex: number | null; readonly cellIndex: number | null; }
+export interface HexaflowPuzzleDraftDto { readonly puzzleDate: IsoDateString; readonly themeClue: string; readonly grid: readonly string[]; readonly answers: readonly HexaflowAnswerDto[]; }
+export interface HexaflowPuzzleAdminDto extends HexaflowPuzzleDraftDto { readonly id: string; readonly status: HexaflowPuzzleStatus; readonly validationErrors: readonly HexaflowValidationErrorDto[]; readonly immutable: boolean; readonly createdBy: string; readonly updatedBy: string; readonly publishedBy: string | null; readonly createdAt: string; readonly updatedAt: string; readonly publishedAt: string | null; }
+export interface HexaflowPuzzleSummaryDto { readonly puzzleDate: IsoDateString; readonly status: HexaflowPuzzleStatus; readonly themeClue: string; readonly answerCount: number; readonly coveredCells: number; readonly valid: boolean; readonly immutable: boolean; }
+export interface HexaflowPuzzleMonthDto { readonly month: string; readonly puzzles: readonly HexaflowPuzzleSummaryDto[]; }
+
 export interface StatsSetDto {
   readonly overall: StatsDto;
   readonly hexaword: StatsDto;
   readonly hexahack: HexahackStatsDto;
   readonly hexasky: HexaskyStatsDto;
+  readonly hexaflow: HexaflowStatsDto;
 }
 
 export interface AdminPrivilegesDto {
@@ -215,6 +237,7 @@ export interface AdminPrivilegesDto {
   readonly canViewPlayerDetails: boolean;
   readonly canManagePlayers: boolean;
   readonly canManageAdmins: boolean;
+  readonly canManageHexaflowPuzzles: boolean;
 }
 
 export interface UserDto {
@@ -258,7 +281,7 @@ export interface LeaderboardsDto {
   readonly weekly: LeaderboardPeriodDto;
 }
 
-export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky";
+export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow";
 
 export interface PublicPlayerProfileDto {
   readonly displayName: string;
@@ -270,6 +293,7 @@ export interface PublicPlayerProfileDto {
   readonly hexawordStats: StatsDto;
   readonly hexahackStats: HexahackStatsDto;
   readonly hexaskyStats: HexaskyStatsDto;
+  readonly hexaflowStats: HexaflowStatsDto;
   readonly medals: MedalCountsDto;
 }
 
@@ -411,6 +435,9 @@ export type ApiEndpointMap = {
   "/api/me/announcements/HEXAHACK_LAUNCH/seen": {
     POST: { response: void };
   };
+  "/api/me/announcements/HEXAFLOW_LAUNCH/seen": {
+    POST: { response: void };
+  };
   "/api/hexaword/today": { GET: { response: TodayGameDto } };
   "/api/hexaword/today/mode": { POST: { body: ModeRequestDto; response: GameDto } };
   "/api/hexaword/today/guesses": { POST: { body: GuessRequestDto; response: GameDto } };
@@ -424,6 +451,10 @@ export type ApiEndpointMap = {
   "/api/hexasky/today": { GET: { response: HexaskyTodayDto } };
   "/api/hexasky/today/checks": { POST: { body: HexaskyCheckRequestDto; response: HexaskyCheckActionDto } };
   "/api/hexasky/stats": { GET: { response: HexaskyStatsDto } };
+  "/api/hexaflow/today": { GET: { response: HexaflowTodayDto } };
+  "/api/hexaflow/today/paths": { POST: { body: HexaflowPathRequestDto; response: HexaflowPathActionDto } };
+  "/api/hexaflow/today/hints": { POST: { body: HexaflowHintRequestDto; response: HexaflowHintActionDto } };
+  "/api/hexaflow/stats": { GET: { response: HexaflowStatsDto } };
   "/api/overall/stats": { GET: { response: StatsDto } };
   "/api/game/today": {
     GET: {
@@ -476,6 +507,7 @@ export type ApiEndpointMap = {
   "/api/hexaword/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/hexahack/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/hexasky/leaderboards": { GET: { response: LeaderboardsDto } };
+  "/api/hexaflow/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/leaderboards/overall": { GET: { response: LeaderboardsDto } };
   "/api/player/:nickname": {
     GET: {
@@ -514,4 +546,12 @@ export type ApiEndpointMap = {
       response: AdminDeleteResultDto;
     };
   };
+  "/api/admin/hexaflow/puzzles": { GET: { response: HexaflowPuzzleMonthDto } };
+  "/api/admin/hexaflow/puzzles/:date": {
+    GET: { response: HexaflowPuzzleAdminDto };
+    PUT: { body: HexaflowPuzzleDraftDto; response: HexaflowPuzzleAdminDto };
+    DELETE: { response: void };
+  };
+  "/api/admin/hexaflow/puzzles/:date/publish": { POST: { response: HexaflowPuzzleAdminDto } };
+  "/api/admin/hexaflow/puzzles/:date/draft": { POST: { response: HexaflowPuzzleAdminDto } };
 };

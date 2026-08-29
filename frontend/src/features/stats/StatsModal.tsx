@@ -2,9 +2,9 @@ import React from "react";
 import { X } from "lucide-react";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
-import type { GameDto, HexahackRank, HexahackStatsDto, HexaskyStatsDto, StatsDto, StatsSetDto } from "../../types";
+import type { GameDto, HexahackRank, HexahackStatsDto, HexaskyStatsDto, HexaflowStatsDto, StatsDto, StatsSetDto } from "../../types";
 
-export type StatsGame = "overall" | "hexaword" | "hexahack" | "hexasky";
+export type StatsGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow";
 
 const RANK_LABELS: Readonly<Record<HexahackRank, string>> = {
   GHOST: "Ghost",
@@ -16,7 +16,7 @@ const RANK_LABELS: Readonly<Record<HexahackRank, string>> = {
 export function StatsTabs({ active, onChange }: { active: StatsGame; onChange: (game: StatsGame) => void }) {
   return (
     <div className="game-stats-tabs" role="tablist" aria-label="Gioco">
-      {([['overall', 'Overall'], ['hexaword', 'Hexaword'], ['hexahack', 'Hexahack'], ['hexasky', 'Hexasky']] as const).map(([id, label]) =>
+      {([['overall', 'Overall'], ['hexaword', 'Hexaword'], ['hexahack', 'Hexahack'], ['hexasky', 'Hexasky'], ['hexaflow', 'Hexaflow']] as const).map(([id, label]) =>
         <button key={id} type="button" role="tab" aria-selected={active === id} className={active === id ? "selected" : ""} onClick={() => onChange(id)}>{label}</button>
       )}
     </div>
@@ -63,6 +63,10 @@ export function HexaskyStatsPanel({ stats }: { stats: HexaskyStatsDto }) {
   return <><div className="stat-grid"><Metric label="Giocate" value={stats.played} /><Metric label="Vinte" value={stats.won} /><Metric label="Perse" value={stats.lost} /><Metric label="Vittorie" value={`${winRate}%`} /></div><div className="stat-grid compact"><Metric label="Serie" value={stats.currentStreak} /><Metric label="Record" value={stats.maxStreak} /></div><div className="distribution"><h3>Controlli per vittoria</h3>{([1, 2] as const).map((check) => <div className="distribution-row" key={check}><span>{check}</span><div><i style={{ width: `${Math.min(100, (stats.checkDistribution[String(check) as "1" | "2"] ?? 0) * 10)}%` }} /></div><strong>{stats.checkDistribution[String(check) as "1" | "2"] ?? 0}</strong></div>)}</div></>;
 }
 
+export function HexaflowStatsPanel({ stats }: { stats: HexaflowStatsDto }) {
+  return <><div className="stat-grid"><Metric label="Iniziate" value={stats.started}/><Metric label="Completate" value={stats.completed}/><Metric label="Serie" value={stats.currentStreak}/><Metric label="Record" value={stats.maxStreak}/></div><div className="stat-grid compact"><Metric label="Suggerimenti usati" value={stats.hintsUsed}/><Metric label="Senza suggerimenti" value={stats.hintlessCompletions}/></div></>;
+}
+
 export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
   game: GameDto | null;
   stats: StatsSetDto;
@@ -70,14 +74,14 @@ export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
   onClose: () => void;
 }) {
   const [active, setActive] = React.useState<StatsGame>(initialGame);
-  const selected = active === "hexahack" || active === "hexasky" ? null : stats[active];
+  const selected = active === "hexahack" || active === "hexasky" || active === "hexaflow" ? null : stats[active];
   const completed = active === "hexaword" ? game : null;
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section className="modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
         <header className="modal-head"><h2>Statistiche</h2><button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button></header>
         <StatsTabs active={active} onChange={setActive} />
-        {active === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : active === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : <StatsPanel stats={selected} />}
+        {active === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : active === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : active === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : <StatsPanel stats={selected} />}
         {completed?.status === "WON" ? <p className="result won">Risolta.</p> : null}
         {completed?.status === "LOST" ? <p className="result lost">Soluzione: {completed.solution?.toUpperCase()}</p> : null}
       </section>

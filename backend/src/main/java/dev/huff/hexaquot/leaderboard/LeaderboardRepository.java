@@ -14,7 +14,7 @@ import java.util.Set;
 
 @ApplicationScoped
 public class LeaderboardRepository {
-    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY }
+    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY, HEXAFLOW }
 
     public List<PlayerScore> winnerScores(String startDate, String endDate) {
         return winnerScores(Board.HEXAWORD, startDate, endDate);
@@ -25,6 +25,7 @@ public class LeaderboardRepository {
         if (board == Board.OVERALL || board == Board.HEXAWORD) merge(scores, hexawordRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXAHACK) merge(scores, hexahackRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXASKY) merge(scores, hexaskyRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXAFLOW) merge(scores, hexaflowRows(startDate, endDate));
         if (scores.isEmpty()) return List.of();
         Set<String> ids = scores.keySet();
         Map<String, UserEntity> users = new HashMap<>();
@@ -62,6 +63,15 @@ public class LeaderboardRepository {
         query += " GROUP BY g.userId";
         var typed = Panache.getEntityManager().createQuery(query, Object[].class)
             .setParameter(1, HexahackDtos.Status.COMPLETED);
+        if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
+        return typed.getResultList();
+    }
+
+    private List<Object[]> hexaflowRows(String startDate, String endDate) {
+        String query = "SELECT g.userId, COUNT(g), MAX(COALESCE(g.completedAt, g.updatedAt, g.createdAt)) FROM HexaflowGameEntity g WHERE g.status = ?1";
+        if (startDate != null) query += " AND g.puzzleDate >= ?2 AND g.puzzleDate < ?3";
+        query += " GROUP BY g.userId";
+        var typed = Panache.getEntityManager().createQuery(query, Object[].class).setParameter(1, dev.huff.hexaquot.game.HexaflowDtos.GameStatus.COMPLETED);
         if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
         return typed.getResultList();
     }

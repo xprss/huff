@@ -121,6 +121,12 @@ public class HexahackDailyGameService {
             calendar(records, LocalDate.parse(dailyGameService.todayDate())));
     }
 
+    public List<StatsCalculator.CompletedGame> completedForUser(String userId) {
+        return repository.findCompletedByUser(userId).stream()
+            .map(record -> new StatsCalculator.CompletedGame(record.puzzleDate(), GameStatus.WON, 1))
+            .toList();
+    }
+
     public static int stealth(int totalCost, int wrongSubmissions) {
         return 100 - 2 * totalCost - 5 * wrongSubmissions;
     }

@@ -37,6 +37,10 @@ public class LeaderboardResource {
         return leaderboardService.leaderboards(LeaderboardRepository.Board.HEXASKY);
     }
 
+    @GET @Path("/hexaflow/leaderboards") public Object hexaflowLeaderboards() {
+        return leaderboardService.leaderboards(LeaderboardRepository.Board.HEXAFLOW);
+    }
+
     @GET
     @Path("/leaderboards/overall")
     public Object overallLeaderboards() {
@@ -57,6 +61,7 @@ public class LeaderboardResource {
             case "overall" -> LeaderboardRepository.Board.OVERALL;
             case "hexahack" -> LeaderboardRepository.Board.HEXAHACK;
             case "hexasky" -> LeaderboardRepository.Board.HEXASKY;
+            case "hexaflow" -> LeaderboardRepository.Board.HEXAFLOW;
             default -> throw new jakarta.ws.rs.BadRequestException("Gioco della leaderboard non valido.");
         };
     }

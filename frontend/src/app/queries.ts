@@ -10,12 +10,16 @@ export const queryKeys = {
   hexahackStats: ["hexahack", "stats"] as const,
   hexaskyToday: ["hexasky", "today"] as const,
   hexaskyStats: ["hexasky", "stats"] as const,
+  hexaflowToday: ["hexaflow", "today"] as const,
+  hexaflowStats: ["hexaflow", "stats"] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: (game?: LeaderboardGame) => game ? ["leaderboards", game] as const : ["leaderboards"] as const,
   publicPlayer: (nickname: string) => ["player", nickname] as const,
   adminPlayers: (query: string, sort: AdminPlayerSortDto, page: number) => ["admin", "players", query, sort, page] as const,
-  adminPlayer: (userId: string) => ["admin", "players", "detail", userId] as const
+  adminPlayer: (userId: string) => ["admin", "players", "detail", userId] as const,
+  adminHexaflowPuzzles: (month: string) => ["admin", "hexaflow", month] as const,
+  adminHexaflowPuzzle: (date: string) => ["admin", "hexaflow", "puzzle", date] as const
 };
 
 export const meQueryOptions = () =>
@@ -54,6 +58,8 @@ export const hexahackStatsQueryOptions = () => queryOptions({
 
 export const hexaskyTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaskyToday, queryFn: api.hexaskyToday });
 export const hexaskyStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaskyStats, queryFn: api.hexaskyStats });
+export const hexaflowTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaflowToday, queryFn: api.hexaflowToday });
+export const hexaflowStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaflowStats, queryFn: api.hexaflowStats });
 
 export const overallStatsQueryOptions = () => queryOptions({
   queryKey: queryKeys.overallStats,

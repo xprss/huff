@@ -4,9 +4,12 @@ import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
 import dev.huff.hexaquot.game.HexahackDtos;
 import dev.huff.hexaquot.game.HexaskyDtos;
+import dev.huff.hexaquot.game.HexaflowDtos;
 import dev.huff.hexaquot.persistence.GameEntity;
 import dev.huff.hexaquot.persistence.HexahackGameEntity;
 import dev.huff.hexaquot.persistence.HexaskyGameEntity;
+import dev.huff.hexaquot.persistence.HexaflowGameEntity;
+import dev.huff.hexaquot.persistence.HexaflowPuzzleEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import dev.huff.hexaquot.persistence.WeeklyMedalEntity;
 import io.quarkus.test.TestTransaction;
@@ -41,6 +44,7 @@ class LeaderboardServiceTest {
         createCompletedHexahackGame(first, weekStart.plusDays(2), "2026-08-07T12:00:00Z");
         createWonGame(second, weekStart, "2026-08-07T09:00:00Z");
         createWonHexaskyGame(second, weekStart.plusDays(1), "2026-08-07T13:00:00Z");
+        createCompletedHexaflowGame(second, weekStart.plusDays(2), "2026-08-07T14:00:00Z");
 
         LeaderboardsDto leaderboards = leaderboardService.leaderboards();
         assertTrue(leaderboards.weekly().entries().stream().anyMatch(entry ->
@@ -52,7 +56,7 @@ class LeaderboardServiceTest {
             entry.nickname().equals(first.nickname) && entry.wins() == 3
         ));
         assertTrue(overallLeaderboards.weekly().entries().stream().anyMatch(entry ->
-            entry.nickname().equals(second.nickname) && entry.wins() == 2
+            entry.nickname().equals(second.nickname) && entry.wins() == 3
         ));
 
         LeaderboardsDto hexahackLeaderboards = leaderboardService.leaderboards(LeaderboardRepository.Board.HEXAHACK);
@@ -71,10 +75,15 @@ class LeaderboardServiceTest {
             entry.nickname().equals(first.nickname)
         ));
 
+        LeaderboardsDto hexaflowLeaderboards = leaderboardService.leaderboards(LeaderboardRepository.Board.HEXAFLOW);
+        assertTrue(hexaflowLeaderboards.weekly().entries().stream().anyMatch(entry ->
+            entry.nickname().equals(second.nickname) && entry.wins() == 1
+        ));
+
         PublicPlayerProfileDto profile = leaderboardService.publicProfile(first.nickname);
         assertEquals(first.displayName, profile.displayName());
         assertEquals(first.nickname, profile.nickname());
-        assertEquals(2, profile.stats().won());
+        assertEquals(3, profile.stats().won());
     }
 
     @Test
@@ -151,6 +160,38 @@ class LeaderboardServiceTest {
         game.eventLogJson = "[]";
         game.checksUsed = 1;
         game.status = HexaskyDtos.Status.WON;
+        game.createdAt = completedAt;
+        game.updatedAt = completedAt;
+        game.completedAt = completedAt;
+        game.persist();
+    }
+
+    private void createCompletedHexaflowGame(UserEntity user, LocalDate date, String completedAt) {
+        HexaflowPuzzleEntity puzzle = new HexaflowPuzzleEntity();
+        puzzle.id = UUID.randomUUID().toString();
+        puzzle.puzzleDate = date.toString();
+        puzzle.status = HexaflowDtos.PuzzleStatus.PUBLISHED;
+        puzzle.themeClue = "Test";
+        puzzle.gridJson = "[]";
+        puzzle.answersJson = "[]";
+        puzzle.createdBy = user.id;
+        puzzle.updatedBy = user.id;
+        puzzle.publishedBy = user.id;
+        puzzle.createdAt = completedAt;
+        puzzle.updatedAt = completedAt;
+        puzzle.publishedAt = completedAt;
+        puzzle.persist();
+
+        HexaflowGameEntity game = new HexaflowGameEntity();
+        game.id = UUID.randomUUID().toString();
+        game.userId = user.id;
+        game.puzzleId = puzzle.id;
+        game.puzzleDate = date.toString();
+        game.foundAnswersJson = "[]";
+        game.extraSequencesJson = "[]";
+        game.hintedAnswersJson = "[]";
+        game.eventLogJson = "[]";
+        game.status = HexaflowDtos.GameStatus.COMPLETED;
         game.createdAt = completedAt;
         game.updatedAt = completedAt;
         game.completedAt = completedAt;

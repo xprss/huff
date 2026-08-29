@@ -180,13 +180,24 @@ class ApiSecurityFilterTest {
             Arguments.of(Method.POST, "/api/hexahack/today/probes"),
             Arguments.of(Method.POST, "/api/hexahack/today/submissions"),
             Arguments.of(Method.GET, "/api/hexahack/stats"),
+            Arguments.of(Method.GET, "/api/hexaflow/today"),
+            Arguments.of(Method.POST, "/api/hexaflow/today/paths"),
+            Arguments.of(Method.POST, "/api/hexaflow/today/hints"),
+            Arguments.of(Method.GET, "/api/hexaflow/stats"),
             Arguments.of(Method.POST, "/api/me/announcements/HEXAHACK_LAUNCH/seen"),
+            Arguments.of(Method.POST, "/api/me/announcements/HEXAFLOW_LAUNCH/seen"),
             Arguments.of(Method.POST, "/api/push/subscriptions"),
             Arguments.of(Method.DELETE, "/api/push/subscriptions"),
             Arguments.of(Method.GET, "/api/admin/players"),
             Arguments.of(Method.GET, "/api/admin/players/missing"),
             Arguments.of(Method.PUT, "/api/admin/players/missing"),
-            Arguments.of(Method.DELETE, "/api/admin/players/missing")
+            Arguments.of(Method.DELETE, "/api/admin/players/missing"),
+            Arguments.of(Method.GET, "/api/admin/hexaflow/puzzles?month=2026-08"),
+            Arguments.of(Method.GET, "/api/admin/hexaflow/puzzles/2026-08-29"),
+            Arguments.of(Method.PUT, "/api/admin/hexaflow/puzzles/2026-08-29"),
+            Arguments.of(Method.POST, "/api/admin/hexaflow/puzzles/2026-08-29/publish"),
+            Arguments.of(Method.POST, "/api/admin/hexaflow/puzzles/2026-08-29/draft"),
+            Arguments.of(Method.DELETE, "/api/admin/hexaflow/puzzles/2026-08-29")
         );
     }
 }

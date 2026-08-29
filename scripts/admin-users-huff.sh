@@ -32,6 +32,7 @@ Privilege flags:
   --view-player-details true|false
   --manage-players true|false
   --manage-admins true|false
+  --manage-hexaflow-puzzles true|false
   --all                      Set every privilege to true
 
 By default grant/update/revoke are dry-run. Add --yes to write changes.
@@ -84,6 +85,7 @@ view_players=""
 view_details=""
 manage_players=""
 manage_admins=""
+manage_hexaflow=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -107,11 +109,16 @@ while [[ $# -gt 0 ]]; do
       manage_admins="$(parse_bool "${2:-}")"
       shift 2
       ;;
+    --manage-hexaflow-puzzles)
+      manage_hexaflow="$(parse_bool "${2:-}")"
+      shift 2
+      ;;
     --all)
       view_players="true"
       view_details="true"
       manage_players="true"
       manage_admins="true"
+      manage_hexaflow="true"
       shift
       ;;
     --yes)
@@ -133,7 +140,7 @@ require_postgres
 case "${command}" in
   list)
     psql_exec -c "
-      SELECT user_id, can_view_players, can_view_player_details, can_manage_players, can_manage_admins, created_at, updated_at
+      SELECT user_id, can_view_players, can_view_player_details, can_manage_players, can_manage_admins, can_manage_hexaflow_puzzles, created_at, updated_at
       FROM admin_users
       ORDER BY user_id;
     "
@@ -141,7 +148,7 @@ case "${command}" in
   show)
     [[ -n "${user_id}" ]] || fail "Missing --id."
     psql_exec -v user_id="${user_id}" -c "
-      SELECT user_id, can_view_players, can_view_player_details, can_manage_players, can_manage_admins, created_at, updated_at
+      SELECT user_id, can_view_players, can_view_player_details, can_manage_players, can_manage_admins, can_manage_hexaflow_puzzles, created_at, updated_at
       FROM admin_users
       WHERE user_id = :'user_id';
     "
@@ -157,7 +164,8 @@ case "${command}" in
       -v view_players="${view_players}" \
       -v view_details="${view_details}" \
       -v manage_players="${manage_players}" \
-      -v manage_admins="${manage_admins}" <<'SQL'
+      -v manage_admins="${manage_admins}" \
+      -v manage_hexaflow="${manage_hexaflow}" <<'SQL'
 BEGIN;
 
 SELECT set_config('huff_admin.user_id', :'user_id', true) AS ignored \gset
@@ -166,6 +174,7 @@ SELECT set_config('huff_admin.view_players', :'view_players', true) AS ignored \
 SELECT set_config('huff_admin.view_details', :'view_details', true) AS ignored \gset
 SELECT set_config('huff_admin.manage_players', :'manage_players', true) AS ignored \gset
 SELECT set_config('huff_admin.manage_admins', :'manage_admins', true) AS ignored \gset
+SELECT set_config('huff_admin.manage_hexaflow', :'manage_hexaflow', true) AS ignored \gset
 
 WITH current_values AS (
   SELECT *
@@ -178,7 +187,8 @@ desired AS (
     COALESCE(NULLIF(current_setting('huff_admin.view_players'), '')::boolean, (SELECT can_view_players FROM current_values), false) AS can_view_players,
     COALESCE(NULLIF(current_setting('huff_admin.view_details'), '')::boolean, (SELECT can_view_player_details FROM current_values), false) AS can_view_player_details,
     COALESCE(NULLIF(current_setting('huff_admin.manage_players'), '')::boolean, (SELECT can_manage_players FROM current_values), false) AS can_manage_players,
-    COALESCE(NULLIF(current_setting('huff_admin.manage_admins'), '')::boolean, (SELECT can_manage_admins FROM current_values), false) AS can_manage_admins
+    COALESCE(NULLIF(current_setting('huff_admin.manage_admins'), '')::boolean, (SELECT can_manage_admins FROM current_values), false) AS can_manage_admins,
+    COALESCE(NULLIF(current_setting('huff_admin.manage_hexaflow'), '')::boolean, (SELECT can_manage_hexaflow_puzzles FROM current_values), false) AS can_manage_hexaflow_puzzles
 ),
 written AS (
   INSERT INTO admin_users (
@@ -187,6 +197,7 @@ written AS (
     can_view_player_details,
     can_manage_players,
     can_manage_admins,
+    can_manage_hexaflow_puzzles,
     created_at,
     updated_at
   )
@@ -196,6 +207,7 @@ written AS (
     can_view_player_details,
     can_manage_players,
     can_manage_admins,
+    can_manage_hexaflow_puzzles,
     now()::text,
     now()::text
   FROM desired
@@ -206,6 +218,7 @@ written AS (
     can_view_player_details = EXCLUDED.can_view_player_details,
     can_manage_players = EXCLUDED.can_manage_players,
     can_manage_admins = EXCLUDED.can_manage_admins,
+    can_manage_hexaflow_puzzles = EXCLUDED.can_manage_hexaflow_puzzles,
     updated_at = now()::text
   RETURNING *
 )
