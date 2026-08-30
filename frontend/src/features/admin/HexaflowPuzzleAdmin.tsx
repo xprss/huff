@@ -181,6 +181,9 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
     );
   }
 
+  const preparedDraft = prepareDraft(draft);
+  const hasUnsavedChanges = !saved || JSON.stringify(preparedDraft) !== JSON.stringify(prepareDraft(toDraft(saved)));
+
   return (
     <section className="hexaflow-cms cms-editor" aria-label="Editor puzzle Hexaflow">
       <header className="cms-editor-header">
@@ -215,7 +218,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
               </div>
             ))}
           </div>
-          {!draft.answers[activeAnswer] ? <p className="cms-grid-help">Crea o seleziona una risposta per iniziare a disegnare un percorso.</p> : <p className="cms-grid-help">Stai disegnando: <strong>{draft.answers[activeAnswer].label || "risposta senza nome"}</strong> · {draft.answers[activeAnswer].path.length} celle. Tocca la penultima cella per tornare indietro.</p>}
+          {!draft.answers[activeAnswer] ? <p className="cms-grid-help">Crea o seleziona una risposta per iniziare a disegnare un percorso.</p> : <p className="cms-grid-help">Stai disegnando: <strong>{solutionForPath(draft.grid, draft.answers[activeAnswer].path) || "percorso senza lettere"}</strong> · {draft.answers[activeAnswer].path.length} celle. Tocca la penultima cella per tornare indietro.</p>}
         </section>
 
         <section className="cms-answers-panel">
@@ -226,20 +229,21 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
           </div>
           <div className="cms-answer-list">
             {draft.answers.length === 0 ? <p className="cms-empty">Inizia aggiungendo una parola tema o il Flusso.</p> : null}
-            {draft.answers.map((answer, index) => (
-              <article key={answer.id} className={`cms-answer ${activeAnswer === index ? "active" : ""}`}>
+            {draft.answers.map((answer, index) => {
+              const solution = solutionForPath(draft.grid, answer.path);
+              return <article key={answer.id} className={`cms-answer ${activeAnswer === index ? "active" : ""}`}>
                 <button className="cms-answer-select" type="button" onClick={() => setActiveAnswer(index)} aria-pressed={activeAnswer === index}>
                   <span className={`cms-answer-type ${answer.type.toLowerCase()}`}>{answer.type === "FLOW" ? "Flusso" : "Tema"}</span>
-                  <strong>{answer.label || "Risposta senza nome"}</strong>
+                  <strong>{solution || "Traccia il percorso"}</strong>
                   <span>{answer.path.length} celle</span>
                 </button>
                 <div className="cms-answer-fields">
                   <label><span>Tipo</span><select value={answer.type} disabled={editorLocked} onFocus={() => setActiveAnswer(index)} onChange={(event) => updateAnswer(index, { type: event.target.value as HexaflowAnswerDto["type"] })}><option value="THEME">Parola tema</option><option value="FLOW">Flusso</option></select></label>
-                  <label><span>Soluzione</span><input value={answer.label} disabled={editorLocked} placeholder="es. GIRASOLE" onFocus={() => setActiveAnswer(index)} onChange={(event) => updateAnswer(index, { label: event.target.value })} /></label>
-                  <button className="cms-delete-answer" type="button" disabled={editorLocked} onClick={() => removeAnswer(index)} aria-label={`Elimina ${answer.label || "risposta"}`}><Trash2 size={17} /></button>
+                  <label><span>Parola composta</span><output className="cms-answer-word">{solution || "Seleziona le celle"}</output></label>
+                  <button className="cms-delete-answer" type="button" disabled={editorLocked} onClick={() => removeAnswer(index)} aria-label={`Elimina ${solution || "percorso"}`}><Trash2 size={17} /></button>
                 </div>
-              </article>
-            ))}
+              </article>;
+            })}
           </div>
         </section>
       </div>
@@ -250,8 +254,8 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
         {confirmAction ? (
           <div className="cms-confirmation"><strong>{confirmAction === "publish" ? "Pubblicare questo puzzle?" : "Eliminare definitivamente questa bozza?"}</strong><span>{confirmAction === "publish" ? "Dopo la pubblicazione di oggi non potrà più essere modificato." : "L’operazione non può essere annullata."}</span><button className={confirmAction === "delete" ? "danger" : "cms-primary-button"} type="button" disabled={publish.isPending || remove.isPending} onClick={() => confirmAction === "publish" ? publish.mutate(draft.puzzleDate) : remove.mutate(draft.puzzleDate)}>{confirmAction === "publish" ? <><Send size={16} />Conferma pubblicazione</> : <><Trash2 size={16} />Elimina bozza</>}</button><button type="button" onClick={() => setConfirmAction(null)}>Annulla</button></div>
         ) : <>
-          <button type="button" disabled={editorLocked || save.isPending} onClick={() => save.mutate(draft)}><Save size={16} />{save.isPending ? "Salvataggio…" : "Salva bozza"}</button>
-          {saved?.status === "PUBLISHED" ? <button type="button" disabled={immutable || unpublish.isPending} onClick={() => unpublish.mutate(draft.puzzleDate)}>Torna in bozza</button> : <button className="cms-primary-button" type="button" disabled={!saved || publish.isPending || errorCount > 0} onClick={() => setConfirmAction("publish")}><Send size={16} />Pubblica</button>}
+          <button type="button" disabled={editorLocked || save.isPending} onClick={() => save.mutate(preparedDraft)}><Save size={16} />{save.isPending ? "Salvataggio…" : "Salva bozza"}</button>
+          {saved?.status === "PUBLISHED" ? <button type="button" disabled={immutable || unpublish.isPending} onClick={() => unpublish.mutate(draft.puzzleDate)}>Torna in bozza</button> : <button className="cms-primary-button" type="button" title={hasUnsavedChanges ? "Salva la bozza prima di pubblicare." : undefined} disabled={!saved || publish.isPending || errorCount > 0 || hasUnsavedChanges} onClick={() => setConfirmAction("publish")}><Send size={16} />Pubblica</button>}
           <button className="danger" type="button" disabled={!saved || saved.status !== "DRAFT" || draft.puzzleDate <= editorToday()} onClick={() => setConfirmAction("delete")}><Trash2 size={16} />Elimina</button>
         </>}
       </footer>
@@ -273,4 +277,15 @@ function formatMonth(month: string) {
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("it-IT", { weekday: "short", day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00`));
+}
+
+function solutionForPath(grid: readonly string[], path: readonly number[]) {
+  return path.map((cell) => grid[cell] ?? "").join("");
+}
+
+function prepareDraft(draft: HexaflowPuzzleDraftDto): HexaflowPuzzleDraftDto {
+  return {
+    ...draft,
+    answers: draft.answers.map((answer) => ({ ...answer, label: solutionForPath(draft.grid, answer.path) }))
+  };
 }
