@@ -1743,7 +1743,8 @@ html[data-theme="chromatic"] .key.absent {
   min-height: 0;
   flex: 1 1 auto;
   display: grid;
-  align-content: center;
+  /* Avoid centering overflowing cards above the scrollable viewport. */
+  align-content: safe center;
   gap: 22px;
   overflow-y: auto;
   overscroll-behavior-y: contain;

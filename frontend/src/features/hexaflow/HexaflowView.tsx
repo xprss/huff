@@ -112,7 +112,7 @@ function taperedCurve(from: { x: number; y: number }, to: { x: number; y: number
   if (!distance) return "";
   const normal = { x: -dy / distance, y: dx / distance };
   const endWidth = 8;
-  const middleWidth = 3.5;
+  const middleWidth = 1.75;
   const curve = ((seed % 3) - 1) * Math.min(7, distance * .12);
   const middle = { x: (from.x + to.x) / 2 + normal.x * curve, y: (from.y + to.y) / 2 + normal.y * curve };
   const point = (base: { x: number; y: number }, offset: number) => `${(base.x + normal.x * offset).toFixed(2)} ${(base.y + normal.y * offset).toFixed(2)}`;
