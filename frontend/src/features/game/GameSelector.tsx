@@ -1,3 +1,4 @@
+import React from "react";
 import { Binary, Check, SpellCheck2, Building2, Waves } from "lucide-react";
 
 export function GameSelector({
@@ -21,8 +22,14 @@ export function GameSelector({
   onHexasky: () => void;
   onHexaflow: () => void;
 }) {
+  const selectorRef = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    selectorRef.current?.scrollTo(0, 0);
+  }, []);
+
   return (
-    <section className="game-selector" aria-labelledby="game-selector-title">
+    <section ref={selectorRef} className="game-selector" aria-labelledby="game-selector-title">
       <div>
         <p className="eyebrow">La sfida quotidiana</p>
         <h2 id="game-selector-title">A cosa giochiamo?</h2>

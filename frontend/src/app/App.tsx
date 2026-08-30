@@ -128,7 +128,6 @@ export function App() {
   const [enablingNotifications, setEnablingNotifications] = React.useState(false);
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
-  const gameSurfaceRef = React.useRef<HTMLElement | null>(null);
   const notificationPromptHandledRef = React.useRef(false);
   const launchAnnouncementHandledRef = React.useRef(false);
   const [showLaunchAnnouncement, setShowLaunchAnnouncement] = React.useState(false);
@@ -263,7 +262,6 @@ export function App() {
 
     if (!isAdminRoute) {
       window.scrollTo(0, 0);
-      if (gameSurfaceRef.current) gameSurfaceRef.current.scrollTop = 0;
     }
 
     return () => documentElement.classList.remove("admin-scroll");
@@ -817,11 +815,7 @@ export function App() {
   return (
     <AppThemeProvider theme={appTheme}>
       <main className={`app-shell${activeRoute === "admin" ? " admin-shell" : ""}`}>
-        <section
-          ref={gameSurfaceRef}
-          className={`game-surface${activeRoute === "admin" ? " admin-surface" : ""}${activeRoute === "games" ? " games-surface" : ""}`}
-          aria-busy={loading}
-        >
+        <section className={`game-surface${activeRoute === "admin" ? " admin-surface" : ""}`} aria-busy={loading}>
           <AppHeader
             puzzleDate={puzzleDate}
             toast={toast}

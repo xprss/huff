@@ -1744,14 +1744,11 @@ html[data-theme="chromatic"] .key.absent {
   display: grid;
   align-content: center;
   gap: 22px;
-  overflow: visible;
-  padding: 8px 0 20px;
-}
-
-.games-surface {
   overflow-y: auto;
   overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  padding: 8px 0 20px;
 }
 
 .game-selector h2,
