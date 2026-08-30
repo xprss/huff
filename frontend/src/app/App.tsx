@@ -128,6 +128,7 @@ export function App() {
   const [enablingNotifications, setEnablingNotifications] = React.useState(false);
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const gameSurfaceRef = React.useRef<HTMLElement | null>(null);
   const notificationPromptHandledRef = React.useRef(false);
   const launchAnnouncementHandledRef = React.useRef(false);
   const [showLaunchAnnouncement, setShowLaunchAnnouncement] = React.useState(false);
@@ -254,6 +255,19 @@ export function App() {
   function setHexaflowGame(updated: NonNullable<HexaflowTodayDto["game"]>) { queryClient.setQueryData<HexaflowTodayDto | undefined>(queryKeys.hexaflowToday, (current) => current ? { ...current, game: updated } : current); }
   const hexaflowPathMutation = useMutation({ mutationFn: api.hexaflowPath, onSuccess: (action) => setHexaflowGame(action.game) });
   const hexaflowHintMutation = useMutation({ mutationFn: api.hexaflowHint, onSuccess: (action) => setHexaflowGame(action.game) });
+
+  React.useEffect(() => {
+    const documentElement = document.documentElement;
+    const isAdminRoute = activeRoute === "admin";
+    documentElement.classList.toggle("admin-scroll", isAdminRoute);
+
+    if (!isAdminRoute) {
+      window.scrollTo(0, 0);
+      if (gameSurfaceRef.current) gameSurfaceRef.current.scrollTop = 0;
+    }
+
+    return () => documentElement.classList.remove("admin-scroll");
+  }, [activeRoute]);
 
   const useKittenMutation = useMutation({
     mutationFn: api.useKitten,
@@ -803,7 +817,11 @@ export function App() {
   return (
     <AppThemeProvider theme={appTheme}>
       <main className={`app-shell${activeRoute === "admin" ? " admin-shell" : ""}`}>
-        <section className={`game-surface${activeRoute === "admin" ? " admin-surface" : ""}`} aria-busy={loading}>
+        <section
+          ref={gameSurfaceRef}
+          className={`game-surface${activeRoute === "admin" ? " admin-surface" : ""}${activeRoute === "games" ? " games-surface" : ""}`}
+          aria-busy={loading}
+        >
           <AppHeader
             puzzleDate={puzzleDate}
             toast={toast}
