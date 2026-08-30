@@ -166,6 +166,7 @@
   --viewport-padding: 22px;
   --surface-gap: 12px;
   --keyboard-gap: 6px;
+  --app-footer-height: 48px;
   --key-row-height: clamp(38px, calc(var(--app-vh) * 6.2), 48px);
   --control-border-width: 1px;
   --tile-border-width: 2px;
@@ -264,7 +265,7 @@ html.admin-scroll #root {
   height: auto;
   min-height: var(--app-height);
   overflow: visible;
-  padding-bottom: calc(var(--viewport-padding) + env(safe-area-inset-bottom, 0px) + 38px);
+  padding-bottom: calc(var(--viewport-padding) + env(safe-area-inset-bottom, 0px) + var(--app-footer-height));
 }
 
 .admin-shell .admin-surface {
@@ -282,14 +283,14 @@ html.admin-scroll #root {
   right: 0;
   bottom: env(safe-area-inset-bottom, 0px);
   left: 0;
-  min-height: 38px;
+  height: var(--app-footer-height);
   z-index: 5;
   background: color-mix(in srgb, var(--color-page) 88%, transparent);
   backdrop-filter: blur(10px);
 }
 
 .admin-shell .cms-actions {
-  bottom: calc(38px + .55rem);
+  bottom: calc(var(--app-footer-height) + .55rem);
 }
 
 .game-surface {
@@ -3918,7 +3919,7 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
     repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 7px),
     repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.3) 0 1px, transparent 1px 7px);
 }
-.hexaflow { width:min(100%,680px); margin:0 auto; padding:1rem; display:grid; gap:1rem; }
+.hexaflow { width:min(100%,680px); min-height:0; flex:1 1 auto; margin:0 auto; padding:1rem 1rem 1.5rem; display:grid; align-content:start; gap:1rem; overflow-y:auto; overscroll-behavior-y:contain; -webkit-overflow-scrolling:touch; touch-action:pan-y; }
 .hexaflow-launch-modal .launch-icon { color:#168b84; }
 .launch-modal-note { font-size:.9rem; opacity:.78; }
 .hexaflow.unavailable { min-height:45vh; place-content:center; text-align:center; justify-items:center; opacity:.8; }
@@ -3929,7 +3930,7 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
 .hexaflow-progress span { display:block; height:100%; background:#37a9a0; transition:width .2s; }
 .hexaflow-current { min-height:1.5em; margin:0; text-align:center; font-weight:800; letter-spacing:.12em; }
 .hexaflow-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:clamp(.28rem,1.2vw,.55rem); width:min(100%,30rem); margin:auto; touch-action:none; user-select:none; }
-.hexaflow-cell { position:relative; aspect-ratio:1; border:2px solid color-mix(in srgb,var(--text-color,#222) 16%,transparent); border-radius:50%; background:var(--surface-raised,#fff); color:inherit; font-size:clamp(1rem,5vw,1.45rem); font-weight:900; padding:0; }
+.hexaflow-cell { position:relative; aspect-ratio:1; border:2px solid color-mix(in srgb,#17312e 22%,transparent); border-radius:50%; background:#f4fffd; color:#17312e; font-size:clamp(1rem,5vw,1.45rem); font-weight:900; padding:0; }
 .hexaflow-cell small { position:absolute; right:.18rem; top:.08rem; font-size:.55rem; }
 .hexaflow-cell.selected { border-color:#127d77; background:#b9ebe7; transform:scale(1.05); }
 .hexaflow-cell.theme { background:#b9ebe7; border-color:#37a9a0; }

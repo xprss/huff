@@ -975,7 +975,13 @@ export function App() {
               busy={hexaflowPathMutation.isPending || hexaflowHintMutation.isPending}
               onPath={(request) => hexaflowPathMutation.mutateAsync(request)} onHint={() => hexaflowHintMutation.mutateAsync()}
               onUpdate={(action) => setHexaflowGame(action.game)} onError={(message) => showToast(message, "warning")}
-              onComplete={() => { void refreshStats(); void launchVictoryConfetti(); setStatsInitialGame("hexaflow"); }} />
+              onComplete={() => {
+                void refreshStats().finally(() => {
+                  setStatsInitialGame("hexaflow");
+                  setShowStats(true);
+                });
+                void launchVictoryConfetti();
+              }} />
           ) : !game ? (
             <>
               <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
