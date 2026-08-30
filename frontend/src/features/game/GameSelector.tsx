@@ -1,5 +1,5 @@
 import React from "react";
-import { Binary, Check, SpellCheck2, Building2, Waves } from "lucide-react";
+import { ArrowUpRight, Binary, Check, SpellCheck2, Building2, Waves } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
@@ -36,31 +36,55 @@ export function GameSelector({
         <p>Scegli il gioco di oggi. Le partite e le statistiche restano indipendenti.</p>
       </div>
       <div className="game-selector-grid">
-        <button className={hexawordCompleted ? "completed" : ""} type="button" onClick={onHexaword}>
-          <SpellCheck2 className="game-selector-icon" aria-hidden="true" />
-          <span className="game-selector-name">
-            <strong>Hexaword</strong>
-            {hexawordCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}
+        <button className={`game-selector-card game-selector-card--word${hexawordCompleted ? " completed" : ""}`} type="button" onClick={onHexaword}>
+          <span className="game-selector-card-top">
+            <span className="game-selector-icon"><SpellCheck2 aria-hidden="true" /></span>
+            <span className="game-selector-index" aria-hidden="true">01</span>
           </span>
-          <span>Trova la parola italiana di sei lettere.</span>
-        </button>
-        <button className={hexahackCompleted ? "completed" : ""} type="button" onClick={onHexahack}>
-          <Binary className="game-selector-icon" aria-hidden="true" />
-          <span className="game-selector-name">
-            <strong>Hexahack</strong>
-            {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
+          <span className="game-selector-copy">
+            <span className="game-selector-name">
+              <strong>Hexaword</strong>
+              {hexawordCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}
+            </span>
+            <span className="game-selector-description">Trova la parola italiana di sei lettere.</span>
           </span>
-          <span>Viola il nodo senza perdere Stealth.</span>
+          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
-        <button className={hexaskyCompleted ? "completed" : ""} type="button" onClick={onHexasky}>
-          <Building2 className="game-selector-icon" aria-hidden="true" />
-          <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-          <span>Risolvi il grattacielo quotidiano 4×4.</span>
+        <button className={`game-selector-card game-selector-card--hack${hexahackCompleted ? " completed" : ""}`} type="button" onClick={onHexahack}>
+          <span className="game-selector-card-top">
+            <span className="game-selector-icon"><Binary aria-hidden="true" /></span>
+            <span className="game-selector-index" aria-hidden="true">02</span>
+          </span>
+          <span className="game-selector-copy">
+            <span className="game-selector-name">
+              <strong>Hexahack</strong>
+              {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
+            </span>
+            <span className="game-selector-description">Viola il nodo senza perdere Stealth.</span>
+          </span>
+          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
-        <button className={hexaflowCompleted ? "completed" : ""} type="button" onClick={onHexaflow} disabled={!hexaflowAvailable}>
-          <Waves className="game-selector-icon" aria-hidden="true" />
-          <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-          <span>{hexaflowAvailable ? "Collega le parole del tema e trova il Flusso." : "Non disponibile oggi"}</span>
+        <button className={`game-selector-card game-selector-card--sky${hexaskyCompleted ? " completed" : ""}`} type="button" onClick={onHexasky}>
+          <span className="game-selector-card-top">
+            <span className="game-selector-icon"><Building2 aria-hidden="true" /></span>
+            <span className="game-selector-index" aria-hidden="true">03</span>
+          </span>
+          <span className="game-selector-copy">
+            <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
+            <span className="game-selector-description">Risolvi il grattacielo quotidiano 4×4.</span>
+          </span>
+          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
+        </button>
+        <button className={`game-selector-card game-selector-card--flow${hexaflowCompleted ? " completed" : ""}`} type="button" onClick={onHexaflow} disabled={!hexaflowAvailable}>
+          <span className="game-selector-card-top">
+            <span className="game-selector-icon"><Waves aria-hidden="true" /></span>
+            <span className="game-selector-index" aria-hidden="true">04</span>
+          </span>
+          <span className="game-selector-copy">
+            <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
+            <span className="game-selector-description">{hexaflowAvailable ? "Collega le parole del tema e trova il Flusso." : "Non disponibile oggi"}</span>
+          </span>
+          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
       </div>
     </section>
