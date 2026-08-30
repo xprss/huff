@@ -11,7 +11,7 @@ export function HexaflowLaunchModal({ onPlay, onClose }: { onPlay: () => void; o
         <Waves className="launch-icon" aria-hidden="true" />
         <p className="eyebrow">Segui il flusso delle parole</p>
         <p>Collega le lettere in ogni direzione, scopri le parole del tema e trova il Flusso che attraversa tutta la griglia.</p>
-        <p className="launch-modal-note">Ogni tre sequenze extra ottieni un suggerimento.</p>
+        <p className="launch-modal-note">Ogni percorso che trovi rende la griglia un po’ più chiara.</p>
         <button className="launch-cta" type="button" onClick={onPlay}>Gioca a Hexaflow</button>
       </section>
     </div>

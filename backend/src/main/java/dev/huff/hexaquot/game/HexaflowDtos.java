@@ -8,7 +8,7 @@ public final class HexaflowDtos {
     public enum AnswerType { THEME, FLOW }
     public enum GameStatus { IN_PROGRESS, COMPLETED }
     public enum PathOutcome { THEME, FLOW, EXTRA, DUPLICATE }
-    public enum EventKind { PATH, HINT }
+    public enum EventKind { PATH }
 
     public record AnswerDto(String id, String label, AnswerType type, List<Integer> path) {}
     public record PuzzleDraftDto(String puzzleDate, String themeClue, List<String> grid, List<AnswerDto> answers) {}
@@ -23,19 +23,14 @@ public final class HexaflowDtos {
 
     public record FoundAnswerDto(String id, String label, AnswerType type, List<Integer> cells) {}
     public record GameDto(String puzzleDate, GameStatus status, List<FoundAnswerDto> foundAnswers,
-                          int extraCount, int hintCredits, int hintsUsed, List<List<Integer>> hintedCells,
-                          String completedAt) {}
+                          int extraCount, String completedAt) {}
     public record TodayDto(String puzzleDate, boolean available, String themeClue, List<String> grid,
                            int totalAnswers, GameDto game) {}
     public record PathRequest(String requestId, List<Integer> cells) {}
-    public record HintRequest(String requestId) {}
     public record PathResultDto(String requestId, PathOutcome outcome, FoundAnswerDto answer,
-                                String sequence, int extraCount, int hintCredits) {}
-    public record HintResultDto(String requestId, List<Integer> cells, int hintCredits) {}
+                                String sequence, int extraCount) {}
     public record EventDto(int sequence, EventKind kind, String requestId, String occurredAt,
-                           PathResultDto path, HintResultDto hint) {}
+                           PathResultDto path) {}
     public record PathActionDto(GameDto game, PathResultDto result, boolean replayed) {}
-    public record HintActionDto(GameDto game, HintResultDto result, boolean replayed) {}
-    public record StatsDto(int started, int completed, int currentStreak, int maxStreak,
-                           int hintsUsed, int hintlessCompletions) {}
+    public record StatsDto(int started, int completed, int currentStreak, int maxStreak) {}
 }

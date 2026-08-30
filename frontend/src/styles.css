@@ -3926,23 +3926,16 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
 .hexaflow-head { display:flex; justify-content:space-between; align-items:end; gap:1rem; }
 .hexaflow-head h2 { margin:.2rem 0 0; font-size:clamp(1.25rem,4vw,1.8rem); }
 .hexaflow-head>span { border-radius:999px; padding:.4rem .7rem; background:var(--surface-raised,#fff); font-weight:800; }
-.hexaflow-progress { height:.38rem; overflow:hidden; border-radius:99px; background:color-mix(in srgb,var(--text-color,#222) 12%,transparent); }
-.hexaflow-progress span { display:block; height:100%; background:#37a9a0; transition:width .2s; }
 .hexaflow-current { min-height:1.5em; margin:0; text-align:center; font-weight:800; letter-spacing:.12em; }
+.hexaflow-instruction { margin:-.55rem 0 0; color:var(--color-muted); text-align:center; font-size:.78rem; font-weight:650; line-height:1.3; }
 .hexaflow-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:clamp(.28rem,1.2vw,.55rem); width:min(100%,30rem); margin:auto; touch-action:none; user-select:none; }
 .hexaflow-cell { position:relative; aspect-ratio:1; border:2px solid color-mix(in srgb,#17312e 22%,transparent); border-radius:50%; background:#f4fffd; color:#17312e; font-size:clamp(1rem,5vw,1.45rem); font-weight:900; padding:0; }
 .hexaflow-cell small { position:absolute; right:.18rem; top:.08rem; font-size:.55rem; }
 .hexaflow-cell.selected { border-color:#127d77; background:#b9ebe7; transform:scale(1.05); }
 .hexaflow-cell.theme { background:#b9ebe7; border-color:#37a9a0; }
 .hexaflow-cell.flow { background:#f4c45e; border-color:#b97c00; }
-.hexaflow-cell.hinted { box-shadow:0 0 0 3px #b35bdb; }
-.hexaflow-actions,.admin-sections { display:flex; flex-wrap:wrap; justify-content:center; gap:.55rem; }
-.hexaflow-actions button,.hexaflow-complete button,.admin-sections button { display:inline-flex; align-items:center; gap:.35rem; border:0; border-radius:.7rem; padding:.65rem .85rem; font:inherit; font-weight:700; }
-.hexaflow-answers { display:grid; gap:.7rem; }
-.hexaflow-answers>div:first-child { display:flex; flex-wrap:wrap; gap:.45rem; align-items:center; }
-.hexaflow-answers span { padding:.3rem .5rem; border-radius:.5rem; background:#b9ebe7; }
-.hexaflow-answers span.flow { background:#f4c45e; }
-.hexaflow-counters { display:flex; gap:.6rem; }
+.admin-sections { display:flex; flex-wrap:wrap; justify-content:center; gap:.55rem; }
+.hexaflow-complete button,.admin-sections button { display:inline-flex; align-items:center; gap:.35rem; border:0; border-radius:.7rem; padding:.65rem .85rem; font:inherit; font-weight:700; }
 .hexaflow-complete { text-align:center; border-radius:1rem; padding:1rem; background:color-mix(in srgb,#37a9a0 16%,transparent); }
 .admin-sections { margin:0 auto 1rem; }
 .admin-sections .selected { background:#37a9a0; color:#071f1d; }

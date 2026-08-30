@@ -18,7 +18,7 @@ class HexaflowDailyGameServiceTest {
     @Inject DailyGameService clock;
 
     @Test @TestTransaction
-    void supportsReverseSolutionsUniqueExtrasHintsCompletionAndReplay() {
+    void supportsReverseSolutionsUniqueExtrasCompletionAndReplay() {
         HexaflowDtos.PuzzleDraftDto puzzle=createPuzzle();
         AppUser user=createUser();
         var initial=service.today(user);
@@ -38,19 +38,13 @@ class HexaflowDailyGameServiceTest {
         assertEquals(HexaflowDtos.PathOutcome.DUPLICATE,duplicate.result().outcome());
         service.submitPath(user,new HexaflowDtos.PathRequest("extra-2",List.of(7,8,9,10)));
         var thirdExtra=service.submitPath(user,new HexaflowDtos.PathRequest("extra-3",List.of(13,14,15,16)));
-        assertEquals(1,thirdExtra.game().hintCredits());
-
-        var hint=service.hint(user,new HexaflowDtos.HintRequest("hint"));
-        assertEquals(0,hint.game().hintCredits());
-        assertEquals(1,hint.game().hintsUsed());
-        assertEquals(new HashSet<>(puzzle.answers().get(1).path()),new HashSet<>(hint.result().cells()));
-        assertTrue(service.hint(user,new HexaflowDtos.HintRequest("hint")).replayed());
+        assertEquals(3,thirdExtra.game().extraCount());
 
         var completed=service.submitPath(user,new HexaflowDtos.PathRequest("theme",reversed(puzzle.answers().get(1).path())));
         assertEquals(HexaflowDtos.GameStatus.COMPLETED,completed.game().status());
         assertEquals(2,completed.game().foundAnswers().size());
         var stats=service.stats(user);
-        assertEquals(1,stats.started());assertEquals(1,stats.completed());assertEquals(1,stats.hintsUsed());
+        assertEquals(1,stats.started());assertEquals(1,stats.completed());
     }
 
     private HexaflowDtos.PuzzleDraftDto createPuzzle() {

@@ -189,7 +189,6 @@ class LeaderboardServiceTest {
         game.puzzleDate = date.toString();
         game.foundAnswersJson = "[]";
         game.extraSequencesJson = "[]";
-        game.hintedAnswersJson = "[]";
         game.eventLogJson = "[]";
         game.status = HexaflowDtos.GameStatus.COMPLETED;
         game.createdAt = completedAt;

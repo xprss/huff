@@ -9,7 +9,6 @@ import type {
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
   HexaflowPathRequestDto,
-  HexaflowHintActionDto,
   HexaflowPuzzleDraftDto,
   LeaderboardGame,
   LeaderboardsDto,
@@ -93,7 +92,6 @@ export type ApiClient = {
   readonly hexaskyStats: EndpointHandler<"/api/hexasky/stats", "GET">;
   readonly hexaflowToday: EndpointHandler<"/api/hexaflow/today", "GET">;
   readonly hexaflowPath: EndpointHandler<"/api/hexaflow/today/paths", "POST", [request: HexaflowPathRequestDto]>;
-  readonly hexaflowHint: () => Promise<HexaflowHintActionDto>;
   readonly hexaflowStats: EndpointHandler<"/api/hexaflow/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
@@ -197,7 +195,6 @@ export const api = {
   hexaskyStats: () => request("/api/hexasky/stats", { method: "GET" }),
   hexaflowToday: () => request("/api/hexaflow/today", { method: "GET" }),
   hexaflowPath: (pathRequest: HexaflowPathRequestDto) => request("/api/hexaflow/today/paths", { method: "POST", body: pathRequest }),
-  hexaflowHint: () => request("/api/hexaflow/today/hints", { method: "POST", body: { requestId: crypto.randomUUID() } }),
   hexaflowStats: () => request("/api/hexaflow/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>

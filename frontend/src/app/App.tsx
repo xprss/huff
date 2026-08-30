@@ -253,7 +253,6 @@ export function App() {
   const hexaskyCheckMutation = useMutation({ mutationFn: api.hexaskyCheck, onSuccess: (action) => setHexaskyGame(action.game) });
   function setHexaflowGame(updated: NonNullable<HexaflowTodayDto["game"]>) { queryClient.setQueryData<HexaflowTodayDto | undefined>(queryKeys.hexaflowToday, (current) => current ? { ...current, game: updated } : current); }
   const hexaflowPathMutation = useMutation({ mutationFn: api.hexaflowPath, onSuccess: (action) => setHexaflowGame(action.game) });
-  const hexaflowHintMutation = useMutation({ mutationFn: api.hexaflowHint, onSuccess: (action) => setHexaflowGame(action.game) });
 
   React.useEffect(() => {
     const documentElement = document.documentElement;
@@ -971,9 +970,9 @@ export function App() {
               }}
             />
           ) : activeRoute === "hexaflow" && hexaflowToday && hexaflowStatsQuery.data ? (
-            <HexaflowView today={hexaflowToday} stats={hexaflowStatsQuery.data}
-              busy={hexaflowPathMutation.isPending || hexaflowHintMutation.isPending}
-              onPath={(request) => hexaflowPathMutation.mutateAsync(request)} onHint={() => hexaflowHintMutation.mutateAsync()}
+            <HexaflowView today={hexaflowToday}
+              busy={hexaflowPathMutation.isPending}
+              onPath={(request) => hexaflowPathMutation.mutateAsync(request)}
               onUpdate={(action) => setHexaflowGame(action.game)} onError={(message) => showToast(message, "warning")}
               onComplete={() => {
                 void refreshStats().finally(() => {
@@ -1143,7 +1142,7 @@ const emptyHexaskyStats = {
   checkDistribution: { "1": 0, "2": 0 }
 } as const;
 
-const emptyHexaflowStats = { started: 0, completed: 0, currentStreak: 0, maxStreak: 0, hintsUsed: 0, hintlessCompletions: 0 } as const;
+const emptyHexaflowStats = { started: 0, completed: 0, currentStreak: 0, maxStreak: 0 } as const;
 
 function normalizeGuessCells(cells: readonly string[], answerLength: number) {
   return Array.from({ length: answerLength }, (_, index) => cells[index] ?? "");

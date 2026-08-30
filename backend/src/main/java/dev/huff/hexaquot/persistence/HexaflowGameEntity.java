@@ -13,8 +13,6 @@ public class HexaflowGameEntity extends PanacheEntityBase {
     @Column(name="puzzle_date", nullable=false, length=10) public String puzzleDate;
     @Column(name="found_answers_json", nullable=false, columnDefinition="TEXT") public String foundAnswersJson;
     @Column(name="extra_sequences_json", nullable=false, columnDefinition="TEXT") public String extraSequencesJson;
-    @Column(name="hinted_answers_json", nullable=false, columnDefinition="TEXT") public String hintedAnswersJson;
-    @Column(name="hints_used", nullable=false) public int hintsUsed;
     @Column(name="event_log_json", nullable=false, columnDefinition="TEXT") public String eventLogJson;
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20) public GameStatus status;
     @Column(name="created_at", nullable=false) public String createdAt;

@@ -41,28 +41,11 @@ public class HexaflowDailyGameService {
             if(found.contains(matched.id()))outcome=HexaflowDtos.PathOutcome.DUPLICATE;
             else{found.add(matched.id());outcome=matched.type()==HexaflowDtos.AnswerType.FLOW?HexaflowDtos.PathOutcome.FLOW:HexaflowDtos.PathOutcome.THEME;foundDto=new HexaflowDtos.FoundAnswerDto(matched.id(),matched.label(),matched.type(),List.copyOf(matched.path()));}
         }else{String normalized=HexaflowPuzzleValidator.normalize(sequence);if(extras.contains(normalized))outcome=HexaflowDtos.PathOutcome.DUPLICATE;else{extras.add(normalized);outcome=HexaflowDtos.PathOutcome.EXTRA;}}
-        String now=Instant.now().toString();int credits=extras.size()/3-game.hintsUsed;
-        var result=new HexaflowDtos.PathResultDto(requestId,outcome,foundDto,sequence,extras.size(),Math.max(0,credits));events.add(new HexaflowDtos.EventDto(events.size()+1,HexaflowDtos.EventKind.PATH,requestId,now,result,null));
+        String now=Instant.now().toString();
+        var result=new HexaflowDtos.PathResultDto(requestId,outcome,foundDto,sequence,extras.size());events.add(new HexaflowDtos.EventDto(events.size()+1,HexaflowDtos.EventKind.PATH,requestId,now,result));
         game.foundAnswersJson=write(found);game.extraSequencesJson=write(extras);game.eventLogJson=write(events);game.updatedAt=now;
         if(found.size()==answers.size()){game.status=HexaflowDtos.GameStatus.COMPLETED;game.completedAt=now;}
         return new HexaflowDtos.PathActionDto(toDto(game,answers),result,false);
-    }
-
-    @Transactional
-    public HexaflowDtos.HintActionDto hint(AppUser user,HexaflowDtos.HintRequest request){
-        String requestId=requestId(request==null?null:request.requestId());HexaflowPuzzleEntity puzzle=requireTodayPuzzle();lockUser(user.id());HexaflowGameEntity game=current(user,puzzle);
-        List<HexaflowDtos.EventDto> events=events(game);var answers=puzzleService.readAnswers(puzzle.answersJson);HexaflowDtos.EventDto replay=events.stream().filter(e->requestId.equals(e.requestId())).findFirst().orElse(null);
-        if(replay!=null){if(replay.hint()==null)throw duplicateRequest();return new HexaflowDtos.HintActionDto(toDto(game,answers),replay.hint(),true);}
-        if(game.status==HexaflowDtos.GameStatus.COMPLETED)throw new WebApplicationException("La partita di oggi è già conclusa.",Response.Status.CONFLICT);
-        List<String> extras=readStrings(game.extraSequencesJson);if(extras.size()/3-game.hintsUsed<=0)throw new WebApplicationException("Nessun credito suggerimento disponibile.",Response.Status.CONFLICT);
-        Set<String> found=new HashSet<>(readStrings(game.foundAnswersJson));List<String> hinted=readStrings(game.hintedAnswersJson);
-        List<HexaflowDtos.AnswerDto> unresolved=answers.stream().filter(a->a.type()==HexaflowDtos.AnswerType.THEME&&!found.contains(a.id())).toList();
-        if(unresolved.isEmpty())throw new WebApplicationException("Non ci sono parole tema da suggerire.",Response.Status.CONFLICT);
-        HexaflowDtos.AnswerDto selected=unresolved.stream().filter(a->!hinted.contains(a.id())).findFirst().orElse(unresolved.get(0));if(!hinted.contains(selected.id()))hinted.add(selected.id());
-        List<Integer> shuffled=new ArrayList<>(selected.path());Collections.shuffle(shuffled,new Random(Objects.hash(game.id,requestId)));
-        game.hintsUsed++;String now=Instant.now().toString();int credits=extras.size()/3-game.hintsUsed;var result=new HexaflowDtos.HintResultDto(requestId,List.copyOf(shuffled),Math.max(0,credits));
-        events.add(new HexaflowDtos.EventDto(events.size()+1,HexaflowDtos.EventKind.HINT,requestId,now,null,result));game.hintedAnswersJson=write(hinted);game.eventLogJson=write(events);game.updatedAt=now;
-        return new HexaflowDtos.HintActionDto(toDto(game,answers),result,false);
     }
 
     public HexaflowDtos.StatsDto stats(AppUser user){return statsForUserId(user.id());}
@@ -70,12 +53,12 @@ public class HexaflowDailyGameService {
         List<HexaflowGameEntity> all=HexaflowGameEntity.<HexaflowGameEntity>list("userId = ?1 order by puzzleDate",userId);List<HexaflowGameEntity> complete=all.stream().filter(g->g.status==HexaflowDtos.GameStatus.COMPLETED).toList();
         String today=dailyGameService.todayDate();List<String> published=HexaflowPuzzleEntity.<HexaflowPuzzleEntity>list("status = ?1 and puzzleDate <= ?2 order by puzzleDate",HexaflowDtos.PuzzleStatus.PUBLISHED,today).stream().map(p->p.puzzleDate).toList();
         Set<String> won=complete.stream().map(g->g.puzzleDate).collect(java.util.stream.Collectors.toSet());int running=0,max=0;for(String date:published){if(won.contains(date))running++;else running=0;max=Math.max(max,running);}
-        int hints=all.stream().mapToInt(g->g.hintsUsed).sum();int hintless=(int)complete.stream().filter(g->g.hintsUsed==0).count();return new HexaflowDtos.StatsDto(all.size(),complete.size(),running,max,hints,hintless);
+        return new HexaflowDtos.StatsDto(all.size(),complete.size(),running,max);
     }
     public List<StatsCalculator.CompletedGame> completedForUser(String userId){return HexaflowGameEntity.<HexaflowGameEntity>list("userId = ?1 and status = ?2 order by puzzleDate",userId,HexaflowDtos.GameStatus.COMPLETED).stream().map(g->new StatsCalculator.CompletedGame(g.puzzleDate,GameStatus.WON,1)).toList();}
 
-    private HexaflowDtos.GameDto toDto(HexaflowGameEntity g,List<HexaflowDtos.AnswerDto> answers){List<String> ids=readStrings(g.foundAnswersJson);Map<String,HexaflowDtos.AnswerDto> byId=new LinkedHashMap<>();answers.forEach(a->byId.put(a.id(),a));List<HexaflowDtos.FoundAnswerDto> found=ids.stream().map(byId::get).filter(Objects::nonNull).map(a->new HexaflowDtos.FoundAnswerDto(a.id(),a.label(),a.type(),a.path())).toList();List<List<Integer>> hintCells=readStrings(g.hintedAnswersJson).stream().map(byId::get).filter(Objects::nonNull).map(a->{List<Integer> cells=new ArrayList<>(a.path());Collections.sort(cells);return List.copyOf(cells);}).toList();int extras=readStrings(g.extraSequencesJson).size();return new HexaflowDtos.GameDto(g.puzzleDate,g.status,found,extras,Math.max(0,extras/3-g.hintsUsed),g.hintsUsed,hintCells,g.completedAt);}
-    private HexaflowGameEntity current(AppUser u,HexaflowPuzzleEntity p){HexaflowGameEntity g=findGame(u.id(),p.puzzleDate,true);if(g!=null)return g;String now=Instant.now().toString();g=new HexaflowGameEntity();g.id=UUID.randomUUID().toString();g.userId=u.id();g.puzzleId=p.id;g.puzzleDate=p.puzzleDate;g.foundAnswersJson="[]";g.extraSequencesJson="[]";g.hintedAnswersJson="[]";g.hintsUsed=0;g.eventLogJson="[]";g.status=HexaflowDtos.GameStatus.IN_PROGRESS;g.createdAt=now;g.updatedAt=now;g.persist();return g;}
+    private HexaflowDtos.GameDto toDto(HexaflowGameEntity g,List<HexaflowDtos.AnswerDto> answers){List<String> ids=readStrings(g.foundAnswersJson);Map<String,HexaflowDtos.AnswerDto> byId=new LinkedHashMap<>();answers.forEach(a->byId.put(a.id(),a));List<HexaflowDtos.FoundAnswerDto> found=ids.stream().map(byId::get).filter(Objects::nonNull).map(a->new HexaflowDtos.FoundAnswerDto(a.id(),a.label(),a.type(),a.path())).toList();int extras=readStrings(g.extraSequencesJson).size();return new HexaflowDtos.GameDto(g.puzzleDate,g.status,found,extras,g.completedAt);}
+    private HexaflowGameEntity current(AppUser u,HexaflowPuzzleEntity p){HexaflowGameEntity g=findGame(u.id(),p.puzzleDate,true);if(g!=null)return g;String now=Instant.now().toString();g=new HexaflowGameEntity();g.id=UUID.randomUUID().toString();g.userId=u.id();g.puzzleId=p.id;g.puzzleDate=p.puzzleDate;g.foundAnswersJson="[]";g.extraSequencesJson="[]";g.eventLogJson="[]";g.status=HexaflowDtos.GameStatus.IN_PROGRESS;g.createdAt=now;g.updatedAt=now;g.persist();return g;}
     private HexaflowGameEntity findGame(String uid,String d,boolean lock){var q=HexaflowGameEntity.<HexaflowGameEntity>find("userId = ?1 and puzzleDate = ?2",uid,d);if(lock)q=q.withLock(LockModeType.PESSIMISTIC_WRITE);return q.firstResult();}
     private HexaflowPuzzleEntity published(String d){return HexaflowPuzzleEntity.<HexaflowPuzzleEntity>find("puzzleDate = ?1 and status = ?2",d,HexaflowDtos.PuzzleStatus.PUBLISHED).firstResult();}
     private HexaflowPuzzleEntity requireTodayPuzzle(){HexaflowPuzzleEntity p=published(dailyGameService.todayDate());if(p==null)throw new NotFoundException("Hexaflow non disponibile oggi.");return p;}

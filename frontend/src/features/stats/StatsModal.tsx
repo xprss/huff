@@ -64,7 +64,7 @@ export function HexaskyStatsPanel({ stats }: { stats: HexaskyStatsDto }) {
 }
 
 export function HexaflowStatsPanel({ stats }: { stats: HexaflowStatsDto }) {
-  return <><div className="stat-grid"><Metric label="Iniziate" value={stats.started}/><Metric label="Completate" value={stats.completed}/><Metric label="Serie" value={stats.currentStreak}/><Metric label="Record" value={stats.maxStreak}/></div><div className="stat-grid compact"><Metric label="Suggerimenti usati" value={stats.hintsUsed}/><Metric label="Senza suggerimenti" value={stats.hintlessCompletions}/></div></>;
+  return <div className="stat-grid"><Metric label="Iniziate" value={stats.started}/><Metric label="Completate" value={stats.completed}/><Metric label="Serie" value={stats.currentStreak}/><Metric label="Record" value={stats.maxStreak}/></div>;
 }
 
 export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
