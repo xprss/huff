@@ -8,6 +8,7 @@ import type {
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
+  HexaflowBoardGenerationRequestDto,
   HexaflowPathRequestDto,
   HexaflowPuzzleDraftDto,
   LeaderboardGame,
@@ -119,6 +120,7 @@ export type ApiClient = {
   readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
   readonly adminHexaflowPuzzles: (month: string) => Promise<import("./types").HexaflowPuzzleMonthDto>;
   readonly adminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
+  readonly generateAdminHexaflowBoard: (date: string, request: HexaflowBoardGenerationRequestDto) => Promise<import("./types").HexaflowGeneratedBoardDto>;
   readonly saveAdminHexaflowPuzzle: (date: string, draft: HexaflowPuzzleDraftDto) => Promise<import("./types").HexaflowPuzzleAdminDto>;
   readonly publishAdminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
   readonly draftAdminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
@@ -246,6 +248,7 @@ export const api = {
     }),
   adminHexaflowPuzzles: (month: string) => request(`/api/admin/hexaflow/puzzles?month=${encodeURIComponent(month)}` as "/api/admin/hexaflow/puzzles", { method: "GET" }),
   adminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "GET" }),
+  generateAdminHexaflowBoard: (date: string, generationRequest: HexaflowBoardGenerationRequestDto) => request(`/api/admin/hexaflow/puzzles/${date}/generate` as "/api/admin/hexaflow/puzzles/:date/generate", { method: "POST", body: generationRequest }),
   saveAdminHexaflowPuzzle: (date: string, draft: HexaflowPuzzleDraftDto) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "PUT", body: draft }),
   publishAdminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}/publish` as "/api/admin/hexaflow/puzzles/:date/publish", { method: "POST" }),
   draftAdminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}/draft` as "/api/admin/hexaflow/puzzles/:date/draft", { method: "POST" }),

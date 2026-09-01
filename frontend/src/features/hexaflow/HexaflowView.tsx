@@ -18,12 +18,9 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
   const cellsRef = React.useRef(new Map<number, HTMLButtonElement>());
   const pathRef = React.useRef<number[]>([]);
   const draggingRef = React.useRef(false);
+  const submittingRef = React.useRef(false);
   const pointerFrame = React.useRef<number | null>(null);
   const pointerPosition = React.useRef<{ x: number; y: number } | null>(null);
-  const knownAnswerIds = React.useRef<Set<string> | null>(null);
-  const rejectedTimer = React.useRef<number | null>(null);
-  const [newAnswerIds, setNewAnswerIds] = React.useState<readonly string[]>([]);
-  const [rejectedCells, setRejectedCells] = React.useState<readonly number[]>([]);
   const game = today.game;
   const completed = game?.status === "COMPLETED";
   const foundByCell = React.useMemo(() => {
@@ -31,26 +28,12 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
     game?.foundAnswers.forEach((answer) => answer.cells.forEach((cell) => map.set(cell, answer.type.toLowerCase() as "theme" | "flow")));
     return map;
   }, [game]);
-  const newlyFoundCells = React.useMemo(() => new Set(
-    (game?.foundAnswers ?? []).filter((answer) => newAnswerIds.includes(answer.id)).flatMap((answer) => answer.cells)
-  ), [game?.foundAnswers, newAnswerIds]);
-
-  React.useEffect(() => {
-    const answerIds = new Set((game?.foundAnswers ?? []).map((answer) => answer.id));
-    if (knownAnswerIds.current === null) {
-      knownAnswerIds.current = answerIds;
-      return;
-    }
-    const added = [...answerIds].filter((id) => !knownAnswerIds.current?.has(id));
-    knownAnswerIds.current = answerIds;
-    if (!added.length) return;
-    setNewAnswerIds(added);
-    const timer = window.setTimeout(() => setNewAnswerIds([]), 1400);
-    return () => window.clearTimeout(timer);
-  }, [game?.foundAnswers]);
+  const pathOrderByCell = React.useMemo(
+    () => new Map(path.map((cell, index) => [cell, index + 1])),
+    [path]
+  );
 
   React.useEffect(() => () => {
-    if (rejectedTimer.current !== null) window.clearTimeout(rejectedTimer.current);
     if (pointerFrame.current !== null) window.cancelAnimationFrame(pointerFrame.current);
   }, []);
 
@@ -100,29 +83,20 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
   }
 
   async function submit(selected: readonly number[]) {
-    if (selected.length < 4 || busy || completed) return;
+    if (selected.length < 4 || busy || completed || submittingRef.current) return;
+    submittingRef.current = true;
+    pathRef.current = [];
+    setPath([]);
     try {
       const action = await onPath({ requestId: crypto.randomUUID(), cells: selected });
       onUpdate(action);
-      pathRef.current = [];
-      setPath([]);
-      if (action.result.outcome === "EXTRA" || action.result.outcome === "DUPLICATE") {
-        showRejectedPath(selected);
-        if (action.result.outcome === "DUPLICATE") onError("Sequenza già utilizzata.");
-      }
+      if (action.result.outcome === "DUPLICATE") onError("Sequenza già utilizzata.");
       if (action.game.status === "COMPLETED") onComplete();
     } catch (error) {
       onError(error instanceof Error ? error.message : "Percorso non accettato.");
+    } finally {
+      submittingRef.current = false;
     }
-  }
-
-  function showRejectedPath(cells: readonly number[]) {
-    if (rejectedTimer.current !== null) window.clearTimeout(rejectedTimer.current);
-    setRejectedCells(cells);
-    rejectedTimer.current = window.setTimeout(() => {
-      setRejectedCells([]);
-      rejectedTimer.current = null;
-    }, 520);
   }
 
   if (!today.available) return <section className="hexaflow unavailable"><Waves size={42} /><h2>Hexaflow</h2><strong>Non disponibile oggi</strong><p>Il prossimo flusso apparirà qui quando sarà pubblicato.</p></section>;
@@ -132,35 +106,27 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
     <header className="hexaflow-head"><div><p className="eyebrow">Hexaflow · {formatGameDate(today.puzzleDate)}</p><h2>{today.themeClue}</h2></div><div className="hexaflow-actions"><button className="hexaflow-share" type="button" onClick={() => void share(today)} aria-label="Condividi Hexaflow"><Share2 size={16} /></button><span aria-label={`${game?.foundAnswers.length ?? 0} parole su ${today.totalAnswers}`}>{game?.foundAnswers.length ?? 0}<i>/</i>{today.totalAnswers}</span></div></header>
     <div className={`hexaflow-current ${currentWord ? "is-tracing" : ""}`} aria-live="polite"><span>{currentWord || "Traccia una parola"}</span><b>{currentWord ? `${path.length} celle` : "scorri e connetti"}</b></div>
     <p className="hexaflow-instruction"><span className="hexaflow-gesture" aria-hidden="true">↗</span> Scorri sulle celle. Rilascia per inviare.</p>
-    <div ref={gridRef} className="hexaflow-grid" onPointerMove={(event) => { if (draggingRef.current) trackPointer(event.clientX, event.clientY); }} onPointerUp={(event) => { if (!draggingRef.current) return; if (pointerFrame.current !== null) { window.cancelAnimationFrame(pointerFrame.current); pointerFrame.current = null; } addCellAt(event.clientX, event.clientY); draggingRef.current = false; void submit(pathRef.current); }} onPointerCancel={() => { draggingRef.current = false; }}>
-      <FoundPaths answers={game?.foundAnswers ?? []} newAnswerIds={newAnswerIds} centers={gridGeometry.centers} width={gridGeometry.width} height={gridGeometry.height} />
+    <div ref={gridRef} className="hexaflow-grid" onPointerMove={(event) => { if (draggingRef.current) trackPointer(event.clientX, event.clientY); }} onPointerUp={(event) => { if (!draggingRef.current) return; if (pointerFrame.current !== null) { window.cancelAnimationFrame(pointerFrame.current); pointerFrame.current = null; } addCellAt(event.clientX, event.clientY); draggingRef.current = false; void submit(pathRef.current); }} onPointerCancel={() => { draggingRef.current = false; pathRef.current = []; setPath([]); }}>
+      <FoundPaths answers={game?.foundAnswers ?? []} centers={gridGeometry.centers} width={gridGeometry.width} height={gridGeometry.height} />
       <ActivePath cells={path} centers={gridGeometry.centers} width={gridGeometry.width} height={gridGeometry.height} />
       {today.grid.map((letter, index) => <button
         type="button" key={index} data-cell={index} ref={(element) => { if (element) cellsRef.current.set(index, element); else cellsRef.current.delete(index); }}
-        className={["hexaflow-cell", path.includes(index) ? "selected" : "", rejectedCells.includes(index) ? "rejected" : "", newlyFoundCells.has(index) ? "just-found" : "", foundByCell.get(index) ?? ""].filter(Boolean).join(" ")}
-        onPointerDown={(event) => { if (completed || busy) return; event.preventDefault(); draggingRef.current = true; if (pathRef.current.length === 0) { pathRef.current = [index]; setPath([index]); } else addCell(index); gridRef.current?.setPointerCapture(event.pointerId); }}
-        aria-label={`Cella ${index + 1}: ${letter}`}><span className="hexaflow-cell-letter">{letter}</span><small>{path.indexOf(index) >= 0 ? path.indexOf(index) + 1 : ""}</small><span className="hexaflow-cell-glint" aria-hidden="true" /></button>)}
+        className={["hexaflow-cell", pathOrderByCell.has(index) ? "selected" : "", foundByCell.get(index) ?? ""].filter(Boolean).join(" ")}
+        onPointerDown={(event) => { if (completed || busy || submittingRef.current) return; event.preventDefault(); draggingRef.current = true; if (pathRef.current.length === 0) { pathRef.current = [index]; setPath([index]); } else addCell(index); gridRef.current?.setPointerCapture(event.pointerId); }}
+        aria-label={`Cella ${index + 1}: ${letter}`}><span className="hexaflow-cell-letter">{letter}</span><small>{pathOrderByCell.get(index) ?? ""}</small></button>)}
     </div>
     {completed ? <div className="hexaflow-complete"><h3>Flusso completato!</h3><p>Hai connesso ogni percorso.</p></div> : null}
   </section>;
 }
 
-function FoundPaths({ answers, newAnswerIds, centers, width, height }: { answers: readonly HexaflowFoundAnswerDto[]; newAnswerIds: readonly string[]; centers: ReadonlyMap<number, Point>; width: number; height: number }) {
+function FoundPaths({ answers, centers, width, height }: { answers: readonly HexaflowFoundAnswerDto[]; centers: ReadonlyMap<number, Point>; width: number; height: number }) {
   if (!width || !height || !answers.length) return null;
   return <svg className="hexaflow-paths" viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-    <defs>
-      <linearGradient id="hexaflow-theme-line" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#a6fff4" /><stop offset=".48" stopColor="#45d8c8" /><stop offset="1" stopColor="#159f98" /></linearGradient>
-      <linearGradient id="hexaflow-flow-line" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff0a6" /><stop offset=".45" stopColor="#ffc24d" /><stop offset="1" stopColor="#ff8f35" /></linearGradient>
-    </defs>
     {answers.flatMap((answer) => answer.cells.slice(1).map((cell, index) => {
       const from = centers.get(answer.cells[index]);
       const to = centers.get(cell);
       const kind = answer.type.toLowerCase();
-      const isNew = newAnswerIds.includes(answer.id);
-      return from && to ? <g key={`${answer.id}-${index}`} className={`hexaflow-connection ${kind} ${isNew ? "is-new" : ""}`}>
-        <path className="hexaflow-path-glow" pathLength="1" d={curvedLine(from, to, answer.cells[index] + cell)} />
-        <path className="hexaflow-path" pathLength="1" d={curvedLine(from, to, answer.cells[index] + cell)} />
-      </g> : null;
+      return from && to ? <line key={`${answer.id}-${index}`} className={`hexaflow-path ${kind}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} /> : null;
     }))}
   </svg>;
 }
@@ -171,21 +137,9 @@ function ActivePath({ cells: path, centers, width, height }: { cells: readonly n
     {path.slice(1).map((cell, index) => {
       const from = centers.get(path[index]);
       const to = centers.get(cell);
-      const line = from && to ? curvedLine(from, to, path[index] + cell) : "";
-      return line ? <g className="hexaflow-active-connection" key={`${path[index]}-${cell}`}><path className="hexaflow-active-glow" d={line} /><path className="hexaflow-active-line" d={line} /></g> : null;
+      return from && to ? <line className="hexaflow-active-line" key={`${path[index]}-${cell}`} x1={from.x} y1={from.y} x2={to.x} y2={to.y} /> : null;
     })}
   </svg>;
-}
-
-function curvedLine(from: { x: number; y: number }, to: { x: number; y: number }, seed: number) {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const distance = Math.hypot(dx, dy);
-  if (!distance) return "";
-  const normal = { x: -dy / distance, y: dx / distance };
-  const curve = ((seed % 3) - 1) * Math.min(7, distance * .12);
-  const middle = { x: (from.x + to.x) / 2 + normal.x * curve, y: (from.y + to.y) / 2 + normal.y * curve };
-  return `M ${from.x.toFixed(2)} ${from.y.toFixed(2)} Q ${middle.x.toFixed(2)} ${middle.y.toFixed(2)} ${to.x.toFixed(2)} ${to.y.toFixed(2)}`;
 }
 
 function adjacent(a: number, b: number) { return a !== b && Math.abs(Math.floor(a / 6) - Math.floor(b / 6)) <= 1 && Math.abs(a % 6 - b % 6) <= 1; }

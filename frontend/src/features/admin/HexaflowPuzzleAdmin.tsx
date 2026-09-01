@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Grid3X3, ListChecks, Plus, Save, Send, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Grid3X3, ListChecks, Plus, Save, Send, Sparkles, Trash2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api";
 import { queryKeys } from "../../app/queries";
@@ -30,6 +30,8 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   const [draft, setDraft] = React.useState<HexaflowPuzzleDraftDto | null>(null);
   const [activeAnswer, setActiveAnswer] = React.useState(0);
   const [confirmAction, setConfirmAction] = React.useState<"publish" | "delete" | null>(null);
+  const [themeWordsInput, setThemeWordsInput] = React.useState("");
+  const [flowWord, setFlowWord] = React.useState("");
   const monthQuery = useQuery({ queryKey: queryKeys.adminHexaflowPuzzles(month), queryFn: () => api.adminHexaflowPuzzles(month) });
   const detailQuery = useQuery({ queryKey: queryKeys.adminHexaflowPuzzle(date ?? ""), queryFn: () => api.adminHexaflowPuzzle(date ?? ""), enabled: Boolean(date) && !isNew });
 
@@ -53,6 +55,15 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   }
 
   const save = useMutation({ mutationFn: (value: HexaflowPuzzleDraftDto) => api.saveAdminHexaflowPuzzle(value.puzzleDate, value), onSuccess: updated });
+  const generate = useMutation({
+    mutationFn: ({ puzzleDate, themeWords, flow }: { puzzleDate: string; themeWords: string[]; flow: string }) => api.generateAdminHexaflowBoard(puzzleDate, { themeWords, flowWord: flow }),
+    onSuccess: (generated) => {
+      setDraft((current) => current ? { ...current, grid: [...generated.grid], answers: generated.answers.map((answer) => ({ ...answer, path: [...answer.path] })) } : current);
+      setActiveAnswer(0);
+      setConfirmAction(null);
+      onSuccess("Tabellone generato. Puoi rigenerarlo o rifinirlo manualmente prima di salvare.");
+    }
+  });
   const publish = useMutation({ mutationFn: (value: string) => api.publishAdminHexaflowPuzzle(value), onSuccess: updated });
   const unpublish = useMutation({ mutationFn: (value: string) => api.draftAdminHexaflowPuzzle(value), onSuccess: updated });
   const remove = useMutation({
@@ -68,9 +79,9 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   });
 
   React.useEffect(() => {
-    const error = monthQuery.error ?? detailQuery.error ?? save.error ?? publish.error ?? unpublish.error ?? remove.error;
+    const error = monthQuery.error ?? detailQuery.error ?? generate.error ?? save.error ?? publish.error ?? unpublish.error ?? remove.error;
     if (error) onError(error instanceof Error ? error.message : "Operazione CMS non riuscita.");
-  }, [monthQuery.error, detailQuery.error, save.error, publish.error, unpublish.error, remove.error, onError]);
+  }, [monthQuery.error, detailQuery.error, generate.error, save.error, publish.error, unpublish.error, remove.error, onError]);
 
   function newPuzzle() {
     const value = creationDate;
@@ -138,6 +149,13 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   draft?.answers.forEach((answer) => answer.path.forEach((cell) => covered.set(cell, (covered.get(cell) ?? 0) + 1)));
   const errorCount = saved?.validationErrors.length ?? 0;
   const completeGrid = draft?.grid.filter(Boolean).length ?? 0;
+  const themeWords = themeWordsInput.split(/\r?\n/).map((word) => word.trim()).filter(Boolean);
+  const normalizedWords = [...themeWords, flowWord].map(normalizeWord);
+  const generatedLetterCount = normalizedWords.reduce((total, word) => total + word.length, 0);
+  const generationConstraint = !themeWords.length ? "Inserisci almeno una parola tema." :
+    themeWords.some((word) => !isValidWord(normalizeWord(word))) ? "Ogni parola tema deve avere almeno 4 lettere (solo lettere, spazi, apostrofi o trattini)." :
+    !isValidWord(normalizeWord(flowWord), 6) ? "Il Flusso deve avere almeno 6 lettere per unire due lati opposti." :
+    generatedLetterCount !== 48 ? `Le parole devono usare esattamente 48 lettere: ora ne usano ${generatedLetterCount}.` : null;
 
   if (!draft) {
     return (
@@ -205,6 +223,15 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
         <span>Indizio del tema</span>
         <input value={draft.themeClue} disabled={editorLocked} placeholder="es. Cose che trovi in un giardino" onChange={(event) => setDraft({ ...draft, themeClue: event.target.value })} />
       </label>
+
+      <section className="cms-generator" aria-label="Generatore tabellone">
+        <div className="cms-panel-heading"><div><h3><Sparkles size={17} />Genera tabellone</h3><p>Inserisci una parola tema per riga e il Flusso. La generazione non salva la bozza.</p></div></div>
+        <div className="cms-generator-fields">
+          <label><span>Parole tema</span><textarea value={themeWordsInput} disabled={editorLocked || generate.isPending} placeholder={"GIARDINO\nFIORI\nALBERI"} onChange={(event) => setThemeWordsInput(event.target.value)} /></label>
+          <label><span>Flusso</span><input value={flowWord} disabled={editorLocked || generate.isPending} placeholder="es. CORRENTE" onChange={(event) => setFlowWord(event.target.value)} /></label>
+        </div>
+        <div className="cms-generator-footer"><p className={generationConstraint ? "invalid" : "valid"}>{generationConstraint ?? "Vincoli rispettati: il tabellone può essere generato."}</p><button className="cms-primary-button" type="button" disabled={editorLocked || Boolean(generationConstraint) || generate.isPending} onClick={() => generate.mutate({ puzzleDate: draft.puzzleDate, themeWords, flow: flowWord })}><Sparkles size={16} />{generate.isPending ? "Generazione…" : draft.answers.length ? "Rigenera tabellone" : "Genera tabellone"}</button></div>
+      </section>
 
       <div className="cms-editor-layout">
         <section className="cms-grid-panel">
@@ -281,6 +308,14 @@ function formatDate(date: string) {
 
 function solutionForPath(grid: readonly string[], path: readonly number[]) {
   return path.map((cell) => grid[cell] ?? "").join("");
+}
+
+function normalizeWord(value: string) {
+  return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toUpperCase().replace(/[ \'’-]/g, "");
+}
+
+function isValidWord(value: string, minimumLength = 4) {
+  return value.length >= minimumLength && /^[A-Z]+$/.test(value);
 }
 
 function prepareDraft(draft: HexaflowPuzzleDraftDto): HexaflowPuzzleDraftDto {

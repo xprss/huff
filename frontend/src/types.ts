@@ -217,6 +217,8 @@ export interface HexaflowPathActionDto { readonly game: HexaflowGameDto; readonl
 export interface HexaflowStatsDto { readonly started: number; readonly completed: number; readonly currentStreak: number; readonly maxStreak: number; }
 export interface HexaflowValidationErrorDto { readonly code: string; readonly field: string; readonly message: string; readonly answerIndex: number | null; readonly cellIndex: number | null; }
 export interface HexaflowPuzzleDraftDto { readonly puzzleDate: IsoDateString; readonly themeClue: string; readonly grid: readonly string[]; readonly answers: readonly HexaflowAnswerDto[]; }
+export interface HexaflowBoardGenerationRequestDto { readonly themeWords: readonly string[]; readonly flowWord: string; }
+export interface HexaflowGeneratedBoardDto { readonly grid: readonly string[]; readonly answers: readonly HexaflowAnswerDto[]; }
 export interface HexaflowPuzzleAdminDto extends HexaflowPuzzleDraftDto { readonly id: string; readonly status: HexaflowPuzzleStatus; readonly validationErrors: readonly HexaflowValidationErrorDto[]; readonly immutable: boolean; readonly createdBy: string; readonly updatedBy: string; readonly publishedBy: string | null; readonly createdAt: string; readonly updatedAt: string; readonly publishedAt: string | null; }
 export interface HexaflowPuzzleSummaryDto { readonly puzzleDate: IsoDateString; readonly status: HexaflowPuzzleStatus; readonly themeClue: string; readonly answerCount: number; readonly coveredCells: number; readonly valid: boolean; readonly immutable: boolean; }
 export interface HexaflowPuzzleMonthDto { readonly month: string; readonly puzzles: readonly HexaflowPuzzleSummaryDto[]; }
@@ -548,6 +550,7 @@ export type ApiEndpointMap = {
     PUT: { body: HexaflowPuzzleDraftDto; response: HexaflowPuzzleAdminDto };
     DELETE: { response: void };
   };
+  "/api/admin/hexaflow/puzzles/:date/generate": { POST: { body: HexaflowBoardGenerationRequestDto; response: HexaflowGeneratedBoardDto } };
   "/api/admin/hexaflow/puzzles/:date/publish": { POST: { response: HexaflowPuzzleAdminDto } };
   "/api/admin/hexaflow/puzzles/:date/draft": { POST: { response: HexaflowPuzzleAdminDto } };
 };

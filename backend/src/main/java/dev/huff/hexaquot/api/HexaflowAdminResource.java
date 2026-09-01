@@ -11,6 +11,7 @@ public class HexaflowAdminResource {
     @Inject UserService users; @Inject HexaflowPuzzleService service;
     @GET public Response month(@CookieParam("huff_session")String s,@QueryParam("month")String m){var u=users.resolve(s);return run(u,()->service.month(u.user(),m));}
     @GET @Path("/{date}") public Response detail(@CookieParam("huff_session")String s,@PathParam("date")String d){var u=users.resolve(s);return run(u,()->service.detail(u.user(),d));}
+    @POST @Path("/{date}/generate") public Response generate(@CookieParam("huff_session")String s,@PathParam("date")String d,HexaflowDtos.BoardGenerationRequest b){var u=users.resolve(s);return run(u,()->service.generate(u.user(),d,b));}
     @PUT @Path("/{date}") public Response save(@CookieParam("huff_session")String s,@PathParam("date")String d,HexaflowDtos.PuzzleDraftDto b){var u=users.resolve(s);return run(u,()->service.save(u.user(),d,b));}
     @POST @Path("/{date}/publish") public Response publish(@CookieParam("huff_session")String s,@PathParam("date")String d){var u=users.resolve(s);return run(u,()->service.publish(u.user(),d));}
     @POST @Path("/{date}/draft") public Response draft(@CookieParam("huff_session")String s,@PathParam("date")String d){var u=users.resolve(s);return run(u,()->service.unpublish(u.user(),d));}

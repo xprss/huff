@@ -1,6 +1,7 @@
 package dev.huff.hexaquot.game;
 
 import org.junit.jupiter.api.Test;
+import jakarta.ws.rs.BadRequestException;
 import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -31,6 +32,19 @@ class HexaflowPuzzleValidatorTest {
         var codes=validator.validate(new HexaflowDtos.PuzzleDraftDto(valid.puzzleDate(),valid.themeClue(),valid.grid(),broken)).stream().map(HexaflowDtos.ValidationErrorDto::code).toList();
         assertTrue(codes.contains("CELL_OVERLAP"));
         assertTrue(codes.contains("FLOW_SIDES"));
+    }
+
+    @Test void generatesAValidFullBoardFromThemeWordsAndFlow() {
+        var generated = new HexaflowBoardGenerator().generate(new HexaflowDtos.BoardGenerationRequest(
+            List.of("Giardino", "Fiori", "Alberi", "Fontana", "Farfalle", "Piante"), "Corrente"));
+        var draft = new HexaflowDtos.PuzzleDraftDto("2026-09-01", "Natura", generated.grid(), generated.answers());
+        assertTrue(validator.validate(draft).isEmpty());
+        assertEquals("CORRENTE", generated.answers().get(0).label());
+        assertEquals(HexaflowDtos.AnswerType.FLOW, generated.answers().get(0).type());
+    }
+
+    @Test void rejectsGenerationWhenWordsDoNotFillTheBoard() {
+        assertThrows(BadRequestException.class, () -> new HexaflowBoardGenerator().generate(new HexaflowDtos.BoardGenerationRequest(List.of("Tema"), "Flusso")));
     }
 
     private HexaflowDtos.PuzzleDraftDto validPuzzle() {

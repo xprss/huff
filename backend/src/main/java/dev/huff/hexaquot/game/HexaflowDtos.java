@@ -12,6 +12,8 @@ public final class HexaflowDtos {
 
     public record AnswerDto(String id, String label, AnswerType type, List<Integer> path) {}
     public record PuzzleDraftDto(String puzzleDate, String themeClue, List<String> grid, List<AnswerDto> answers) {}
+    public record BoardGenerationRequest(List<String> themeWords, String flowWord) {}
+    public record GeneratedBoardDto(List<String> grid, List<AnswerDto> answers) {}
     public record ValidationErrorDto(String code, String field, String message, Integer answerIndex, Integer cellIndex) {}
     public record PuzzleAdminDto(String id, String puzzleDate, PuzzleStatus status, String themeClue,
                                  List<String> grid, List<AnswerDto> answers, List<ValidationErrorDto> validationErrors,

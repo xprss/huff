@@ -17,6 +17,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 public class HexaflowPuzzleService {
     @Inject ObjectMapper objectMapper;
     @Inject HexaflowPuzzleValidator validator;
+    @Inject HexaflowBoardGenerator boardGenerator;
     @ConfigProperty(name="app.game.timezone") String timezone;
 
     public HexaflowDtos.PuzzleMonthDto month(AppUser admin, String month) {
@@ -26,6 +27,7 @@ public class HexaflowPuzzleService {
         return new HexaflowDtos.PuzzleMonthDto(normalized,puzzles);
     }
     public HexaflowDtos.PuzzleAdminDto detail(AppUser admin,String date){require(admin);return toAdmin(find(date));}
+    public HexaflowDtos.GeneratedBoardDto generate(AppUser admin,String date,HexaflowDtos.BoardGenerationRequest request){require(admin);parseDate(date);return boardGenerator.generate(request);}
 
     @Transactional
     public HexaflowDtos.PuzzleAdminDto save(AppUser admin,String date,HexaflowDtos.PuzzleDraftDto request){
