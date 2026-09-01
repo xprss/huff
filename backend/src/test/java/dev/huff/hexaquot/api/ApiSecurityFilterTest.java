@@ -194,6 +194,7 @@ class ApiSecurityFilterTest {
             Arguments.of(Method.GET, "/api/admin/hexaflow/puzzles?month=2026-08"),
             Arguments.of(Method.GET, "/api/admin/hexaflow/puzzles/2026-08-29"),
             Arguments.of(Method.PUT, "/api/admin/hexaflow/puzzles/2026-08-29"),
+            Arguments.of(Method.POST, "/api/admin/hexaflow/puzzles/2026-08-29/generate"),
             Arguments.of(Method.POST, "/api/admin/hexaflow/puzzles/2026-08-29/publish"),
             Arguments.of(Method.POST, "/api/admin/hexaflow/puzzles/2026-08-29/draft"),
             Arguments.of(Method.DELETE, "/api/admin/hexaflow/puzzles/2026-08-29")

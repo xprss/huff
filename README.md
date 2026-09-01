@@ -1,5 +1,8 @@
 # HexaQuot
 
+[![Server coverage](https://img.shields.io/codecov/c/github/xprss/huff?flag=server&label=server%20coverage)](https://app.codecov.io/gh/xprss/huff?flags%5B0%5D=server)
+[![Client coverage](https://img.shields.io/codecov/c/github/xprss/huff?flag=client&label=client%20coverage)](https://app.codecov.io/gh/xprss/huff?flags%5B0%5D=client)
+
 Daily Italian word puzzle built with React, TypeScript, and a Java Quarkus backend.
 
 ## Local Development
