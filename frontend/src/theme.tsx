@@ -926,26 +926,116 @@ export const tricotopiaAppTheme: AppTheme = {
   }
 };
 
-/** Add new selectable themes to this registry. */
-export const appThemes = [darkAppTheme, lightAppTheme, crazyPinkAppTheme, matrixAppTheme, pannaAppTheme, chromaticAppTheme, noirAppTheme, childhoodAppTheme, tricotopiaAppTheme] as const satisfies readonly AppTheme[];
+export const organicAppTheme: AppTheme = {
+  id: "organic",
+  name: "Organic",
+  colorScheme: "light",
+  colors: {
+    ...lightAppTheme.colors,
+    page: "#f5ead8",
+    surface: "#ebddc5",
+    surfaceSoft: "#eee7db",
+    surfaceStrong: "#dcd3c4",
+    surfaceRaised: "#f9f4ed",
+    surfaceGlass: "rgba(245, 234, 216, 0.88)",
+    surfaceBorder: "rgba(32, 30, 29, 0.16)",
+    tile: "#f9f4ed",
+    tileBorder: "#c0b6a5",
+    tileFilled: "#645c50",
+    text: "#201e1d",
+    muted: "#82796a",
+    mutedStrong: "#474238",
+    primary: "#c67139",
+    primaryStrong: "#b2622d",
+    accent: "#c67139",
+    accentStrong: "#b2622d",
+    danger: "#8c491a",
+    button: "#ebddc5",
+    buttonBorder: "rgba(32, 30, 29, 0.16)",
+    buttonShadow: "rgba(46, 43, 37, 0.16)",
+    hoverBorder: "#c67139",
+    focusRing: "rgba(198, 113, 57, 0.42)",
+    modal: "#f5ead8",
+    modalBorder: "rgba(32, 30, 29, 0.16)",
+    modalShadow: "rgba(46, 43, 37, 0.22)",
+    track: "#dcd3c4",
+    key: "#ebddc5",
+    keyText: "#2e2b25",
+    keyShadow: "rgba(46, 43, 37, 0.14)",
+    keyPressed: "#c0b6a5",
+    error: "#8c491a",
+    correct: "#8fa073",
+    present: "#f6a06b",
+    absent: "#c0b6a5",
+    appGlowCorrect: "transparent",
+    appGlowError: "transparent",
+    titleText: "#201e1d",
+    titleGlowSoft: "transparent",
+    titleGlowMedium: "transparent",
+    titleGlowWide: "transparent",
+    onSolid: "#f5ead8",
+    onPresent: "#402310",
+    loginButtonBorder: "rgba(32, 30, 29, 0.16)",
+    loginButtonBackground: "#ebddc5",
+    loginButtonText: "#201e1d",
+    loginButtonShadow: "rgba(46, 43, 37, 0.16)",
+    loginButtonHoverBorder: "#c67139",
+    loadingSpinnerTrack: "rgba(130, 121, 106, 0.24)",
+    shareButtonBorder: "#c67139",
+    shareButtonShadow: "rgba(198, 113, 57, 0.22)",
+    boardShadow: "rgba(46, 43, 37, 0.16)",
+    terminalBackground: "#2e2b25",
+    terminalText: "#f5ead8",
+    terminalInsetBorder: "rgba(198, 113, 57, 0.48)",
+    terminalOverlay: "rgba(46, 43, 37, 0.96)",
+    terminalWonText: "#f0fae1",
+    terminalWonBorder: "rgba(143, 160, 115, 0.58)",
+    terminalWonRing: "rgba(143, 160, 115, 0.22)",
+    terminalLostText: "#fff2eb",
+    terminalLostBorder: "rgba(198, 113, 57, 0.54)",
+    terminalLostRing: "rgba(198, 113, 57, 0.2)",
+    terminalCellBorder: "rgba(198, 113, 57, 0.46)",
+    terminalCursor: "#f6a06b",
+    terminalCursorShadow: "rgba(246, 160, 107, 0.46)",
+    terminalWonCellBorder: "#8fa073",
+    terminalWonFilledText: "#f0fae1",
+    terminalWonGlowSoft: "rgba(240, 250, 225, 0.48)",
+    terminalWonGlowMedium: "rgba(143, 160, 115, 0.34)",
+    terminalWonGlowWide: "rgba(143, 160, 115, 0.18)",
+    terminalLostCellBorder: "#c67139",
+    terminalLostFilledText: "#fff2eb",
+    terminalLostGlowSoft: "rgba(255, 242, 235, 0.48)",
+    terminalLostGlowMedium: "rgba(198, 113, 57, 0.34)",
+    terminalLostGlowWide: "rgba(198, 113, 57, 0.18)",
+    modalBackdrop: "rgba(32, 30, 29, 0.4)",
+    distributionBar: "#8fa073",
+    metricBackground: "#ebddc5",
+    metricBorder: "rgba(32, 30, 29, 0.16)",
+    feedbackEmpty: "#eee7db",
+    resultWon: "#56633f",
+    resultLost: "#8c491a"
+  }
+};
+
+/** Organic is the default; established themes remain available from the menu. */
+export const appThemes = [organicAppTheme, darkAppTheme, lightAppTheme, crazyPinkAppTheme, matrixAppTheme, pannaAppTheme, chromaticAppTheme, noirAppTheme, childhoodAppTheme, tricotopiaAppTheme] as const satisfies readonly AppTheme[];
 
 export type ThemeCssVariables = {
   [key: `--color-${string}`]: string;
 };
 
-const AppThemeContext = React.createContext<AppTheme>(darkAppTheme);
+const AppThemeContext = React.createContext<AppTheme>(organicAppTheme);
 let themeSwitchFrame = 0;
 
 export function getAppTheme(themeId: string | null | undefined): AppTheme {
-  return appThemes.find((theme) => theme.id === themeId) ?? darkAppTheme;
+  return appThemes.find((theme) => theme.id === themeId) ?? organicAppTheme;
 }
 
 export function getStoredThemeId(): string {
   const storedThemeId = localStorage.getItem(THEME_STORAGE_KEY);
   if (storedThemeId && appThemes.some((theme) => theme.id === storedThemeId)) return storedThemeId;
 
-  // Preserve the preference saved by versions that only offered light and dark modes.
-  return localStorage.getItem("darkMode") === "false" ? lightAppTheme.id : darkAppTheme.id;
+  return organicAppTheme.id;
 }
 
 export function getThemeCssVariables(theme: AppTheme): ThemeCssVariables {

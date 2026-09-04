@@ -6,6 +6,7 @@ import { queryClient } from "./app/queryClient";
 import { registerServiceWorker } from "./app/serviceWorker";
 import { applyThemeToDocument, getAppTheme, getStoredThemeId } from "./theme";
 import "./styles.css";
+import "./styles-organic.css";
 
 applyThemeToDocument(getAppTheme(getStoredThemeId()));
 document.documentElement.dataset.patterns = localStorage.getItem("patternsEnabled") === "true" ? "enabled" : "disabled";
