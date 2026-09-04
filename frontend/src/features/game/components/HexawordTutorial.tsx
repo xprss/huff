@@ -11,9 +11,9 @@ export function HexawordTutorial({ onClose }: { onClose: () => void }) {
         </header>
         <p>Trova la parola italiana di sei lettere in sei tentativi. Ogni parola inserita deve essere valida.</p>
         <div className="word-tutorial-examples" aria-label="Esempi di indizi">
-          <div><span className="correct">A</span><p><strong>Verde</strong>: la lettera è nella posizione giusta.</p></div>
-          <div><span className="present">R</span><p><strong>Giallo</strong>: la lettera c'è, ma va spostata.</p></div>
-          <div><span className="absent">T</span><p><strong>Grigio</strong>: la lettera non è nella parola.</p></div>
+          <div><span className="correct">A</span><p><strong>Salvia</strong>: la lettera è nella posizione giusta.</p></div>
+          <div><span className="present">R</span><p><strong>Terracotta</strong>: la lettera c'è, ma va spostata.</p></div>
+          <div><span className="absent">T</span><p><strong>Sabbia</strong>: la lettera non è nella parola.</p></div>
         </div>
         <div className="word-mode-tutorials">
           <section>
@@ -28,12 +28,12 @@ export function HexawordTutorial({ onClose }: { onClose: () => void }) {
             <h3><span aria-hidden="true">🦀</span> Granchio testardo</h3>
             <p>Dal tentativo successivo, ogni indizio scoperto diventa obbligatorio e continua a valere fino alla fine:</p>
             <ul>
-              <li><strong>Verde:</strong> la lettera resta bloccata nella stessa casella.</li>
-              <li><strong>Giallo:</strong> devi riutilizzare la lettera, spostandola dalle caselle in cui è risultata gialla.</li>
+              <li><strong>Salvia:</strong> la lettera resta bloccata nella stessa casella.</li>
+              <li><strong>Terracotta:</strong> devi riutilizzare la lettera, spostandola dalle caselle in cui è risultata terracotta.</li>
               <li><strong>Copie:</strong> due lettere confermate richiedono due copie nei tentativi successivi.</li>
-              <li><strong>Grigio:</strong> non aggiunge un nuovo obbligo.</li>
+              <li><strong>Sabbia:</strong> non aggiunge un nuovo obbligo.</li>
             </ul>
-            <div className="crab-tutorial-example" aria-label="Esempio: A verde bloccata e due R gialle obbligatorie">
+            <div className="crab-tutorial-example" aria-label="Esempio: A salvia bloccata e due R terracotta obbligatorie">
               <span className="correct">A</span>
               <span className="present">R</span>
               <span className="present">R</span>

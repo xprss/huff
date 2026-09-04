@@ -91,6 +91,8 @@ h2, h3, h4, h5 {
   padding: 0 var(--viewport-padding) calc(var(--viewport-padding) + env(safe-area-inset-bottom, 0px));
 }
 
+.desktop-rail-nav, .desktop-summary { display: none; }
+
 .topbar { background: transparent; border: 0; padding: 22px 0 14px; }
 .title-mark h1 {
   color: var(--color-text);
@@ -143,6 +145,7 @@ h2, h3, h4, h5 {
 .menu-item.selected { background: var(--color-accent-2-200); color: var(--color-accent-2-900); font-family: var(--font-heading); font-size: 17px; }
 .menu-item.danger { color: var(--color-accent-700); }
 .menu-divider { height: 1px; background: var(--color-divider); margin: var(--space-2) 14px; }
+.menu-status { margin-left: auto; border-radius: var(--radius-pill); background: var(--color-accent-2-100); color: var(--color-accent-2-800); font-size: 11px; font-weight: 700; padding: 3px 8px; }
 
 .game-selector { align-content: start; gap: 22px; padding-top: 42px; }
 .game-selector h2 { font-size: 34px; margin: 6px 0 8px; }
@@ -327,6 +330,7 @@ h2, h3, h4, h5 {
 .hack-code-cell { padding: 0; border: 0; background: transparent; }
 .hack-code-cell > span { display: none; }
 .hack-code-cell input { border: 1px solid var(--color-divider); border-radius: 18px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-heading); font-size: 23px; }
+.hack-code-cell input::placeholder { color: var(--color-neutral-400); opacity: 1; }
 .hack-code-cell input:focus-visible { border: 2px solid var(--color-accent); box-shadow: none; color: var(--color-accent-700); outline: none; }
 .hack-console, .hack-mastery { padding: var(--space-4); border: 0; border-radius: var(--radius-lg); background: var(--color-accent-100); box-shadow: none; }
 .hack-console header strong, .hack-mastery header strong { color: var(--color-accent-900); font-family: var(--font-heading); font-size: 17px; font-weight: 400; letter-spacing: 0; text-transform: none; }
@@ -363,15 +367,93 @@ h2, h3, h4, h5 {
 .hexaflow-cell:hover { border-color: var(--color-accent); }.hexaflow-cell.selected { border-color: var(--color-accent); background: var(--color-accent-200); color: var(--color-accent-900); }.hexaflow-cell.theme { border-color: var(--color-accent-2-500); background: var(--color-accent-2-400); color: var(--color-bg); }.hexaflow-cell.flow { border-color: var(--color-accent-400); background: var(--color-accent-300); color: var(--color-accent-900); }
 
 @media (max-width: 767px) {
-  .action-menu { position: fixed; z-index: 20; right: 0; bottom: 0; left: 0; top: auto; width: 100%; max-width: none; border-radius: 38px 38px 0 0; padding: 25px 18px max(18px, env(safe-area-inset-bottom)); animation: sheet-enter var(--motion-base) var(--ease-out) both; }
+  /* The entry animation establishes a fixed-position containing block. The
+   * sheet deliberately stops above the permanent footer rather than covering it. */
+  .action-menu-scrim { position: fixed; z-index: 19; top: 0; right: auto; bottom: calc(var(--app-footer-height) * -1); left: calc(var(--viewport-padding) * -1); width: calc(100% + (var(--viewport-padding) * 2)); height: auto; border: 0; background: color-mix(in srgb, #201e1d 34%, transparent); cursor: default; }
+  .action-menu { position: fixed; z-index: 20; right: auto; bottom: calc(var(--app-footer-height) + 10px); left: calc(var(--viewport-padding) * -1); top: auto; width: calc(100% + (var(--viewport-padding) * 2)); max-width: none; border-radius: 38px; padding: 25px 18px 20px; animation: sheet-enter var(--motion-base) var(--ease-out) both; }
+  .app-footer { position: relative; z-index: 2; }
   .action-menu::before { width: 46px; height: 5px; display: block; margin: -10px auto 16px; border-radius: var(--radius-pill); background: var(--color-neutral-300); content: ""; }
 }
+
+@media (min-width: 768px) { .action-menu-scrim { display: none; } }
 
 @keyframes sheet-enter { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (min-width: 1024px) {
   .app-shell { max-width: none; padding: 0; }
-  .game-surface { width: 100%; max-width: none; padding: 0 35px; }
+  .game-surface {
+    width: min(100%, 1440px);
+    max-width: none;
+    display: grid;
+    grid-template-columns: 260px minmax(440px, 520px) 300px;
+    grid-auto-rows: min-content;
+    align-content: start;
+    justify-content: center;
+    column-gap: clamp(44px, 7vw, 108px);
+    row-gap: 18px;
+    padding: 0 34px;
+  }
+  .game-surface > :not(.topbar):not(.desktop-summary) { grid-column: 2; width: 100%; }
+  .topbar {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    align-self: stretch;
+    min-height: var(--app-height);
+    padding: 32px 34px;
+    background: var(--color-surface);
+  }
+  .topbar .actions { display: none; }
+  .title-mark h1 { font-size: 31px; }
+  .desktop-rail-nav { display: flex; min-height: calc(var(--app-height) - 100px); flex-direction: column; gap: 22px; margin-top: 46px; }
+  .desktop-rail-games, .desktop-rail-links { display: grid; gap: 8px; }
+  .desktop-rail-game, .desktop-rail-links button {
+    min-height: 45px;
+    border: 0;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 14px;
+    background: transparent;
+    color: var(--color-text);
+    cursor: pointer;
+    font: 600 16px/1.2 var(--font-body);
+    text-align: left;
+  }
+  .desktop-rail-game:hover, .desktop-rail-links button:hover { background: color-mix(in srgb, var(--color-bg) 62%, transparent); }
+  .desktop-rail-game.selected, .desktop-rail-links button.selected { background: var(--color-bg); font-family: var(--font-heading); font-size: 16px; font-weight: 400; }
+  .desktop-rail-dot { width: 12px; height: 12px; flex: none; border-radius: var(--radius-pill); background: var(--color-neutral-400); }
+  .desktop-rail-dot.word { background: var(--color-accent-2-500); }
+  .desktop-rail-dot.hack { background: var(--color-accent-400); }
+  .desktop-rail-dot.sky { background: var(--color-neutral-400); }
+  .desktop-rail-dot.flow { background: var(--color-neutral-300); }
+  .desktop-rail-divider { height: 1px; background: var(--color-divider); margin: 12px 0 20px; }
+  .desktop-summary {
+    grid-column: 3;
+    grid-row: 1 / span 12;
+    align-self: start;
+    display: grid;
+    gap: 20px;
+    padding-top: 52px;
+  }
+  .desktop-summary-card { border-radius: var(--radius-lg); padding: 24px 28px; }
+  .desktop-summary-card h2 { margin: 0; color: var(--color-text); font-size: 22px; }
+  .desktop-summary-card p:not(.eyebrow) { margin: 14px 0 0; color: var(--color-neutral-700); font-size: 14px; line-height: 1.45; }
+  .desktop-summary-card.weekly { background: var(--color-accent-100); }
+  .desktop-summary-card.weekly .eyebrow { margin: 0 0 8px; }
+  .desktop-summary-card.metrics { background: var(--color-surface); }
+  .desktop-summary-card.metrics dl { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 18px; margin: 24px 0 0; }
+  .desktop-summary-card.metrics dl div { display: grid; gap: 5px; }
+  .desktop-summary-card.metrics dt { grid-row: 2; color: var(--color-neutral-700); font-size: 12px; }
+  .desktop-summary-card.metrics dd { grid-row: 1; margin: 0; color: var(--color-text); font-family: var(--font-heading); font-size: 28px; line-height: 1; }
+  .desktop-summary-card.tomorrow { border: 1px solid var(--color-divider); background: transparent; }
+  .daily-game-intro, .game-selector { padding-top: 58px; }
+  .daily-game-intro h2 { font-size: 40px; }
+  .game-selector { align-content: start; }
+  .game-selector-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .game-selector-grid .game-selector-card { min-height: 106px; }
+  .keyboard-zone { padding-bottom: 24px; }
+  .app-footer { display: none; }
   .board { max-width: 520px; margin: 0 auto; }
   .terminal-cell, .board [class*="cell"] { border-radius: 20px; font-size: 30px; }
   .feedback-marker { height: 18px; }

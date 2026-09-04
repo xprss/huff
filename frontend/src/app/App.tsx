@@ -855,6 +855,22 @@ export function App() {
               setActiveRoute("games");
               setShowActionsMenu(false);
             }}
+            onOpenHexaword={() => {
+              setActiveRoute("game");
+              setShowActionsMenu(false);
+            }}
+            onOpenHexahack={() => {
+              setActiveRoute("hexahack");
+              setShowActionsMenu(false);
+            }}
+            onOpenHexasky={() => {
+              setActiveRoute("hexasky");
+              setShowActionsMenu(false);
+            }}
+            onOpenHexaflow={() => {
+              setActiveRoute("hexaflow");
+              setShowActionsMenu(false);
+            }}
             onOpenStats={() => {
               setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : "overall");
               setShowStats(true);
@@ -984,7 +1000,7 @@ export function App() {
           ) : !game ? (
             <>
               <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
-                Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
+                Il colore indica la posizione: <strong className="correct">salvia</strong> è corretta, <strong className="present">terracotta</strong> è presente altrove e <strong className="absent">sabbia</strong> è assente.
               </DailyGameIntro>
               <div className="play-area">
                 <ModeSelection modes={modes} selectedMode={null} onSelect={(mode) => void selectGameMode(mode)} />
@@ -993,7 +1009,7 @@ export function App() {
           ) : (
             <>
               <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
-                Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
+                Il colore indica la posizione: <strong className="correct">salvia</strong> è corretta, <strong className="present">terracotta</strong> è presente altrove e <strong className="absent">sabbia</strong> è assente.
               </DailyGameIntro>
               <div className="play-area">
                 <GameBoard
@@ -1063,6 +1079,7 @@ export function App() {
               </div>
             </>
           )}
+          <DesktopSummary stats={statsSet} />
         </section>
 
         {showStats ? (
@@ -1111,6 +1128,33 @@ export function App() {
         </footer>
       </main>
     </AppThemeProvider>
+  );
+}
+
+function DesktopSummary({ stats }: { stats: StatsSetDto }) {
+  const winRate = stats.overall.played ? Math.round((stats.overall.won / stats.overall.played) * 100) : 0;
+
+  return (
+    <aside className="desktop-summary" aria-label="Riepilogo delle tue sfide">
+      <section className="desktop-summary-card weekly">
+        <p className="eyebrow">Questa settimana</p>
+        <h2>Un gioco al giorno.</h2>
+        <p>Completa le sfide quotidiane per scalare la classifica.</p>
+      </section>
+      <section className="desktop-summary-card metrics">
+        <h2>Le tue cifre</h2>
+        <dl>
+          <div><dt>riuscita</dt><dd>{winRate}%</dd></div>
+          <div><dt>serie</dt><dd>{stats.overall.currentStreak}</dd></div>
+          <div><dt>record</dt><dd>{stats.overall.maxStreak}</dd></div>
+          <div><dt>giocate</dt><dd>{stats.overall.played}</dd></div>
+        </dl>
+      </section>
+      <section className="desktop-summary-card tomorrow">
+        <h2>Domani</h2>
+        <p>Nuova parola, nuovo nodo e un altro scorcio da alzare.</p>
+      </section>
+    </aside>
   );
 }
 

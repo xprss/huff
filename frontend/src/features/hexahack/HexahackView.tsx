@@ -20,10 +20,10 @@ const RANK_LABELS: Readonly<Record<HexahackRank, string>> = {
 };
 
 const PROBE_LABELS: Readonly<Record<HexahackProbeType, string>> = {
-  PING: "PING",
-  BIT_SCAN: "BIT SCAN",
-  LINK_TRACE: "LINK TRACE",
-  CHECKSUM: "CHECKSUM"
+  PING: "Ping",
+  BIT_SCAN: "Parità",
+  LINK_TRACE: "Confronto",
+  CHECKSUM: "Somma"
 };
 
 const TUTORIAL_STORAGE_KEY = "huff.hexahack.tutorial.v2";
@@ -112,7 +112,7 @@ export function HexahackView({
     const probes = game.log.filter((entry) => entry.kind === "PROBE").length;
     const text = [
       `Hexahack · nodo ${game.puzzleDate}`,
-      `${RANK_LABELS[game.rank ?? "TRACED"]} · Stealth ${game.finalStealth}`,
+      `${RANK_LABELS[game.rank ?? "TRACED"]} · Silenzio ${game.finalStealth}`,
       `${"◆".repeat(Math.min(probes, 12))}${probes > 12 ? "+" : ""} ${probes} sonde · ${game.wrongSubmissions} errori`
     ].join("\n");
     try {
@@ -126,17 +126,17 @@ export function HexahackView({
   return (
     <section className="hack-shell" aria-label="Hexahack">
       <header className="hack-heading">
-        <div><span className="hack-kicker">NODE/{today.puzzleDate}</span><h2>Hexahack</h2></div>
+        <div><span className="hack-kicker">Hexahack · nodo {today.puzzleDate}</span><h2>Apri il nodo</h2></div>
         <button className="tutorial-help" type="button" onClick={() => setTutorialOpen(true)} aria-label="Come si gioca"><CircleHelp size={20} /></button>
       </header>
 
       <div className="hack-status-grid" aria-label="Telemetria nodo">
         <div><span>Somma</span><strong>{today.freeClues.totalSum}</strong></div>
         <div><span>Cifre distinte</span><strong>{today.freeClues.distinctDigits}</strong></div>
-        <div><span>Stealth</span><strong>{currentStealth}</strong></div>
+        <div><span>Silenzio</span><strong>{currentStealth}</strong></div>
         <div><span>Rango previsto</span><strong>{RANK_LABELS[projectedRank]}</strong></div>
       </div>
-      <div className="hack-stealth-track" role="meter" aria-label={`Stealth ${currentStealth}`} aria-valuemin={Math.min(0, currentStealth)} aria-valuenow={currentStealth} aria-valuemax={100}>
+      <div className="hack-stealth-track" role="meter" aria-label={`Silenzio ${currentStealth}`} aria-valuemin={Math.min(0, currentStealth)} aria-valuenow={currentStealth} aria-valuemax={100}>
         <span style={{ width: `${Math.max(0, Math.min(100, currentStealth))}%` }} />
       </div>
 
@@ -152,6 +152,7 @@ export function HexahackView({
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={1}
+              placeholder="·"
               disabled={completed || busy}
               aria-label={`Cifra ${index + 1}`}
             />
@@ -197,7 +198,7 @@ export function HexahackView({
       )}
 
       {!completed ? <button className="hack-inject" type="button" disabled={busy || digits.some((digit) => !digit)} onClick={() => void submitCode()}>
-        <ShieldCheck size={19} /> INJECT CODE
+        <ShieldCheck size={19} /> Inietta il codice
       </button> : null}
 
       <MasteryStats stats={stats} />
@@ -214,8 +215,8 @@ function LogLine({ entry }: { entry: NonNullable<HexahackGameDto["log"]>[number]
   let line = "";
   if (entry.probe) line = `${PROBE_LABELS[entry.probe.type]} · ${entry.probe.summary}`;
   if (entry.submission) line = entry.submission.granted
-    ? "INJECT CODE · ACCESS GRANTED"
-    : `INJECT CODE · ${entry.submission.correctPositions}/6 posizioni corrette`;
+    ? "CODICE INIETTATO · ACCESSO CONSENTITO"
+    : `CODICE INIETTATO · ${entry.submission.correctPositions}/6 posizioni corrette`;
   return <p><span>{String(entry.sequence).padStart(3, "0")}</span>{line}</p>;
 }
 
@@ -232,7 +233,7 @@ function AccessGranted({ game, stats, onShare }: { game: HexahackGameDto; stats:
   return <section className="hack-granted" aria-live="polite">
     <span>ACCESS GRANTED</span>
     <h3>{RANK_LABELS[game.rank ?? "TRACED"]}</h3>
-    <div><strong>{game.finalStealth}</strong><small>STEALTH</small></div>
+    <div><strong>{game.finalStealth}</strong><small>SILENZIO</small></div>
     <p>{game.log.length} decisioni · costo {game.totalCost} · {game.wrongSubmissions} errori</p>
     <p>{comparison}</p>
     <button type="button" onClick={onShare}><Share2 size={17} /> Condividi senza spoiler</button>
@@ -252,7 +253,7 @@ function MasteryStats({ stats }: { stats: HexahackStatsDto }) {
       {(Object.keys(RANK_LABELS) as HexahackRank[]).map((rank) => <span key={rank}>{RANK_LABELS[rank]} <strong>{stats.rankDistribution[rank] ?? 0}</strong></span>)}
     </div>
     <div className="hack-calendar">
-      {stats.last30Nodes.map((node) => <span className={node.completed ? `rank-${node.rank?.toLowerCase()}` : "empty"} title={`${node.puzzleDate}${node.completed ? ` · ${node.rank} · ${node.stealth}` : " · non completato"}`} aria-label={`${node.puzzleDate}${node.completed ? `, rango ${node.rank}, Stealth ${node.stealth}` : ", non completato"}`} key={node.puzzleDate} />)}
+      {stats.last30Nodes.map((node) => <span className={node.completed ? `rank-${node.rank?.toLowerCase()}` : "empty"} title={`${node.puzzleDate}${node.completed ? ` · ${node.rank} · ${node.stealth}` : " · non completato"}`} aria-label={`${node.puzzleDate}${node.completed ? `, rango ${node.rank}, Silenzio ${node.stealth}` : ", non completato"}`} key={node.puzzleDate} />)}
     </div>
   </section>;
 }
@@ -261,11 +262,11 @@ function Tutorial({ onClose }: { onClose: () => void }) {
   const [step, setStep] = React.useState(0);
   const steps = [
     ["OBIETTIVO", "Ogni giorno devi ricostruire un codice di sei cifre. Somma totale e numero di cifre distinte sono indizi gratuiti: usali per escludere combinazioni."],
-    ["PING · costo 1", "Scegli una posizione e una soglia: PING risponde se la cifra è minore, uguale o maggiore. Ad esempio, “posizione 1 = 2” fissa subito quella cifra."],
-    ["BIT SCAN · costo 1", "BIT SCAN rivela soltanto la parità della cifra scelta: pari o dispari. È utile per dimezzare le possibilità quando non ti serve un valore esatto."],
-    ["LINK TRACE · costo 1", "Confronta due posizioni diverse: scopri se la prima cifra è minore, uguale o maggiore della seconda. Combina questi rapporti con PING e BIT SCAN."],
-    ["CHECKSUM · costo 2", "Somma due posizioni diverse. Per esempio, se 1 + 2 = 5 e PING conferma che la posizione 1 è 2, allora la posizione 2 è 3."],
-    ["INJECT CODE", "Inserisci le sei cifre quando hai una soluzione. Un tentativo errato indica quante posizioni sono esatte, ma costa 5 Stealth; ogni punto costo delle sonde ne sottrae 2. Meno costo ed errori significano un rango migliore."]
+    ["Ping · costo 1", "Scegli una posizione e una soglia: Ping risponde se la cifra è minore, uguale o maggiore. Ad esempio, “posizione 1 = 2” fissa subito quella cifra."],
+    ["Parità · costo 1", "Parità rivela soltanto se la cifra scelta è pari o dispari. È utile per dimezzare le possibilità quando non ti serve un valore esatto."],
+    ["Confronto · costo 1", "Confronta due posizioni diverse: scopri se la prima cifra è minore, uguale o maggiore della seconda. Combina questi rapporti con Ping e Parità."],
+    ["Somma · costo 2", "Somma due posizioni diverse. Per esempio, se 1 + 2 = 5 e Ping conferma che la posizione 1 è 2, allora la posizione 2 è 3."],
+    ["Inietta il codice", "Inserisci le sei cifre quando hai una soluzione. Un tentativo errato indica quante posizioni sono esatte, ma costa 5 punti di Silenzio; ogni punto costo delle sonde ne sottrae 2. Meno costo ed errori significano un rango migliore."]
   ] as const;
   const trainingCode = step >= 4 ? ["2", "3", "?", "?", "?", "?"] : step >= 1 ? ["2", "?", "?", "?", "?", "?"] : ["?", "?", "?", "?", "?", "?"];
   return createPortal(<div className="modal-backdrop" role="presentation" onMouseDown={onClose}>

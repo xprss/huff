@@ -32,7 +32,7 @@ export function TerminalInput({
           disabled={!canPlay || lockedCells.has(index)}
           onClick={() => onSelectCell(index)}
           aria-label={`Casella ${index + 1}${displayCells[index] ? `: ${displayCells[index]}` : ", vuota"}${
-            lockedCells.has(index) ? ", verde bloccata dal granchio" : ""
+            lockedCells.has(index) ? ", salvia bloccata dal granchio" : ""
           }`}
         >
           <span>{displayCells[index] ?? ""}</span>

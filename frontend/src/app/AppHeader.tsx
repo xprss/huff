@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Eye, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Eye, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound, X } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
@@ -27,6 +27,10 @@ export function AppHeader({
   onToggleMenu,
   onOpenProfile,
   onOpenGames,
+  onOpenHexaword,
+  onOpenHexahack,
+  onOpenHexasky,
+  onOpenHexaflow,
   onOpenStats,
   onOpenLeaderboard,
   onOpenAdmin,
@@ -58,6 +62,10 @@ export function AppHeader({
   onToggleMenu: () => void;
   onOpenProfile: () => void;
   onOpenGames: () => void;
+  onOpenHexaword: () => void;
+  onOpenHexahack: () => void;
+  onOpenHexasky: () => void;
+  onOpenHexaflow: () => void;
   onOpenStats: () => void;
   onOpenLeaderboard: () => void;
   onOpenAdmin: () => void;
@@ -129,12 +137,14 @@ export function AppHeader({
             onClick={onToggleMenu}
             aria-haspopup="menu"
             aria-expanded={showActionsMenu}
-            aria-label="Apri menu"
+            aria-label={showActionsMenu ? "Chiudi menu" : "Apri menu"}
             title="Menu"
           >
-            <Menu size={21} />
+            {showActionsMenu ? <X size={21} /> : <Menu size={21} />}
           </button>
           {showActionsMenu ? (
+            <>
+            <button className="action-menu-scrim" type="button" aria-label="Chiudi menu" onClick={onCloseMenu} />
             <div className="action-menu" role="menu" aria-label={showThemes ? "Temi" : "Azioni"}>
               {showThemes ? (
                 <>
@@ -208,6 +218,7 @@ export function AppHeader({
               <button className="menu-item" type="button" role="menuitem" onClick={onToggleNotifications}>
                 {notificationsEnabled ? <BellOff size={18} /> : <Bell size={18} />}
                 <span>{notificationMenuLabel}</span>
+                {notificationsEnabled ? <small className="menu-status">attive</small> : null}
               </button>
               <button className="menu-item" type="button" role="menuitem" onClick={() => setShowThemes(true)}>
                 <Palette size={18} />
@@ -226,9 +237,39 @@ export function AppHeader({
                 </>
               )}
             </div>
+            </>
           ) : null}
         </div>
       </div>
+
+      {canUseGameActions ? (
+        <nav className="desktop-rail-nav" aria-label="Navigazione principale">
+          <div className="desktop-rail-games">
+            <button className={`desktop-rail-game${activeRoute === "game" ? " selected" : ""}`} type="button" onClick={onOpenHexaword}>
+              <span className="desktop-rail-dot word" aria-hidden="true" />
+              <span>Hexaword</span>
+            </button>
+            <button className={`desktop-rail-game${activeRoute === "hexahack" ? " selected" : ""}`} type="button" onClick={onOpenHexahack}>
+              <span className="desktop-rail-dot hack" aria-hidden="true" />
+              <span>Hexahack</span>
+            </button>
+            <button className={`desktop-rail-game${activeRoute === "hexasky" ? " selected" : ""}`} type="button" onClick={onOpenHexasky}>
+              <span className="desktop-rail-dot sky" aria-hidden="true" />
+              <span>Hexasky</span>
+            </button>
+            <button className={`desktop-rail-game${activeRoute === "hexaflow" ? " selected" : ""}`} type="button" onClick={onOpenHexaflow}>
+              <span className="desktop-rail-dot flow" aria-hidden="true" />
+              <span>Hexaflow</span>
+            </button>
+          </div>
+          <div className="desktop-rail-divider" />
+          <div className="desktop-rail-links">
+            <button className={activeRoute === "profile" ? "selected" : ""} type="button" onClick={onOpenProfile}>Profilo</button>
+            <button type="button" onClick={onOpenStats}>Statistiche</button>
+            <button className={isMenuPageActive("leaderboard") ? "selected" : ""} type="button" onClick={onOpenLeaderboard}>Classifica</button>
+          </div>
+        </nav>
+      ) : null}
 
       {toast ? (
         <div className={`toast ${toast.variant}`} role="status" aria-live="polite" key={toast.id}>

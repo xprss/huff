@@ -10,7 +10,7 @@ export function HexahackLaunchModal({ onPlay, onClose }: { onPlay: () => void; o
         </header>
         <RadioTower className="launch-icon" aria-hidden="true" />
         <p className="eyebrow">Un nuovo nodo è online</p>
-        <p>Analizza il codice quotidiano con le sonde, proteggi lo Stealth e conquista il rango GHOST.</p>
+        <p>Analizza il codice quotidiano con le sonde, proteggi il Silenzio e conquista il rango GHOST.</p>
         <button className="launch-cta" type="button" onClick={onPlay}>Entra nel nodo</button>
       </section>
     </div>
