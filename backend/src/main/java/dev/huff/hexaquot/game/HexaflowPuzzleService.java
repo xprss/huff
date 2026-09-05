@@ -33,11 +33,13 @@ public class HexaflowPuzzleService {
     public HexaflowDtos.PuzzleAdminDto save(AppUser admin,String date,HexaflowDtos.PuzzleDraftDto request){
         require(admin); parseDate(date); if(request==null)throw new BadRequestException("Bozza mancante.");
         if(request.puzzleDate()!=null&&!request.puzzleDate().equals(date))throw new BadRequestException("La data del corpo non coincide con l'URL.");
+        String themeClue=request.themeClue()==null?"":request.themeClue().trim();
+        if(themeClue.isEmpty())throw new BadRequestException("L'indizio del tema è obbligatorio.");
         HexaflowPuzzleEntity entity=HexaflowPuzzleEntity.<HexaflowPuzzleEntity>find("puzzleDate",date).firstResult();
         if(entity!=null&&entity.status==HexaflowDtos.PuzzleStatus.PUBLISHED) immutable();
         String now=Instant.now().toString();
         if(entity==null){entity=new HexaflowPuzzleEntity();entity.id=UUID.randomUUID().toString();entity.puzzleDate=date;entity.status=HexaflowDtos.PuzzleStatus.DRAFT;entity.createdBy=admin.id();entity.createdAt=now;}
-        entity.themeClue=request.themeClue()==null?"":request.themeClue().trim();
+        entity.themeClue=themeClue;
         entity.gridJson=write(request.grid()==null?List.of():request.grid().stream().map(v->v==null?"":v.trim().toUpperCase(Locale.ROOT)).toList());
         entity.answersJson=write(request.answers()==null?List.of():request.answers());
         entity.updatedBy=admin.id();entity.updatedAt=now;

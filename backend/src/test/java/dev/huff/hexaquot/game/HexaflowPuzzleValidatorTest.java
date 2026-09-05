@@ -18,6 +18,7 @@ class HexaflowPuzzleValidatorTest {
 
     @Test void reportsIncompleteDraftWithoutPreventingItsRepresentation() {
         var errors=validator.validate(new HexaflowDtos.PuzzleDraftDto("2026-09-01","",List.of("A"),List.of()));
+        assertTrue(errors.stream().anyMatch(e->e.code().equals("THEME_CLUE")));
         assertTrue(errors.stream().anyMatch(e->e.code().equals("GRID_SIZE")));
         assertTrue(errors.stream().anyMatch(e->e.code().equals("FLOW_COUNT")));
         assertTrue(errors.stream().anyMatch(e->e.code().equals("GRID_COVERAGE")));

@@ -26,6 +26,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   const [month, setMonth] = React.useState(monthNow);
   const [date, setDate] = React.useState<string | null>(null);
   const [creationDate, setCreationDate] = React.useState(editorToday);
+  const [creationThemeClue, setCreationThemeClue] = React.useState("");
   const [isNew, setIsNew] = React.useState(false);
   const [draft, setDraft] = React.useState<HexaflowPuzzleDraftDto | null>(null);
   const [activeAnswer, setActiveAnswer] = React.useState(0);
@@ -87,7 +88,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
     const value = creationDate;
     setIsNew(true);
     setDate(value);
-    setDraft({ puzzleDate: value as HexaflowPuzzleDraftDto["puzzleDate"], themeClue: "", grid: blankGrid(), answers: [] });
+    setDraft({ puzzleDate: value as HexaflowPuzzleDraftDto["puzzleDate"], themeClue: creationThemeClue.trim(), grid: blankGrid(), answers: [] });
     setActiveAnswer(0);
     setConfirmAction(null);
   }
@@ -171,7 +172,11 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
               <span>Data di gioco</span>
               <input type="date" value={creationDate} onChange={(event) => setCreationDate(event.target.value)} />
             </label>
-            <button className="cms-primary-button" type="button" onClick={newPuzzle}><Plus size={17} />Nuovo puzzle</button>
+            <label>
+              <span>Indizio del tema</span>
+              <input value={creationThemeClue} required placeholder="es. Cose che trovi in un giardino" onChange={(event) => setCreationThemeClue(event.target.value)} />
+            </label>
+            <button className="cms-primary-button" type="button" disabled={!creationThemeClue.trim()} title={!creationThemeClue.trim() ? "L'indizio del tema è obbligatorio." : undefined} onClick={newPuzzle}><Plus size={17} />Nuovo puzzle</button>
           </div>
         </header>
 
@@ -201,6 +206,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
 
   const preparedDraft = prepareDraft(draft);
   const hasUnsavedChanges = !saved || JSON.stringify(preparedDraft) !== JSON.stringify(prepareDraft(toDraft(saved)));
+  const missingThemeClue = !draft.themeClue.trim();
 
   return (
     <section className="hexaflow-cms cms-editor" aria-label="Editor puzzle Hexaflow">
@@ -221,7 +227,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
 
       <label className="cms-theme">
         <span>Indizio del tema</span>
-        <input value={draft.themeClue} disabled={editorLocked} placeholder="es. Cose che trovi in un giardino" onChange={(event) => setDraft({ ...draft, themeClue: event.target.value })} />
+        <input value={draft.themeClue} required disabled={editorLocked} placeholder="es. Cose che trovi in un giardino" onChange={(event) => setDraft({ ...draft, themeClue: event.target.value })} />
       </label>
 
       <section className="cms-generator" aria-label="Generatore tabellone">
@@ -281,7 +287,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
         {confirmAction ? (
           <div className="cms-confirmation"><strong>{confirmAction === "publish" ? "Pubblicare questo puzzle?" : "Eliminare definitivamente questa bozza?"}</strong><span>{confirmAction === "publish" ? "Dopo la pubblicazione di oggi non potrà più essere modificato." : "L’operazione non può essere annullata."}</span><button className={confirmAction === "delete" ? "danger" : "cms-primary-button"} type="button" disabled={publish.isPending || remove.isPending} onClick={() => confirmAction === "publish" ? publish.mutate(draft.puzzleDate) : remove.mutate(draft.puzzleDate)}>{confirmAction === "publish" ? <><Send size={16} />Conferma pubblicazione</> : <><Trash2 size={16} />Elimina bozza</>}</button><button type="button" onClick={() => setConfirmAction(null)}>Annulla</button></div>
         ) : <>
-          <button type="button" disabled={editorLocked || save.isPending} onClick={() => save.mutate(preparedDraft)}><Save size={16} />{save.isPending ? "Salvataggio…" : "Salva bozza"}</button>
+          <button type="button" disabled={editorLocked || save.isPending || missingThemeClue} title={missingThemeClue ? "L'indizio del tema è obbligatorio." : undefined} onClick={() => save.mutate(preparedDraft)}><Save size={16} />{save.isPending ? "Salvataggio…" : "Salva bozza"}</button>
           {saved?.status === "PUBLISHED" ? <button type="button" disabled={immutable || unpublish.isPending} onClick={() => unpublish.mutate(draft.puzzleDate)}>Torna in bozza</button> : <button className="cms-primary-button" type="button" title={hasUnsavedChanges ? "Salva la bozza prima di pubblicare." : undefined} disabled={!saved || publish.isPending || errorCount > 0 || hasUnsavedChanges} onClick={() => setConfirmAction("publish")}><Send size={16} />Pubblica</button>}
           <button className="danger" type="button" disabled={!saved || saved.status !== "DRAFT" || draft.puzzleDate <= editorToday()} onClick={() => setConfirmAction("delete")}><Trash2 size={16} />Elimina</button>
         </>}

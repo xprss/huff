@@ -9,6 +9,7 @@ public class HexaflowPuzzleValidator {
     public List<HexaflowDtos.ValidationErrorDto> validate(HexaflowDtos.PuzzleDraftDto draft) {
         List<HexaflowDtos.ValidationErrorDto> errors = new ArrayList<>();
         if (draft == null) return List.of(error("MISSING", "puzzle", "Puzzle mancante.", null, null));
+        if (draft.themeClue()==null || draft.themeClue().isBlank()) errors.add(error("THEME_CLUE", "themeClue", "L'indizio del tema è obbligatorio.", null, null));
         List<String> grid = draft.grid() == null ? List.of() : draft.grid();
         if (grid.size() != 48) errors.add(error("GRID_SIZE", "grid", "La griglia deve contenere 48 celle.", null, null));
         for (int i=0;i<grid.size();i++) if (grid.get(i)==null || !grid.get(i).trim().toUpperCase(Locale.ROOT).matches("[A-Z]"))
