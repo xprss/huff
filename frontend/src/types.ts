@@ -210,7 +210,7 @@ export type HexaflowPathOutcome = "THEME" | "FLOW" | "EXTRA" | "DUPLICATE";
 export interface HexaflowAnswerDto { readonly id: string; readonly label: string; readonly type: HexaflowAnswerType; readonly path: readonly number[]; }
 export interface HexaflowFoundAnswerDto { readonly id: string; readonly label: string; readonly type: HexaflowAnswerType; readonly cells: readonly number[]; }
 export interface HexaflowGameDto { readonly puzzleDate: IsoDateString; readonly status: HexaflowGameStatus; readonly foundAnswers: readonly HexaflowFoundAnswerDto[]; readonly extraCount: number; readonly completedAt: string | null; }
-export interface HexaflowTodayDto { readonly puzzleDate: IsoDateString; readonly available: boolean; readonly themeClue: string | null; readonly grid: readonly string[]; readonly totalAnswers: number; readonly game: HexaflowGameDto | null; }
+export interface HexaflowTodayDto { readonly puzzleDate: IsoDateString; readonly available: boolean; readonly themeClue: string | null; readonly authorUsername: string | null; readonly grid: readonly string[]; readonly totalAnswers: number; readonly game: HexaflowGameDto | null; }
 export interface HexaflowPathRequestDto { readonly requestId: string; readonly cells: readonly number[]; }
 export interface HexaflowPathResultDto { readonly requestId: string; readonly outcome: HexaflowPathOutcome; readonly answer: HexaflowFoundAnswerDto | null; readonly sequence: string; readonly extraCount: number; }
 export interface HexaflowPathActionDto { readonly game: HexaflowGameDto; readonly result: HexaflowPathResultDto; readonly replayed: boolean; }

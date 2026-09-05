@@ -22,9 +22,10 @@ public class HexaflowDailyGameService {
 
     public HexaflowDtos.TodayDto today(AppUser user){
         String date=dailyGameService.todayDate();HexaflowPuzzleEntity puzzle=published(date);
-        if(puzzle==null)return new HexaflowDtos.TodayDto(date,false,null,List.of(),0,null);
+        if(puzzle==null)return new HexaflowDtos.TodayDto(date,false,null,null,List.of(),0,null);
         var answers=puzzleService.readAnswers(puzzle.answersJson);HexaflowGameEntity game=findGame(user.id(),date,false);
-        return new HexaflowDtos.TodayDto(date,true,puzzle.themeClue,puzzleService.readGrid(puzzle.gridJson),answers.size(),game==null?null:toDto(game,answers));
+        UserEntity author=UserEntity.findById(puzzle.createdBy);
+        return new HexaflowDtos.TodayDto(date,true,puzzle.themeClue,author==null?null:author.nickname,puzzleService.readGrid(puzzle.gridJson),answers.size(),game==null?null:toDto(game,answers));
     }
 
     @Transactional

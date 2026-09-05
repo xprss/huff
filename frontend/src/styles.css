@@ -4004,6 +4004,8 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
 .hexaflow.unavailable { min-height:45vh; place-content:center; text-align:center; justify-items:center; opacity:.8; }
 .hexaflow-head { display:flex; justify-content:space-between; align-items:end; gap:1rem; padding:.1rem .15rem; }
 .hexaflow-head h2 { max-width:28rem; margin:.18rem 0 0; font-size:clamp(1.3rem,4.5vw,2rem); line-height:1.03; letter-spacing:-.035em; }
+.text-muted { color:var(--color-muted); }
+.hexaflow-author { margin:.28rem 0 0; font-size:.72rem; font-weight:650; line-height:1.2; }
 .hexaflow-actions { flex:0 0 auto; display:flex; align-items:center; gap:.38rem; }.hexaflow-head>span { display:flex; align-items:baseline; gap:.08rem; border:1px solid color-mix(in srgb,var(--flow-mint) 38%,transparent); border-radius:1.1rem; padding:.47rem .62rem .4rem; background:var(--color-surface-raised); color:var(--color-text); font-size:1.05rem; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; }
 .hexaflow-head>span i { opacity:.48; font-size:.7em; font-style:normal; font-weight:700; }
 .hexaflow-share { width:2.18rem; height:2.18rem; display:grid; place-items:center; border:1px solid color-mix(in srgb,var(--flow-mint) 35%,var(--color-surface-border)); border-radius:50%; padding:0; background:var(--color-surface-raised); color:var(--flow-mint); cursor:pointer; -webkit-tap-highlight-color:transparent; }.hexaflow-share:hover { border-color:var(--flow-mint); }.hexaflow-share:focus-visible { outline:2px solid #fff; outline-offset:2px; }

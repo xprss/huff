@@ -26,7 +26,7 @@ public final class HexaflowDtos {
     public record FoundAnswerDto(String id, String label, AnswerType type, List<Integer> cells) {}
     public record GameDto(String puzzleDate, GameStatus status, List<FoundAnswerDto> foundAnswers,
                           int extraCount, String completedAt) {}
-    public record TodayDto(String puzzleDate, boolean available, String themeClue, List<String> grid,
+    public record TodayDto(String puzzleDate, boolean available, String themeClue, String authorUsername, List<String> grid,
                            int totalAnswers, GameDto game) {}
     public record PathRequest(String requestId, List<Integer> cells) {}
     public record PathResultDto(String requestId, PathOutcome outcome, FoundAnswerDto answer,
