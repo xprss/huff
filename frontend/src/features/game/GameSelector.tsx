@@ -39,7 +39,6 @@ export function GameSelector({
         <button className={`game-selector-card game-selector-card--word${hexawordCompleted ? " completed" : ""}`} type="button" onClick={onHexaword}>
           <span className="game-selector-card-top">
             <span className="game-selector-icon"><SpellCheck2 aria-hidden="true" /></span>
-            <span className="game-selector-index" aria-hidden="true">01</span>
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name">
@@ -53,7 +52,6 @@ export function GameSelector({
         <button className={`game-selector-card game-selector-card--hack${hexahackCompleted ? " completed" : ""}`} type="button" onClick={onHexahack}>
           <span className="game-selector-card-top">
             <span className="game-selector-icon"><Binary aria-hidden="true" /></span>
-            <span className="game-selector-index" aria-hidden="true">02</span>
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name">
@@ -67,7 +65,6 @@ export function GameSelector({
         <button className={`game-selector-card game-selector-card--sky${hexaskyCompleted ? " completed" : ""}`} type="button" onClick={onHexasky}>
           <span className="game-selector-card-top">
             <span className="game-selector-icon"><Building2 aria-hidden="true" /></span>
-            <span className="game-selector-index" aria-hidden="true">03</span>
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
@@ -78,7 +75,6 @@ export function GameSelector({
         <button className={`game-selector-card game-selector-card--flow${hexaflowCompleted ? " completed" : ""}`} type="button" onClick={onHexaflow} disabled={!hexaflowAvailable}>
           <span className="game-selector-card-top">
             <span className="game-selector-icon"><Waves aria-hidden="true" /></span>
-            <span className="game-selector-index" aria-hidden="true">04</span>
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
