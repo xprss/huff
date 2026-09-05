@@ -35,12 +35,14 @@ class HexaflowPuzzleValidatorTest {
     }
 
     @Test void generatesAValidFullBoardFromThemeWordsAndFlow() {
-        var generated = new HexaflowBoardGenerator().generate(new HexaflowDtos.BoardGenerationRequest(
-            List.of("Giardino", "Fiori", "Alberi", "Fontana", "Farfalle", "Piante"), "Corrente"));
-        var draft = new HexaflowDtos.PuzzleDraftDto("2026-09-01", "Natura", generated.grid(), generated.answers());
-        assertTrue(validator.validate(draft).isEmpty());
-        assertEquals("CORRENTE", generated.answers().get(0).label());
-        assertEquals(HexaflowDtos.AnswerType.FLOW, generated.answers().get(0).type());
+        for (int generation = 0; generation < 25; generation++) {
+            var generated = new HexaflowBoardGenerator().generate(new HexaflowDtos.BoardGenerationRequest(
+                List.of("Giardino", "Fiori", "Alberi", "Fontana", "Farfalle", "Piante"), "Corrente"));
+            var draft = new HexaflowDtos.PuzzleDraftDto("2026-09-01", "Natura", generated.grid(), generated.answers());
+            assertTrue(validator.validate(draft).isEmpty());
+            assertEquals("CORRENTE", generated.answers().get(0).label());
+            assertEquals(HexaflowDtos.AnswerType.FLOW, generated.answers().get(0).type());
+        }
     }
 
     @Test void rejectsGenerationWhenWordsDoNotFillTheBoard() {

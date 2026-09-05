@@ -24,7 +24,7 @@ public class HexaflowBoardGenerator {
         if (total != CELLS) throw new BadRequestException("Le parole devono usare esattamente 48 lettere: ora ne usano " + total + ".");
 
         Collections.shuffle(themes);
-        List<Integer> route = serpentineRoute(flow.length());
+        List<Integer> route = intricateRoute(flow.length());
         List<String> grid = new ArrayList<>(Collections.nCopies(CELLS, ""));
         List<HexaflowDtos.AnswerDto> answers = new ArrayList<>();
         int offset = addAnswer(answers, grid, route, 0, flow, HexaflowDtos.AnswerType.FLOW);
@@ -50,11 +50,48 @@ public class HexaflowBoardGenerator {
         return offset + word.length();
     }
 
-    /** A randomized Hamiltonian route; the first run makes the Flusso touch two opposite sides. */
-    private List<Integer> serpentineRoute(int flowLength) {
-        boolean horizontal = flowLength < ROWS || ThreadLocalRandom.current().nextBoolean();
-        int outer = horizontal ? ROWS : COLUMNS;
-        int inner = horizontal ? COLUMNS : ROWS;
+    /**
+     * Builds a Hamiltonian route and repeatedly rewires two of its links.  Starting from a
+     * horizontal snake guarantees that the first six cells already span the board, while the
+     * rewiring makes the words weave through the grid instead of following predictable rows.
+     */
+    private List<Integer> intricateRoute(int flowLength) {
+        List<Integer> route = serpentineRoute();
+        int rewires = 0;
+        for (int attempts = 0; attempts < 2_000 && rewires < 72; attempts++) {
+            int firstEdge = ThreadLocalRandom.current().nextInt(CELLS - 3);
+            int secondEdge = ThreadLocalRandom.current().nextInt(firstEdge + 2, CELLS - 1);
+            int first = route.get(firstEdge);
+            int next = route.get(firstEdge + 1);
+            int last = route.get(secondEdge);
+            int afterLast = route.get(secondEdge + 1);
+
+            // A 2-opt reversal preserves every cell exactly once.  It is valid only when the
+            // two new links are neighbours in the hex grid.
+            if (!HexaflowPuzzleValidator.adjacent(first, last)
+                    || !HexaflowPuzzleValidator.adjacent(next, afterLast)) continue;
+            Collections.reverse(route.subList(firstEdge + 1, secondEdge + 1));
+            if (touchesOppositeSides(route, flowLength)) rewires++;
+            else Collections.reverse(route.subList(firstEdge + 1, secondEdge + 1));
+        }
+        return route;
+    }
+
+    private boolean touchesOppositeSides(List<Integer> route, int length) {
+        boolean top = false, bottom = false, left = false, right = false;
+        for (int index = 0; index < length; index++) {
+            int cell = route.get(index);
+            top |= cell < COLUMNS;
+            bottom |= cell >= CELLS - COLUMNS;
+            left |= cell % COLUMNS == 0;
+            right |= cell % COLUMNS == COLUMNS - 1;
+        }
+        return (top && bottom) || (left && right);
+    }
+
+    private List<Integer> serpentineRoute() {
+        int outer = ROWS;
+        int inner = COLUMNS;
         int outerStart = ThreadLocalRandom.current().nextBoolean() ? 0 : outer - 1;
         int outerStep = outerStart == 0 ? 1 : -1;
         int innerStart = ThreadLocalRandom.current().nextBoolean() ? 0 : inner - 1;
@@ -66,7 +103,7 @@ public class HexaflowBoardGenerator {
             int start = outerOffset % 2 == 0 ? innerStart : innerStart == 0 ? inner - 1 : 0;
             for (int innerOffset = 0; innerOffset < inner; innerOffset++) {
                 int innerIndex = start + innerOffset * direction;
-                route.add(horizontal ? outerIndex * COLUMNS + innerIndex : innerIndex * COLUMNS + outerIndex);
+                route.add(outerIndex * COLUMNS + innerIndex);
             }
         }
         return route;
