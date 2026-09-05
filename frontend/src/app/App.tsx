@@ -138,6 +138,11 @@ export function App() {
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
   const isLoggedIn = Boolean(me?.loggedIn);
+  const needsNotificationPrompt =
+    isLoggedIn &&
+    !notificationsEnabled &&
+    notificationPermission !== "denied" &&
+    !isGameNotificationsPromptDismissed();
   const globalStatsQuery = useQuery({
     ...globalStatsQueryOptions(),
     enabled: isLoggedIn
@@ -357,18 +362,27 @@ export function App() {
     hexahackStatsQuery.error, hexaskyTodayQuery.error, hexaskyStatsQuery.error, overallStatsQuery.error, leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
-    if (me?.pendingAnnouncements.includes("HEXAFLOW_LAUNCH") || !me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") || launchAnnouncementHandledRef.current) return;
+    if (
+      me?.pendingAnnouncements.includes("HEXAFLOW_LAUNCH") ||
+      !me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") ||
+      launchAnnouncementHandledRef.current ||
+      showNotificationPrompt ||
+      (needsNotificationPrompt && !notificationPromptHandledRef.current)
+    ) return;
     launchAnnouncementHandledRef.current = true;
-    setShowNotificationPrompt(false);
     setShowLaunchAnnouncement(true);
-  }, [me?.pendingAnnouncements]);
+  }, [me?.pendingAnnouncements, needsNotificationPrompt, showNotificationPrompt]);
 
   React.useEffect(() => {
-    if (!me?.pendingAnnouncements.includes("HEXAFLOW_LAUNCH") || hexaflowLaunchAnnouncementHandledRef.current) return;
+    if (
+      !me?.pendingAnnouncements.includes("HEXAFLOW_LAUNCH") ||
+      hexaflowLaunchAnnouncementHandledRef.current ||
+      showNotificationPrompt ||
+      (needsNotificationPrompt && !notificationPromptHandledRef.current)
+    ) return;
     hexaflowLaunchAnnouncementHandledRef.current = true;
-    setShowNotificationPrompt(false);
     setShowHexaflowLaunchAnnouncement(true);
-  }, [me?.pendingAnnouncements]);
+  }, [me?.pendingAnnouncements, needsNotificationPrompt, showNotificationPrompt]);
 
   React.useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, appTheme.id);
@@ -395,11 +409,8 @@ export function App() {
 
   React.useEffect(() => {
     if (
-      !isLoggedIn ||
+      !needsNotificationPrompt ||
       launchModalOpen ||
-      notificationsEnabled ||
-      notificationPermission === "denied" ||
-      isGameNotificationsPromptDismissed() ||
       notificationPromptHandledRef.current
     ) {
       return;
@@ -407,7 +418,7 @@ export function App() {
 
     notificationPromptHandledRef.current = true;
     setShowNotificationPrompt(true);
-  }, [isLoggedIn, notificationPermission, notificationsEnabled, launchModalOpen]);
+  }, [launchModalOpen, needsNotificationPrompt]);
 
   React.useEffect(() => {
     if (!toast) return;
