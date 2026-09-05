@@ -17,7 +17,7 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
   const gridRef = React.useRef<HTMLDivElement>(null);
   const cellsRef = React.useRef(new Map<number, HTMLButtonElement>());
   const pathRef = React.useRef<number[]>([]);
-  const draggingRef = React.useRef(false);
+  const gestureRef = React.useRef<{ pointerId: number; startCell: number; swiping: boolean } | null>(null);
   const submittingRef = React.useRef(false);
   const pointerFrame = React.useRef<number | null>(null);
   const pointerPosition = React.useRef<{ x: number; y: number } | null>(null);
@@ -35,6 +35,15 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
 
   React.useEffect(() => () => {
     if (pointerFrame.current !== null) window.cancelAnimationFrame(pointerFrame.current);
+  }, []);
+
+  React.useEffect(() => {
+    const cancelOutsideGrid = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Node && !gridRef.current?.contains(target)) clearPath();
+    };
+    document.addEventListener("pointerdown", cancelOutsideGrid);
+    return () => document.removeEventListener("pointerdown", cancelOutsideGrid);
   }, []);
 
   React.useLayoutEffect(() => {
@@ -67,9 +76,26 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
     setPath(next);
   }
 
-  function addCellAt(x: number, y: number) {
+  function clearPath() {
+    pathRef.current = [];
+    setPath([]);
+  }
+
+  function cellAt(x: number, y: number) {
     const target = document.elementFromPoint(x, y)?.closest<HTMLElement>("[data-cell]");
-    if (target?.dataset.cell) addCell(Number(target.dataset.cell));
+    return target?.dataset.cell === undefined ? undefined : Number(target.dataset.cell);
+  }
+
+  function beginSwipe() {
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.swiping) return;
+    gesture.swiping = true;
+    if (pathRef.current.length === 0) {
+      pathRef.current = [gesture.startCell];
+      setPath([gesture.startCell]);
+    } else {
+      addCell(gesture.startCell);
+    }
   }
 
   function trackPointer(x: number, y: number) {
@@ -78,7 +104,13 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
     pointerFrame.current = window.requestAnimationFrame(() => {
       pointerFrame.current = null;
       const position = pointerPosition.current;
-      if (draggingRef.current && position) addCellAt(position.x, position.y);
+      const gesture = gestureRef.current;
+      if (!gesture || !position) return;
+      const index = cellAt(position.x, position.y);
+      if (index !== undefined && (gesture.swiping || index !== gesture.startCell)) {
+        beginSwipe();
+        addCell(index);
+      }
     });
   }
 
@@ -105,14 +137,27 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
   return <section className="hexaflow" aria-label="Hexaflow">
     <header className="hexaflow-head"><div><p className="eyebrow">Hexaflow · {formatGameDate(today.puzzleDate)}</p><h2>{today.themeClue}</h2></div><div className="hexaflow-actions"><button className="hexaflow-share" type="button" onClick={() => void share(today)} aria-label="Condividi Hexaflow"><Share2 size={16} /></button><span aria-label={`${game?.foundAnswers.length ?? 0} parole su ${today.totalAnswers}`}>{game?.foundAnswers.length ?? 0}<i>/</i>{today.totalAnswers}</span></div></header>
     <div className={`hexaflow-current ${currentWord ? "is-tracing" : ""}`} aria-live="polite"><span>{currentWord || "Traccia una parola"}</span><b>{currentWord ? `${path.length} celle` : "scorri e connetti"}</b></div>
-    <p className="hexaflow-instruction"><span className="hexaflow-gesture" aria-hidden="true">↗</span> Scorri sulle celle. Rilascia per inviare.</p>
-    <div ref={gridRef} className="hexaflow-grid" onPointerMove={(event) => { if (draggingRef.current) trackPointer(event.clientX, event.clientY); }} onPointerUp={(event) => { if (!draggingRef.current) return; if (pointerFrame.current !== null) { window.cancelAnimationFrame(pointerFrame.current); pointerFrame.current = null; } addCellAt(event.clientX, event.clientY); draggingRef.current = false; void submit(pathRef.current); }} onPointerCancel={() => { draggingRef.current = false; pathRef.current = []; setPath([]); }}>
+    <p className="hexaflow-instruction"><span className="hexaflow-gesture" aria-hidden="true">↗</span> Scorri e rilascia per inviare. Con i tocchi, premi di nuovo l'ultima cella.</p>
+    <div ref={gridRef} className="hexaflow-grid" onPointerDown={(event) => { const target = event.target; if (!(target instanceof Element) || !target.closest("[data-cell]")) clearPath(); }} onPointerMove={(event) => { if (gestureRef.current?.pointerId === event.pointerId) trackPointer(event.clientX, event.clientY); }} onPointerUp={(event) => {
+      const gesture = gestureRef.current;
+      if (!gesture || gesture.pointerId !== event.pointerId) return;
+      if (pointerFrame.current !== null) { window.cancelAnimationFrame(pointerFrame.current); pointerFrame.current = null; }
+      const index = cellAt(event.clientX, event.clientY);
+      if (index !== undefined && (gesture.swiping || index !== gesture.startCell)) {
+        beginSwipe();
+        addCell(index);
+      }
+      gestureRef.current = null;
+      if (gesture.swiping) void submit(pathRef.current);
+      else if (pathRef.current[pathRef.current.length - 1] === gesture.startCell) void submit(pathRef.current);
+      else addCell(gesture.startCell);
+    }} onPointerCancel={() => { gestureRef.current = null; clearPath(); }}>
       <FoundPaths answers={game?.foundAnswers ?? []} centers={gridGeometry.centers} width={gridGeometry.width} height={gridGeometry.height} />
       <ActivePath cells={path} centers={gridGeometry.centers} width={gridGeometry.width} height={gridGeometry.height} />
       {today.grid.map((letter, index) => <button
         type="button" key={index} data-cell={index} ref={(element) => { if (element) cellsRef.current.set(index, element); else cellsRef.current.delete(index); }}
         className={["hexaflow-cell", pathOrderByCell.has(index) ? "selected" : "", foundByCell.get(index) ?? ""].filter(Boolean).join(" ")}
-        onPointerDown={(event) => { if (completed || busy || submittingRef.current) return; event.preventDefault(); draggingRef.current = true; if (pathRef.current.length === 0) { pathRef.current = [index]; setPath([index]); } else addCell(index); gridRef.current?.setPointerCapture(event.pointerId); }}
+        onPointerDown={(event) => { if (completed || busy || submittingRef.current) return; event.preventDefault(); gestureRef.current = { pointerId: event.pointerId, startCell: index, swiping: false }; gridRef.current?.setPointerCapture(event.pointerId); }}
         aria-label={`Cella ${index + 1}: ${letter}`}><span className="hexaflow-cell-letter">{letter}</span><small>{pathOrderByCell.get(index) ?? ""}</small></button>)}
     </div>
     {completed ? <div className="hexaflow-complete"><h3>Flusso completato!</h3><p>Hai connesso ogni percorso.</p></div> : null}
