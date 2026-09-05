@@ -14,25 +14,31 @@ export function ModeSelection({
   return (
     <section className={`mode-selection ${compact ? "compact" : ""}`} aria-label="Modalità di gioco">
       <h2>Modalità</h2>
-      <div className="mode-options">
-        {modes.map((mode) => (
-          <button
-            className={`mode-option ${selectedMode === mode.mode ? "selected" : ""}`}
-            type="button"
-            key={mode.mode}
-            onClick={() => onSelect(mode.mode)}
-            aria-pressed={selectedMode === mode.mode}
-          >
-            {mode.mode === "MISCHIEVOUS_MOUSE" ? (
-              <span aria-hidden="true">🐭</span>
-            ) : mode.mode === "STUBBORN_CRAB" ? (
-              <span aria-hidden="true">🦀</span>
-            ) : (
-              <span className="classic-mark" aria-hidden="true" />
-            )}
-            <span>{mode.label}</span>
-          </button>
-        ))}
+      <div className={`mode-options ${selectedMode ? "has-selection" : ""}`} role="group" aria-label="Scegli la modalità di gioco">
+        {modes.map((mode) => {
+          const isSelected = selectedMode === mode.mode;
+
+          return (
+            <button
+              className={`mode-option ${isSelected ? "selected" : ""}`}
+              type="button"
+              key={mode.mode}
+              onClick={() => onSelect(mode.mode)}
+              aria-pressed={isSelected}
+              aria-label={mode.label}
+              title={mode.label}
+            >
+              {mode.mode === "MISCHIEVOUS_MOUSE" ? (
+                <span aria-hidden="true">🐭</span>
+              ) : mode.mode === "STUBBORN_CRAB" ? (
+                <span aria-hidden="true">🦀</span>
+              ) : (
+                <span className="classic-mark" aria-hidden="true" />
+              )}
+              {isSelected ? <span>{mode.label}</span> : null}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
