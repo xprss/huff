@@ -54,6 +54,7 @@ public class HexaflowBoardGenerator {
      * Builds a Hamiltonian route and repeatedly rewires two of its links.  Starting from a
      * horizontal snake guarantees that the first six cells already span the board, while the
      * rewiring makes the words weave through the grid instead of following predictable rows.
+     * A candidate is kept only if none of its links crosses another one.
      */
     private List<Integer> intricateRoute(int flowLength) {
         List<Integer> route = serpentineRoute();
@@ -71,7 +72,8 @@ public class HexaflowBoardGenerator {
             if (!HexaflowPuzzleValidator.adjacent(first, last)
                     || !HexaflowPuzzleValidator.adjacent(next, afterLast)) continue;
             Collections.reverse(route.subList(firstEdge + 1, secondEdge + 1));
-            if (touchesOppositeSides(route, flowLength)) rewires++;
+            if (touchesOppositeSides(route, flowLength)
+                    && !HexaflowPuzzleValidator.hasIntersectingLinks(route)) rewires++;
             else Collections.reverse(route.subList(firstEdge + 1, secondEdge + 1));
         }
         return route;
