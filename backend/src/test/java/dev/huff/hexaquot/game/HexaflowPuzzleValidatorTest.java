@@ -38,7 +38,7 @@ class HexaflowPuzzleValidatorTest {
     @Test void generatesAValidFullBoardFromThemeWordsAndFlow() {
         for (int generation = 0; generation < 100; generation++) {
             var generated = new HexaflowBoardGenerator().generate(new HexaflowDtos.BoardGenerationRequest(
-                List.of("Giardino", "Fiori", "Alberi", "Fontana", "Farfalle", "Piante"), "Corrente"));
+                List.of("Giardino", "Fiori", "Alberi", "Fontana", "Farfalle", "Piante"), "Corrente"), new Random(generation));
             var draft = new HexaflowDtos.PuzzleDraftDto("2026-09-01", "Natura", generated.grid(), generated.answers());
             assertTrue(validator.validate(draft).isEmpty());
             assertFalse(HexaflowPuzzleValidator.hasIntersectingPaths(generated.answers()));

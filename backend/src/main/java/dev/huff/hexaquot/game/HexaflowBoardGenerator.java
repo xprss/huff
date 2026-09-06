@@ -2,6 +2,7 @@ package dev.huff.hexaquot.game;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ServiceUnavailableException;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -10,8 +11,14 @@ public class HexaflowBoardGenerator {
     private static final int ROWS = 8;
     private static final int COLUMNS = 6;
     private static final int CELLS = ROWS * COLUMNS;
+    private static final int SEARCH_RESTARTS = 96;
+    private static final int SEARCH_STEPS = 12_000;
 
     public HexaflowDtos.GeneratedBoardDto generate(HexaflowDtos.BoardGenerationRequest request) {
+        return generate(request, ThreadLocalRandom.current());
+    }
+
+    HexaflowDtos.GeneratedBoardDto generate(HexaflowDtos.BoardGenerationRequest request, Random random) {
         if (request == null) throw new BadRequestException("Inserisci le parole tema e il Flusso.");
         String flow = word(request.flowWord(), "Il Flusso");
         List<String> themes = new ArrayList<>();
@@ -23,8 +30,11 @@ public class HexaflowBoardGenerator {
         int total = flow.length() + themes.stream().mapToInt(String::length).sum();
         if (total != CELLS) throw new BadRequestException("Le parole devono usare esattamente 48 lettere: ora ne usano " + total + ".");
 
-        Collections.shuffle(themes);
-        List<Integer> route = intricateRoute(flow.length());
+        Collections.shuffle(themes, random);
+        List<Integer> lengths = new ArrayList<>();
+        lengths.add(flow.length());
+        themes.forEach(theme -> lengths.add(theme.length()));
+        List<Integer> route = intricateRoute(lengths, random);
         List<String> grid = new ArrayList<>(Collections.nCopies(CELLS, ""));
         List<HexaflowDtos.AnswerDto> answers = new ArrayList<>();
         int offset = addAnswer(answers, grid, route, 0, flow, HexaflowDtos.AnswerType.FLOW);
@@ -51,52 +61,121 @@ public class HexaflowBoardGenerator {
     }
 
     /**
-     * Builds a Hamiltonian route and repeatedly rewires two of its links.  Starting from a
-     * horizontal snake guarantees that the first six cells already span the board, while the
-     * rewiring makes the words weave through the grid instead of following predictable rows.
-     * A candidate is kept only if none of its links crosses another one.
+     * Searches cell permutations using endpoint and internal reversals, plus cell swaps.
+     * Each move preserves full, disjoint coverage; only adjacent, non-crossing answer links
+     * are accepted. Annealing allows temporary regressions in shape and Flusso span, but
+     * only an arrangement meeting every word's complexity requirements is returned.
      */
-    private List<Integer> intricateRoute(int flowLength) {
-        List<Integer> route = serpentineRoute();
-        int rewires = 0;
-        for (int attempts = 0; attempts < 2_000 && rewires < 72; attempts++) {
-            int firstEdge = ThreadLocalRandom.current().nextInt(CELLS - 3);
-            int secondEdge = ThreadLocalRandom.current().nextInt(firstEdge + 2, CELLS - 1);
-            int first = route.get(firstEdge);
-            int next = route.get(firstEdge + 1);
-            int last = route.get(secondEdge);
-            int afterLast = route.get(secondEdge + 1);
-
-            // A 2-opt reversal preserves every cell exactly once.  It is valid only when the
-            // two new links are neighbours in the hex grid.
-            if (!HexaflowPuzzleValidator.adjacent(first, last)
-                    || !HexaflowPuzzleValidator.adjacent(next, afterLast)) continue;
-            Collections.reverse(route.subList(firstEdge + 1, secondEdge + 1));
-            if (touchesOppositeSides(route, flowLength)
-                    && !HexaflowPuzzleValidator.hasIntersectingLinks(route)) rewires++;
-            else Collections.reverse(route.subList(firstEdge + 1, secondEdge + 1));
+    private List<Integer> intricateRoute(List<Integer> lengths, Random random) {
+        for (int restart = 0; restart < SEARCH_RESTARTS; restart++) {
+            List<Integer> route = serpentineRoute(random);
+            int penalty = complexityPenalty(route, lengths);
+            for (int attempt = 0; attempt < SEARCH_STEPS; attempt++) {
+                int start, end;
+                if (random.nextBoolean()) {
+                    boolean head = random.nextBoolean();
+                    int target = head ? random.nextInt(2, CELLS) : random.nextInt(CELLS - 2);
+                    start = head ? 0 : target + 1;
+                    end = head ? target : CELLS;
+                } else {
+                    start = random.nextInt(CELLS - 1);
+                    end = random.nextInt(start + 2, CELLS + 1);
+                }
+                List<Integer> reversed = route.subList(start, end);
+                boolean swap = random.nextInt(4) == 0;
+                rearrange(reversed, swap);
+                if (!hasValidLinks(route, lengths)) {
+                    rearrange(reversed, swap);
+                    continue;
+                }
+                int candidatePenalty = complexityPenalty(route, lengths);
+                if (candidatePenalty == 0) return route;
+                double temperature = 0.15 + 3.0 * (1.0 - (double) attempt / SEARCH_STEPS);
+                if (candidatePenalty <= penalty || random.nextDouble() < Math.exp((penalty - candidatePenalty) / temperature)) {
+                    penalty = candidatePenalty;
+                } else {
+                    rearrange(reversed, swap);
+                }
+            }
         }
-        return route;
+        throw new ServiceUnavailableException("Non è stato trovato un incastro senza incroci con percorsi abbastanza articolati. Riprova oppure cambia le parole o la lunghezza del Flusso.");
     }
 
-    private boolean touchesOppositeSides(List<Integer> route, int length) {
-        boolean top = false, bottom = false, left = false, right = false;
+    private void rearrange(List<Integer> cells, boolean swap) {
+        if (swap) Collections.swap(cells, 0, cells.size() - 1);
+        else Collections.reverse(cells);
+    }
+
+    private boolean hasValidLinks(List<Integer> route, List<Integer> lengths) {
+        // Only opposite diagonals of the same square can cross. Connections between
+        // words are not drawn, so they must not constrain the arrangement of the answers.
+        long descending = 0, ascending = 0;
+        int offset = 0;
+        for (int length : lengths) {
+            for (int index = offset + 1; index < offset + length; index++) {
+                int from = route.get(index - 1), to = route.get(index);
+                if (!HexaflowPuzzleValidator.adjacent(from, to)) return false;
+                int row = from / COLUMNS, column = from % COLUMNS;
+                int nextRow = to / COLUMNS, nextColumn = to % COLUMNS;
+                if (row == nextRow || column == nextColumn) continue;
+                long square = 1L << (Math.min(row, nextRow) * (COLUMNS - 1) + Math.min(column, nextColumn));
+                if ((nextRow - row) * (nextColumn - column) > 0) descending |= square;
+                else ascending |= square;
+                if ((descending & ascending) != 0) return false;
+            }
+            offset += length;
+        }
+        return true;
+    }
+
+    private int complexityPenalty(List<Integer> route, List<Integer> lengths) {
+        int penalty = 12 * missingSpan(route, lengths.get(0));
+        int offset = 0;
+        for (int length : lengths) {
+            int turns = 0, run = 0, diagonals = 0;
+            int previousRow = 0, previousColumn = 0;
+            for (int index = offset + 1; index < offset + length; index++) {
+                int from = route.get(index - 1), to = route.get(index);
+                int row = to / COLUMNS - from / COLUMNS;
+                int column = to % COLUMNS - from % COLUMNS;
+                if (row != 0 && column != 0) diagonals++;
+                if (index > offset + 1 && (row != previousRow || column != previousColumn)) {
+                    turns++;
+                    run = 1;
+                } else {
+                    run++;
+                }
+                if (run > 3) penalty += 4;
+                previousRow = row;
+                previousColumn = column;
+            }
+            // Even the shortest words must bend twice; longer ones must keep changing
+            // direction. Score each word separately, excluding links between answers.
+            penalty += 4 * Math.max(0, Math.max(2, (length - 1) / 2) - turns);
+            if (diagonals == 0) penalty += 2;
+            offset += length;
+        }
+        return penalty;
+    }
+
+    private int missingSpan(List<Integer> route, int length) {
+        int minRow = ROWS - 1, maxRow = 0, minColumn = COLUMNS - 1, maxColumn = 0;
         for (int index = 0; index < length; index++) {
             int cell = route.get(index);
-            top |= cell < COLUMNS;
-            bottom |= cell >= CELLS - COLUMNS;
-            left |= cell % COLUMNS == 0;
-            right |= cell % COLUMNS == COLUMNS - 1;
+            minRow = Math.min(minRow, cell / COLUMNS);
+            maxRow = Math.max(maxRow, cell / COLUMNS);
+            minColumn = Math.min(minColumn, cell % COLUMNS);
+            maxColumn = Math.max(maxColumn, cell % COLUMNS);
         }
-        return (top && bottom) || (left && right);
+        return Math.min(ROWS - 1 - (maxRow - minRow), COLUMNS - 1 - (maxColumn - minColumn));
     }
 
-    private List<Integer> serpentineRoute() {
+    private List<Integer> serpentineRoute(Random random) {
         int outer = ROWS;
         int inner = COLUMNS;
-        int outerStart = ThreadLocalRandom.current().nextBoolean() ? 0 : outer - 1;
+        int outerStart = random.nextBoolean() ? 0 : outer - 1;
         int outerStep = outerStart == 0 ? 1 : -1;
-        int innerStart = ThreadLocalRandom.current().nextBoolean() ? 0 : inner - 1;
+        int innerStart = random.nextBoolean() ? 0 : inner - 1;
         int innerStep = innerStart == 0 ? 1 : -1;
         List<Integer> route = new ArrayList<>(CELLS);
         for (int outerOffset = 0; outerOffset < outer; outerOffset++) {
