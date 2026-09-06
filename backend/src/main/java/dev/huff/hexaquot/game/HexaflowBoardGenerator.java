@@ -26,7 +26,6 @@ public class HexaflowBoardGenerator {
             if (value != null && !value.isBlank()) themes.add(word(value, "Ogni parola tema"));
         }
         if (themes.isEmpty()) throw new BadRequestException("Inserisci almeno una parola tema.");
-        if (flow.length() < COLUMNS) throw new BadRequestException("Il Flusso deve avere almeno 6 lettere per collegare due lati opposti.");
         int total = flow.length() + themes.stream().mapToInt(String::length).sum();
         if (total != CELLS) throw new BadRequestException("Le parole devono usare esattamente 48 lettere: ora ne usano " + total + ".");
 
@@ -129,7 +128,7 @@ public class HexaflowBoardGenerator {
     }
 
     private int complexityPenalty(List<Integer> route, List<Integer> lengths) {
-        int penalty = 12 * missingSpan(route, lengths.get(0));
+        int penalty = 12 * missingSides(route, lengths.get(0));
         int offset = 0;
         for (int length : lengths) {
             int turns = 0, run = 0, diagonals = 0;
@@ -158,16 +157,16 @@ public class HexaflowBoardGenerator {
         return penalty;
     }
 
-    private int missingSpan(List<Integer> route, int length) {
-        int minRow = ROWS - 1, maxRow = 0, minColumn = COLUMNS - 1, maxColumn = 0;
+    private int missingSides(List<Integer> route, int length) {
+        boolean top = false, bottom = false, left = false, right = false;
         for (int index = 0; index < length; index++) {
             int cell = route.get(index);
-            minRow = Math.min(minRow, cell / COLUMNS);
-            maxRow = Math.max(maxRow, cell / COLUMNS);
-            minColumn = Math.min(minColumn, cell % COLUMNS);
-            maxColumn = Math.max(maxColumn, cell % COLUMNS);
+            top |= cell < COLUMNS;
+            bottom |= cell >= CELLS - COLUMNS;
+            left |= cell % COLUMNS == 0;
+            right |= cell % COLUMNS == COLUMNS - 1;
         }
-        return Math.min(ROWS - 1 - (maxRow - minRow), COLUMNS - 1 - (maxColumn - minColumn));
+        return Math.max(0, 2 - ((top ? 1 : 0) + (bottom ? 1 : 0) + (left ? 1 : 0) + (right ? 1 : 0)));
     }
 
     private List<Integer> serpentineRoute(Random random) {

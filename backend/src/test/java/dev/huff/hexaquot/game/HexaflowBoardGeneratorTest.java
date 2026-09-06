@@ -1,6 +1,5 @@
 package dev.huff.hexaquot.game;
 
-import jakarta.ws.rs.ServiceUnavailableException;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +11,7 @@ class HexaflowBoardGeneratorTest {
             List.of(6, 6, 6, 6, 6, 6, 6, 6),
             List.of(7, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4),
             List.of(8, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4),
-            List.of(7, 41), List.of(8, 40), List.of(24, 24), List.of(44, 4));
+            List.of(4, 44), List.of(7, 41), List.of(8, 40), List.of(24, 24), List.of(44, 4));
         var generator = new HexaflowBoardGenerator();
         var validator = new HexaflowPuzzleValidator();
         for (var lengths : partitions) {
@@ -28,12 +27,14 @@ class HexaflowBoardGeneratorTest {
         }
     }
 
-    @Test void doesNotFallBackToAStraightFlowWhenArticulatedPathsCannotFit() {
-        // A six-cell Flusso must advance a column at every step. Bending it splits the
-        // remaining cells into regions that a single, non-crossing theme cannot cover.
+    @Test void generatesAnArticulatedShortFlowAcrossAdjacentSides() {
         var request = new HexaflowDtos.BoardGenerationRequest(List.of("A".repeat(42)), "FLUSSO");
-        assertThrows(ServiceUnavailableException.class,
-            () -> new HexaflowBoardGenerator().generate(request, new Random(0)));
+        var board = new HexaflowBoardGenerator().generate(request, new Random(0));
+        var errors = validator().validate(new HexaflowDtos.PuzzleDraftDto("2026-09-06", "Tema", board.grid(), board.answers()));
+        assertEquals(List.of(), errors);
+        var flow = board.answers().get(0).path();
+        assertArticulated(flow, "short flow");
+        assertFalse(touchesOppositeSides(flow));
     }
 
     @Test void regenerationProducesDifferentLayouts() {
@@ -64,5 +65,20 @@ class HexaflowBoardGeneratorTest {
             assertTrue(new HashSet<>(directions.subList(index, index + 4)).size() > 1,
                 "Four consecutive straight links: " + path + "; " + context);
         }
+    }
+
+    private HexaflowPuzzleValidator validator() {
+        return new HexaflowPuzzleValidator();
+    }
+
+    private boolean touchesOppositeSides(List<Integer> path) {
+        boolean top = false, bottom = false, left = false, right = false;
+        for (int cell : path) {
+            top |= cell < 6;
+            bottom |= cell >= 42;
+            left |= cell % 6 == 0;
+            right |= cell % 6 == 5;
+        }
+        return top && bottom || left && right;
     }
 }

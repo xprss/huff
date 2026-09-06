@@ -12,6 +12,15 @@ class HexaflowPuzzleValidatorTest {
         assertTrue(validator.validate(validPuzzle()).isEmpty());
     }
 
+    @Test void acceptsFlowJoiningAdjacentSides() {
+        List<String> grid=Collections.nCopies(48,"A");
+        List<Integer> theme=List.of(2,3,4,5,11,10,9,8,13,12,18,19,20,21,22,23,29,28,27,26,25,24,30,31,32,33,34,35,41,40,39,38,37,36,42,43,44,45,46,47);
+        var draft=new HexaflowDtos.PuzzleDraftDto("2026-09-01","Acqua",grid,List.of(
+            new HexaflowDtos.AnswerDto("flow","AAAA",HexaflowDtos.AnswerType.FLOW,List.of(0,1,7,6)),
+            new HexaflowDtos.AnswerDto("theme","A".repeat(44),HexaflowDtos.AnswerType.THEME,theme)));
+        assertFalse(validator.validate(draft).stream().anyMatch(error -> error.code().equals("FLOW_SIDES")));
+    }
+
     @Test void normalizesAccentsSpacesApostrophesAndDashes() {
         assertEquals("ACQUAPURA", HexaflowPuzzleValidator.normalize("Àcqua-pur'a"));
     }
@@ -24,7 +33,7 @@ class HexaflowPuzzleValidatorTest {
         assertTrue(errors.stream().anyMatch(e->e.code().equals("GRID_COVERAGE")));
     }
 
-    @Test void rejectsOverlapJumpsAndFlowWithoutOppositeSides() {
+    @Test void rejectsOverlapJumpsAndFlowWithoutTwoSides() {
         var valid=validPuzzle();
         var broken=List.of(
             new HexaflowDtos.AnswerDto("flow","AAAAAAAA",HexaflowDtos.AnswerType.FLOW,List.of(7,8,9,10,16,15,14,13)),

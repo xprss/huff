@@ -36,7 +36,7 @@ public class HexaflowPuzzleValidator {
                 if(cell<grid.size()&&grid.get(cell)!=null) letters.append(grid.get(cell).trim().toUpperCase(Locale.ROOT));
             }
             if(!normalized.equals(letters.toString())) errors.add(error("LABEL_MISMATCH","answers","L'etichetta non coincide con le lettere del percorso.",ai,null));
-            if(a.type()==HexaflowDtos.AnswerType.FLOW && !touchesOppositeSides(path)) errors.add(error("FLOW_SIDES","answers","Il Flusso deve toccare due lati opposti.",ai,null));
+            if(a.type()==HexaflowDtos.AnswerType.FLOW && !touchesTwoSides(path)) errors.add(error("FLOW_SIDES","answers","Il Flusso deve toccare due lati della griglia.",ai,null));
         }
         if (hasIntersectingPaths(answers)) errors.add(error("PATH_INTERSECTION", "answers", "I collegamenti dei percorsi non possono intersecarsi.", null, null));
         if(covered.size()!=48) errors.add(error("GRID_COVERAGE","answers","I percorsi devono coprire tutte le 48 celle.",null,null));
@@ -89,6 +89,6 @@ public class HexaflowPuzzleValidator {
     private static long orientation(int ax, int ay, int bx, int by, int cx, int cy) {
         return (long) (bx - ax) * (cy - ay) - (long) (by - ay) * (cx - ax);
     }
-    private boolean touchesOppositeSides(List<Integer> p){if(p==null)return false;boolean top=false,bottom=false,left=false,right=false;for(int c:p){top|=c<6;bottom|=c>=42;left|=c%6==0;right|=c%6==5;}return top&&bottom||left&&right;}
+    private boolean touchesTwoSides(List<Integer> p){if(p==null)return false;boolean top=false,bottom=false,left=false,right=false;for(int c:p){top|=c<6;bottom|=c>=42;left|=c%6==0;right|=c%6==5;}return (top?1:0)+(bottom?1:0)+(left?1:0)+(right?1:0)>=2;}
     private HexaflowDtos.ValidationErrorDto error(String c,String f,String m,Integer a,Integer cell){return new HexaflowDtos.ValidationErrorDto(c,f,m,a,cell);}
 }

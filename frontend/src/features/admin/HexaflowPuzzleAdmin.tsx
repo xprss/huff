@@ -155,7 +155,7 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   const generatedLetterCount = normalizedWords.reduce((total, word) => total + word.length, 0);
   const generationConstraint = !themeWords.length ? "Inserisci almeno una parola tema." :
     themeWords.some((word) => !isValidWord(normalizeWord(word))) ? "Ogni parola tema deve avere almeno 4 lettere (solo lettere, spazi, apostrofi o trattini)." :
-    !isValidWord(normalizeWord(flowWord), 6) ? "Il Flusso deve avere almeno 6 lettere per unire due lati opposti." :
+    !isValidWord(normalizeWord(flowWord)) ? "Il Flusso deve avere almeno 4 lettere (solo lettere, spazi, apostrofi o trattini)." :
     generatedLetterCount !== 48 ? `Le parole devono usare esattamente 48 lettere: ora ne usano ${generatedLetterCount}.` : null;
 
   if (!draft) {
