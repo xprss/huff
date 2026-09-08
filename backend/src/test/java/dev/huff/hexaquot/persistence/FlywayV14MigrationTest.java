@@ -22,15 +22,16 @@ class FlywayV14MigrationTest {
     @Inject AgroalDataSource dataSource;
 
     @Test
-    void migratesAnEmptyDatabaseDirectlyToTheNewV17() throws Exception {
+    void migratesAnEmptyDatabaseDirectlyToTheNewV18() throws Exception {
         withSchema(schema -> {
             flyway(schema, null).migrate();
-            assertEquals("17", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
+            assertEquals("18", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
             assertTrue(tableExists(schema, "hexaword_games"));
             assertTrue(tableExists(schema, "hexahack_games"));
             assertTrue(tableExists(schema, "hexasky_games"));
             assertTrue(tableExists(schema, "hexaflow_puzzles"));
             assertTrue(tableExists(schema, "hexaflow_games"));
+            assertTrue(tableExists(schema, "hexastar_games"));
             assertTrue(columnExists(schema, "admin_users", "can_manage_hexaflow_puzzles"));
             assertFalse(columnExists(schema, "hexaflow_games", "hinted_answers_json"));
             assertFalse(columnExists(schema, "hexaflow_games", "hints_used"));

@@ -18,6 +18,7 @@
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.0</surefire-plugin.version>
     <web-push.version>5.1.2</web-push.version>
+    <hyphenator.version>1.1.0</hyphenator.version>
   </properties>
 
   <dependencyManagement>
@@ -78,6 +79,11 @@
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcprov-jdk15on</artifactId>
       <version>1.70</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.nianna</groupId>
+      <artifactId>hyphenator</artifactId>
+      <version>${hyphenator.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
