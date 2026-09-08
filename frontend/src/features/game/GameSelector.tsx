@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowUpRight, Binary, Check, SpellCheck2, Building2, Waves } from "lucide-react";
+import { ArrowUpRight, Binary, Check, SpellCheck2, Building2, Waves, Sparkles } from "lucide-react";
 
 export function GameSelector({
   hexawordCompleted,
@@ -7,20 +7,24 @@ export function GameSelector({
   hexaskyCompleted,
   hexaflowCompleted,
   hexaflowAvailable,
+  hexastarCompleted,
   onHexaword,
   onHexahack,
   onHexasky,
-  onHexaflow
+  onHexaflow,
+  onHexastar
 }: {
   hexawordCompleted: boolean;
   hexahackCompleted: boolean;
   hexaskyCompleted: boolean;
   hexaflowCompleted: boolean;
   hexaflowAvailable: boolean;
+  hexastarCompleted: boolean;
   onHexaword: () => void;
   onHexahack: () => void;
   onHexasky: () => void;
   onHexaflow: () => void;
+  onHexastar: () => void;
 }) {
   const selectorRef = React.useRef<HTMLElement | null>(null);
 
@@ -79,6 +83,16 @@ export function GameSelector({
           <span className="game-selector-copy">
             <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
             <span className="game-selector-description">{hexaflowAvailable ? "Collega le parole del tema e trova il Flusso." : "Non disponibile oggi"}</span>
+          </span>
+          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
+        </button>
+        <button className={`game-selector-card game-selector-card--star${hexastarCompleted ? " completed" : ""}`} type="button" onClick={onHexastar}>
+          <span className="game-selector-card-top">
+            <span className="game-selector-icon"><Sparkles aria-hidden="true" /></span>
+          </span>
+          <span className="game-selector-copy">
+            <span className="game-selector-name"><strong>Hexastar</strong>{hexastarCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
+            <span className="game-selector-description">Trova la parola componendo le sue sillabe.</span>
           </span>
           <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>

@@ -94,6 +94,9 @@ export type ApiClient = {
   readonly hexaflowToday: EndpointHandler<"/api/hexaflow/today", "GET">;
   readonly hexaflowPath: EndpointHandler<"/api/hexaflow/today/paths", "POST", [request: HexaflowPathRequestDto]>;
   readonly hexaflowStats: EndpointHandler<"/api/hexaflow/stats", "GET">;
+  readonly hexastarToday: EndpointHandler<"/api/hexastar/today", "GET">;
+  readonly hexastarGuess: EndpointHandler<"/api/hexastar/today/guesses", "POST", [requestId: string, syllables: readonly string[]]>;
+  readonly hexastarStats: EndpointHandler<"/api/hexastar/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
@@ -198,6 +201,10 @@ export const api = {
   hexaflowToday: () => request("/api/hexaflow/today", { method: "GET" }),
   hexaflowPath: (pathRequest: HexaflowPathRequestDto) => request("/api/hexaflow/today/paths", { method: "POST", body: pathRequest }),
   hexaflowStats: () => request("/api/hexaflow/stats", { method: "GET" }),
+  hexastarToday: () => request("/api/hexastar/today", { method: "GET" }),
+  hexastarGuess: (requestId: string, syllables: readonly string[]) =>
+    request("/api/hexastar/today/guesses", { method: "POST", body: { requestId, syllables } }),
+  hexastarStats: () => request("/api/hexastar/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {

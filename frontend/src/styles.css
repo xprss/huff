@@ -1811,6 +1811,7 @@ html[data-theme="chromatic"] .key.absent {
 .game-selector-card--hack { --game-accent: var(--color-primary); }
 .game-selector-card--sky { --game-accent: var(--color-present); }
 .game-selector-card--flow { --game-accent: #48d6c7; }
+.game-selector-card--star { --game-accent: #c58cff; grid-column: 1 / -1; }
 .game-selector-grid .game-selector-card:hover:not(:disabled) {
   transform: translateY(-3px);
   border-color: color-mix(in srgb, var(--game-accent) 68%, var(--color-surface-border));
@@ -1873,6 +1874,160 @@ html[data-theme="chromatic"] .key.absent {
 }
 .game-selector-open svg { width: 13px; height: 13px; }
 .game-selector-card:hover:not(:disabled) .game-selector-open { transform: translate(2px, -2px); background: var(--game-accent-soft); }
+
+.hexastar-shell {
+  width: min(100%, 560px);
+  min-height: 0;
+  margin: 0 auto;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hexastar-board {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  border: 1px solid var(--color-surface-border);
+  border-radius: var(--control-radius);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  padding: 12px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--color-surface-glass), var(--color-surface));
+  box-shadow: 0 18px 60px var(--color-board-shadow);
+}
+
+.hexastar-attempts { display: grid; gap: 7px; }
+
+.hexastar-attempt-row,
+.hexastar-entry .hexastar-syllables,
+.hexastar-empty-row {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.hexastar-attempt-row { min-height: 38px; }
+
+.hexastar-attempt-tile,
+.hexastar-empty-row span {
+  min-width: 0;
+  flex-basis: 0;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 10px;
+}
+
+.hexastar-attempt-tile {
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  color: var(--color-on-solid);
+  font-family: var(--font-mono);
+  font-size: clamp(.76rem, 3.4vw, 1rem);
+  font-weight: 900;
+  letter-spacing: .08em;
+  animation: marker-reveal 420ms var(--ease-out) both;
+}
+
+.hexastar-attempt-tile.correct { border-color: var(--color-correct); background: var(--color-correct); }
+.hexastar-attempt-tile.present { border-color: var(--color-present); background: var(--color-present); color: var(--color-on-present); }
+.hexastar-attempt-tile.absent { border-color: var(--color-absent); background: var(--color-absent); }
+
+.hexastar-empty-row { min-height: 13px; opacity: .65; }
+.hexastar-empty-row span { background: var(--color-feedback-empty); }
+
+.hexastar-entry {
+  display: grid;
+  gap: 6px;
+  padding: 7px 0;
+  text-align: center;
+}
+
+.hexastar-entry small { color: var(--color-muted); font-size: .7rem; font-weight: 800; }
+
+.hexastar-entry .hexastar-syllables {
+  min-height: 64px;
+  transition: gap 360ms var(--ease-out), transform 360ms var(--ease-out), filter 360ms var(--ease-out);
+}
+
+.hexastar-syllable-input {
+  min-width: 0;
+  flex-basis: 0;
+  border: 1px solid var(--color-terminal-inset-border);
+  border-radius: 13px;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  padding: 9px 8px;
+  background: var(--color-terminal-background);
+  color: var(--color-terminal-text);
+  box-shadow: inset 0 0 0 999px var(--color-terminal-overlay);
+  cursor: pointer;
+  transition: border-radius 360ms var(--ease-out), border-color 220ms var(--ease-out), background 220ms var(--ease-out), transform 360ms var(--ease-out);
+}
+
+.hexastar-syllable-input:disabled { opacity: 1; cursor: default; }
+.hexastar-syllable-input.selected { border-color: var(--color-terminal-cursor); box-shadow: inset 0 0 0 999px var(--color-terminal-overlay), 0 0 0 2px var(--color-terminal-cursor-shadow); }
+.hexastar-syllable-input.correct { border-color: var(--color-correct); background: var(--color-correct); color: var(--color-on-solid); box-shadow: none; }
+.hexastar-syllable-input.present { border-color: var(--color-present); background: var(--color-present); color: var(--color-on-present); box-shadow: none; }
+.hexastar-syllable-input.absent { border-color: var(--color-absent); background: var(--color-absent); color: var(--color-on-solid); box-shadow: none; }
+
+.hexastar-letter-slot {
+  min-width: 0;
+  flex: 1 1 0;
+  display: grid;
+  place-items: center;
+  border-bottom: 2px solid var(--color-terminal-cell-border);
+  font-family: var(--font-mono);
+  font-size: clamp(1.15rem, 5.3vw, 1.8rem);
+  font-weight: 900;
+}
+
+.hexastar-entry.phase-assembling .hexastar-syllables,
+.hexastar-entry.phase-won .hexastar-syllables { gap: 0; transform: scale(1.025); }
+.hexastar-entry.phase-assembling .hexastar-syllable-input,
+.hexastar-entry.phase-won .hexastar-syllable-input { border-radius: 0; }
+.hexastar-entry.phase-assembling .hexastar-syllable-input:first-child,
+.hexastar-entry.phase-won .hexastar-syllable-input:first-child { border-radius: 13px 0 0 13px; }
+.hexastar-entry.phase-assembling .hexastar-syllable-input:last-child,
+.hexastar-entry.phase-won .hexastar-syllable-input:last-child { border-radius: 0 13px 13px 0; }
+.hexastar-entry.phase-won .hexastar-syllable-input { border-color: var(--color-correct); background: var(--color-correct); color: var(--color-on-solid); box-shadow: 0 0 22px color-mix(in srgb, var(--color-correct) 38%, transparent); }
+.hexastar-entry.phase-rejected .hexastar-syllables { animation: hexastar-reject 360ms ease-in-out; }
+.hexastar-entry.phase-separating .hexastar-syllables { animation: hexastar-separate 500ms var(--ease-out); }
+
+@keyframes hexastar-reject {
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+
+@keyframes hexastar-separate {
+  from { gap: 0; transform: scale(1.025); filter: brightness(1.12); }
+  to { gap: 8px; transform: scale(1); filter: brightness(1); }
+}
+
+.hexastar-terminal {
+  min-height: 76px;
+  border: 1px solid var(--color-correct);
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  background: color-mix(in srgb, var(--color-correct) 16%, var(--color-surface-raised));
+  color: var(--color-text);
+}
+.hexastar-terminal.lost { border-color: var(--color-danger); background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-raised)); }
+.hexastar-terminal strong { font-family: var(--font-mono); font-size: clamp(1.55rem, 7vw, 2.25rem); letter-spacing: .08em; }
+.hexastar-terminal span { color: var(--color-muted); font-size: .78rem; font-weight: 850; letter-spacing: .12em; }
+
+.hexastar-shell > .share-button { align-self: center; }
+
+.hexastar-tutorial-example { display: flex; justify-content: center; gap: 8px; }
+.hexastar-tutorial-example span { min-width: 58px; border: 1px solid var(--color-primary); border-radius: 11px; padding: 10px; background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface)); color: var(--color-text); font-family: var(--font-mono); font-weight: 900; text-align: center; }
 
 .sky-shell { width: min(100%, 600px); margin: 0 auto; display: grid; gap: 14px; }
 .sky-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -3974,6 +4129,8 @@ html[data-theme="chromatic"] .key.absent {
 html[data-patterns="enabled"] .key.correct,
 html[data-patterns="enabled"] .feedback-marker.correct,
 html[data-patterns="enabled"] .star-reveal-tile.correct,
+html[data-patterns="enabled"] .hexastar-attempt-tile.correct,
+html[data-patterns="enabled"] .hexastar-syllable-input.correct,
 html[data-patterns="enabled"] .login-decor-tile.correct {
   background-color: var(--color-correct);
   background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 2px, transparent 2px 7px);
@@ -3983,6 +4140,8 @@ html[data-patterns="enabled"] .key.present,
 html[data-patterns="enabled"] .feedback-marker.present,
 html[data-patterns="enabled"] .star-reveal-tile.present,
 html[data-patterns="enabled"] .star-reveal-tile.hidden,
+html[data-patterns="enabled"] .hexastar-attempt-tile.present,
+html[data-patterns="enabled"] .hexastar-syllable-input.present,
 html[data-patterns="enabled"] .login-decor-tile.present {
   background-color: var(--color-present);
   background-image: radial-gradient(rgba(47, 35, 0, 0.3) 1.5px, transparent 1.8px);
@@ -3992,6 +4151,8 @@ html[data-patterns="enabled"] .login-decor-tile.present {
 html[data-patterns="enabled"] .key.absent,
 html[data-patterns="enabled"] .feedback-marker.absent,
 html[data-patterns="enabled"] .star-reveal-tile.absent,
+html[data-patterns="enabled"] .hexastar-attempt-tile.absent,
+html[data-patterns="enabled"] .hexastar-syllable-input.absent,
 html[data-patterns="enabled"] .login-decor-tile.absent {
   background-color: var(--color-absent);
   background-image:

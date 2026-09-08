@@ -5,6 +5,7 @@ import type { TileState } from "../../../types";
 
 export function GameKeyboard({
   canPlay,
+  canSubmit = canPlay,
   keyStates,
   shouldHideKeyboardHints,
   onAddLetter,
@@ -12,6 +13,7 @@ export function GameKeyboard({
   onBackspace
 }: {
   canPlay: boolean;
+  canSubmit?: boolean;
   keyStates: Map<string, Exclude<TileState, "HIDDEN">>;
   shouldHideKeyboardHints: boolean;
   onAddLetter: (letter: string) => void;
@@ -37,7 +39,7 @@ export function GameKeyboard({
             <button
               className="key wide primary"
               type="button"
-              disabled={!canPlay}
+              disabled={!canSubmit}
               onPointerDown={(event) => pressVirtualKey(event, onSubmit)}
               onClick={(event) => clickVirtualKey(event, onSubmit)}
             >
