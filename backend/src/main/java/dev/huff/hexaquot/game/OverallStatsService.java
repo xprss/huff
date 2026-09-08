@@ -10,6 +10,7 @@ public class OverallStatsService {
     @Inject HexahackDailyGameService hexahack;
     @Inject HexaskyDailyGameService hexasky;
     @Inject HexaflowDailyGameService hexaflow;
+    @Inject HexastarDailyGameService hexastar;
 
     public StatsDto stats(AppUser user) { return statsForUserId(user.id()); }
 
@@ -18,12 +19,13 @@ public class OverallStatsService {
         completed.addAll(hexahack.completedForUser(userId));
         completed.addAll(hexasky.completedForUser(userId));
         completed.addAll(hexaflow.completedForUser(userId));
+        completed.addAll(hexastar.completedForUser(userId));
         return StatsCalculator.calculateOverall(completed);
     }
 
     public PlayerStatsDto allForUser(String userId) {
-        return new PlayerStatsDto(statsForUserId(userId), hexaword.statsForUserId(userId), hexahack.statsForUserId(userId), hexasky.statsForUserId(userId), hexaflow.statsForUserId(userId));
+        return new PlayerStatsDto(statsForUserId(userId), hexaword.statsForUserId(userId), hexahack.statsForUserId(userId), hexasky.statsForUserId(userId), hexaflow.statsForUserId(userId), hexastar.statsForUserId(userId));
     }
 
-    public record PlayerStatsDto(StatsDto overall, StatsDto hexaword, HexahackDtos.StatsDto hexahack, HexaskyDtos.StatsDto hexasky, HexaflowDtos.StatsDto hexaflow) {}
+    public record PlayerStatsDto(StatsDto overall, StatsDto hexaword, HexahackDtos.StatsDto hexahack, HexaskyDtos.StatsDto hexasky, HexaflowDtos.StatsDto hexaflow, StatsDto hexastar) {}
 }
