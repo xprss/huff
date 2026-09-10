@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -62,7 +63,7 @@ class HexastarDailyGameProviderTest {
 
         assertEquals(List.of(TileState.ABSENT, TileState.PRESENT), tiles.get(0).letters().stream()
             .map(HexastarDtos.LetterResultDto::state).toList());
-        assertEquals(List.of(null, 1), tiles.get(0).letters().stream()
+        assertEquals(Arrays.asList(null, 1), tiles.get(0).letters().stream()
             .map(HexastarDtos.LetterResultDto::solutionSyllableIndex).toList());
         assertEquals(List.of(TileState.CORRECT, TileState.CORRECT), tiles.get(1).letters().stream()
             .map(HexastarDtos.LetterResultDto::state).toList());
