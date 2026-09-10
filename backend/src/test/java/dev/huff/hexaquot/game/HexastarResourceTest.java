@@ -24,7 +24,7 @@ class HexastarResourceTest {
         given().header("Cookie", cookie)
             .when().get("/api/hexastar/today")
             .then().statusCode(200)
-            .body("rulesVersion", equalTo(1))
+            .body("rulesVersion", equalTo(HexastarDailyGameProvider.RULES_VERSION))
             .body("maxAttempts", equalTo(6))
             .body("syllableLengths", hasSize(solution.syllables().size()))
             .body("game", nullValue());
