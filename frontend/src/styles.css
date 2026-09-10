@@ -1887,21 +1887,12 @@ html[data-theme="chromatic"] .key.absent {
 
 .hexastar-board {
   width: 100%;
-  min-height: 0;
-  flex: 1 1 auto;
-  border: 1px solid var(--color-surface-border);
-  border-radius: var(--control-radius);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 7px;
-  padding: 12px;
-  overflow: hidden;
-  background: linear-gradient(180deg, var(--color-surface-glass), var(--color-surface));
-  box-shadow: 0 18px 60px var(--color-board-shadow);
+  display: grid;
+  gap: 10px;
+  padding: 6px 0;
 }
 
-.hexastar-attempts { display: grid; gap: 7px; }
+.hexastar-attempts { display: grid; gap: 10px; }
 
 .hexastar-attempt-row,
 .hexastar-entry .hexastar-syllables,
@@ -1911,7 +1902,7 @@ html[data-theme="chromatic"] .key.absent {
   gap: 8px;
 }
 
-.hexastar-attempt-row { min-height: 38px; }
+.hexastar-attempt-row { min-height: 74px; }
 
 .hexastar-attempt-tile,
 .hexastar-empty-row span {
@@ -1922,20 +1913,18 @@ html[data-theme="chromatic"] .key.absent {
 }
 
 .hexastar-attempt-tile {
-  display: grid;
-  place-items: center;
-  padding: 0 5px;
-  color: var(--color-on-solid);
-  font-family: var(--font-mono);
-  font-size: clamp(.76rem, 3.4vw, 1rem);
-  font-weight: 900;
-  letter-spacing: .08em;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--color-surface-raised);
   animation: marker-reveal 420ms var(--ease-out) both;
 }
 
-.hexastar-attempt-tile.correct { border-color: var(--color-correct); background: var(--color-correct); }
-.hexastar-attempt-tile.present { border-color: var(--color-present); background: var(--color-present); color: var(--color-on-present); }
-.hexastar-attempt-tile.absent { border-color: var(--color-absent); background: var(--color-absent); }
+.hexastar-attempt-tile.correct { border-color: var(--color-correct); }
+.hexastar-attempt-tile.present { border-color: var(--color-present); }
+.hexastar-attempt-tile.absent { border-color: var(--color-surface-border); }
 
 .hexastar-empty-row { min-height: 13px; opacity: .65; }
 .hexastar-empty-row span { background: var(--color-feedback-empty); }
@@ -1950,7 +1939,7 @@ html[data-theme="chromatic"] .key.absent {
 .hexastar-entry small { color: var(--color-muted); font-size: .7rem; font-weight: 800; }
 
 .hexastar-entry .hexastar-syllables {
-  min-height: 64px;
+  min-height: 78px;
   transition: gap 360ms var(--ease-out), transform 360ms var(--ease-out), filter 360ms var(--ease-out);
 }
 
@@ -1960,9 +1949,10 @@ html[data-theme="chromatic"] .key.absent {
   border: 1px solid var(--color-terminal-inset-border);
   border-radius: 13px;
   display: flex;
-  align-items: stretch;
-  gap: 4px;
-  padding: 9px 8px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 8px;
   background: var(--color-terminal-background);
   color: var(--color-terminal-text);
   box-shadow: inset 0 0 0 999px var(--color-terminal-overlay);
@@ -1972,19 +1962,75 @@ html[data-theme="chromatic"] .key.absent {
 
 .hexastar-syllable-input:disabled { opacity: 1; cursor: default; }
 .hexastar-syllable-input.selected { border-color: var(--color-terminal-cursor); box-shadow: inset 0 0 0 999px var(--color-terminal-overlay), 0 0 0 2px var(--color-terminal-cursor-shadow); }
-.hexastar-syllable-input.correct { border-color: var(--color-correct); background: var(--color-correct); color: var(--color-on-solid); box-shadow: none; }
-.hexastar-syllable-input.present { border-color: var(--color-present); background: var(--color-present); color: var(--color-on-present); box-shadow: none; }
-.hexastar-syllable-input.absent { border-color: var(--color-absent); background: var(--color-absent); color: var(--color-on-solid); box-shadow: none; }
+.hexastar-syllable-input.correct { border-color: var(--color-correct); box-shadow: none; }
+.hexastar-syllable-input.present { border-color: var(--color-present); box-shadow: none; }
+.hexastar-syllable-input.absent { border-color: var(--color-surface-border); box-shadow: none; }
+
+.hexastar-syllable-label {
+  display: block;
+  color: var(--color-muted);
+  font-size: .57rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+  line-height: 1;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.hexastar-letters {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
 
 .hexastar-letter-slot {
   min-width: 0;
   flex: 1 1 0;
   display: grid;
   place-items: center;
-  border-bottom: 2px solid var(--color-terminal-cell-border);
+  align-content: center;
+  min-height: 38px;
+  border: 1px solid var(--color-terminal-cell-border);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--color-terminal-background) 76%, transparent);
   font-family: var(--font-mono);
-  font-size: clamp(1.15rem, 5.3vw, 1.8rem);
+  color: var(--color-terminal-text);
+}
+
+.hexastar-letter-slot strong {
+  font-size: clamp(1rem, 4.7vw, 1.45rem);
   font-weight: 900;
+  line-height: 1;
+}
+
+.hexastar-letter-slot small {
+  min-height: .7rem;
+  margin-top: 2px;
+  color: currentColor;
+  font-family: var(--font-sans);
+  font-size: .52rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+
+.hexastar-letter-slot.correct {
+  border-color: var(--color-correct);
+  background: var(--color-correct);
+  color: var(--color-on-solid);
+}
+
+.hexastar-letter-slot.present {
+  border-color: var(--color-present);
+  background: var(--color-present);
+  color: var(--color-on-present);
+}
+
+.hexastar-letter-slot.absent {
+  border-color: var(--color-absent);
+  background: var(--color-absent);
+  color: var(--color-on-solid);
 }
 
 .hexastar-entry.phase-assembling .hexastar-syllables,
@@ -1995,7 +2041,7 @@ html[data-theme="chromatic"] .key.absent {
 .hexastar-entry.phase-won .hexastar-syllable-input:first-child { border-radius: 13px 0 0 13px; }
 .hexastar-entry.phase-assembling .hexastar-syllable-input:last-child,
 .hexastar-entry.phase-won .hexastar-syllable-input:last-child { border-radius: 0 13px 13px 0; }
-.hexastar-entry.phase-won .hexastar-syllable-input { border-color: var(--color-correct); background: var(--color-correct); color: var(--color-on-solid); box-shadow: 0 0 22px color-mix(in srgb, var(--color-correct) 38%, transparent); }
+.hexastar-entry.phase-won .hexastar-syllable-input { border-color: var(--color-correct); box-shadow: 0 0 22px color-mix(in srgb, var(--color-correct) 38%, transparent); }
 .hexastar-entry.phase-rejected .hexastar-syllables { animation: hexastar-reject 360ms ease-in-out; }
 .hexastar-entry.phase-separating .hexastar-syllables { animation: hexastar-separate 500ms var(--ease-out); }
 
@@ -2062,6 +2108,8 @@ html[data-theme="chromatic"] .key.absent {
 .word-tutorial-examples { display: grid; gap: 8px; }
 .word-tutorial-examples > div { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 10px; }
 .word-tutorial-examples span { width: 38px; aspect-ratio: 1; display: grid; place-items: center; border-radius: var(--compact-radius); color: var(--color-on-solid); font-weight: 900; }
+.word-tutorial-examples span:has(small) { position: relative; }
+.word-tutorial-examples span small { position: absolute; right: 3px; bottom: 3px; font-size: .48rem; line-height: 1; }
 .word-tutorial-examples span.correct { background: var(--color-correct); }
 .word-tutorial-examples span.present { background: var(--color-present); }
 .word-tutorial-examples span.absent { background: var(--color-absent); }
@@ -4129,8 +4177,7 @@ html[data-theme="chromatic"] .key.absent {
 html[data-patterns="enabled"] .key.correct,
 html[data-patterns="enabled"] .feedback-marker.correct,
 html[data-patterns="enabled"] .star-reveal-tile.correct,
-html[data-patterns="enabled"] .hexastar-attempt-tile.correct,
-html[data-patterns="enabled"] .hexastar-syllable-input.correct,
+html[data-patterns="enabled"] .hexastar-letter-slot.correct,
 html[data-patterns="enabled"] .login-decor-tile.correct {
   background-color: var(--color-correct);
   background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0 2px, transparent 2px 7px);
@@ -4140,8 +4187,7 @@ html[data-patterns="enabled"] .key.present,
 html[data-patterns="enabled"] .feedback-marker.present,
 html[data-patterns="enabled"] .star-reveal-tile.present,
 html[data-patterns="enabled"] .star-reveal-tile.hidden,
-html[data-patterns="enabled"] .hexastar-attempt-tile.present,
-html[data-patterns="enabled"] .hexastar-syllable-input.present,
+html[data-patterns="enabled"] .hexastar-letter-slot.present,
 html[data-patterns="enabled"] .login-decor-tile.present {
   background-color: var(--color-present);
   background-image: radial-gradient(rgba(47, 35, 0, 0.3) 1.5px, transparent 1.8px);
@@ -4151,8 +4197,7 @@ html[data-patterns="enabled"] .login-decor-tile.present {
 html[data-patterns="enabled"] .key.absent,
 html[data-patterns="enabled"] .feedback-marker.absent,
 html[data-patterns="enabled"] .star-reveal-tile.absent,
-html[data-patterns="enabled"] .hexastar-attempt-tile.absent,
-html[data-patterns="enabled"] .hexastar-syllable-input.absent,
+html[data-patterns="enabled"] .hexastar-letter-slot.absent,
 html[data-patterns="enabled"] .login-decor-tile.absent {
   background-color: var(--color-absent);
   background-image:

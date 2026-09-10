@@ -69,6 +69,14 @@ export type HexastarStatus = "IN_PROGRESS" | "WON" | "LOST";
 export interface HexastarSyllableResultDto {
   readonly syllable: string;
   readonly state: Exclude<TileState, "HIDDEN">;
+  readonly letters: readonly HexastarLetterResultDto[];
+}
+
+export interface HexastarLetterResultDto {
+  readonly letter: string;
+  readonly state: Exclude<TileState, "HIDDEN">;
+  /** One-based index of the solution syllable containing this occurrence. */
+  readonly solutionSyllableIndex: number | null;
 }
 
 export interface HexastarAttemptDto {

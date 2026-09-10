@@ -9,7 +9,9 @@ public final class HexastarDtos {
 
     public record GuessRequest(String requestId, List<String> syllables) {}
 
-    public record SyllableResultDto(String syllable, TileState state) {}
+    public record LetterResultDto(String letter, TileState state, Integer solutionSyllableIndex) {}
+
+    public record SyllableResultDto(String syllable, TileState state, List<LetterResultDto> letters) {}
 
     public record AttemptDto(
         int sequence,

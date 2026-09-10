@@ -3,7 +3,7 @@ import { CircleHelp, Share2 } from "lucide-react";
 import { GameKeyboard } from "../game/components/GameKeyboard";
 import { SHARE_EMOJI } from "../../app/constants";
 import { formatPuzzleDate } from "../../shared/utils/date";
-import type { HexastarAttemptDto, HexastarGuessActionDto, HexastarTodayDto } from "../../types";
+import type { HexastarAttemptDto, HexastarGuessActionDto, HexastarSyllableResultDto, HexastarTodayDto } from "../../types";
 import { HexastarTutorial } from "./HexastarTutorial";
 
 type AnimationPhase = "idle" | "assembling" | "separating" | "won" | "rejected";
@@ -30,7 +30,7 @@ export function HexastarView({
   const [selected, setSelected] = React.useState(0);
   const [phase, setPhase] = React.useState<AnimationPhase>("idle");
   const [pendingAttempt, setPendingAttempt] = React.useState<HexastarAttemptDto | null>(null);
-  const [tutorialOpen, setTutorialOpen] = React.useState(() => localStorage.getItem("huff.hexastar.tutorial.v1.closed") !== "true");
+  const [tutorialOpen, setTutorialOpen] = React.useState(() => localStorage.getItem("huff.hexastar.tutorial.v2.closed") !== "true");
 
   React.useEffect(() => {
     setSyllables(lengths.map(() => ""));
@@ -89,6 +89,7 @@ export function HexastarView({
     try {
       const [action] = await Promise.all([onGuess(crypto.randomUUID(), syllables), minimumAnimation]);
       if (action.game.status === "WON") {
+        setPendingAttempt(action.attempt);
         setPhase("won");
         onUpdate(action);
         await animationDelay(650);
@@ -152,7 +153,8 @@ export function HexastarView({
               aria-label={`Sillaba ${index + 1} di ${lengths.length}, ${length} lettere`}
               key={`${index}-${length}`}
             >
-              {Array.from({ length }, (_, letterIndex) => <span className="hexastar-letter-slot" key={letterIndex}>{syllables[index]?.[letterIndex] ?? ""}</span>)}
+              <span className="hexastar-syllable-label">Sillaba {index + 1}</span>
+              <SyllableLetters syllable={syllables[index] ?? ""} length={length} feedback={pendingAttempt?.tiles[index]}/>
             </button>)}
           </div>
           <small>{complete ? "Parola pronta" : `Sillaba ${selected + 1}: ${syllables[selected]?.length ?? 0}/${lengths[selected]}`}</small>
@@ -164,8 +166,6 @@ export function HexastarView({
         </div>
       )}
 
-      {Array.from({ length: Math.max(0, (game?.maxAttempts ?? today.maxAttempts) - (game?.attempts.length ?? 0) - ((game?.status ?? "IN_PROGRESS") === "IN_PROGRESS" ? 1 : 0)) }, (_, index) =>
-        <div className="hexastar-empty-row" aria-hidden="true" key={index}>{lengths.map((length, cell) => <span style={{ flexGrow: length }} key={cell}/>)}</div>)}
     </div>
 
     {game && game.status !== "IN_PROGRESS" && phase === "idle" ? <button className="share-button" type="button" onClick={() => void share()}><Share2 size={18}/><span>Condividi risultato</span></button> : null}
@@ -175,7 +175,7 @@ export function HexastarView({
     </div>
 
     {tutorialOpen ? <HexastarTutorial onClose={() => {
-      localStorage.setItem("huff.hexastar.tutorial.v1.closed", "true");
+      localStorage.setItem("huff.hexastar.tutorial.v2.closed", "true");
       setTutorialOpen(false);
     }}/> : null}
   </section>;
@@ -183,8 +183,28 @@ export function HexastarView({
 
 function AttemptRow({ attempt, lengths }: { attempt: HexastarAttemptDto; lengths: readonly number[] }) {
   return <div className="hexastar-attempt-row" aria-label={`Tentativo ${attempt.sequence}`}>
-    {attempt.tiles.map((tile, index) => <span className={`hexastar-attempt-tile ${tile.state.toLowerCase()}`} style={{ flexGrow: lengths[index] }} key={index}>{tile.syllable.toUpperCase()}</span>)}
+    {attempt.tiles.map((tile, index) => <div className={`hexastar-attempt-tile ${tile.state.toLowerCase()}`} style={{ flexGrow: lengths[index] }} key={index}>
+      <span className="hexastar-syllable-label">Sillaba {index + 1}</span>
+      <SyllableLetters syllable={tile.syllable} length={lengths[index]} feedback={tile}/>
+    </div>)}
   </div>;
+}
+
+function SyllableLetters({ syllable, length, feedback }: {
+  syllable: string;
+  length: number;
+  feedback?: HexastarSyllableResultDto;
+}) {
+  return <span className="hexastar-letters">
+    {Array.from({ length }, (_, index) => {
+      const result = feedback?.letters?.[index];
+      const letter = syllable[index] ?? "";
+      return <span className={`hexastar-letter-slot${result ? ` ${result.state.toLowerCase()}` : ""}`} key={index}>
+        <strong>{letter}</strong>
+        {result?.solutionSyllableIndex ? <small title={`Nella sillaba ${result.solutionSyllableIndex}`}>S{result.solutionSyllableIndex}</small> : null}
+      </span>;
+    })}
+  </span>;
 }
 
 function delay(milliseconds: number) {

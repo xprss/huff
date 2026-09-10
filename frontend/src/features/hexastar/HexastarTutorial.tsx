@@ -15,9 +15,9 @@ export function HexastarTutorial({ onClose }: { onClose: () => void }) {
         </div>
         <p>Gli spazi mostrano quante lettere contiene ogni sillaba. La parola viene validata soltanto quando tutte le sillabe sono complete.</p>
         <div className="word-tutorial-examples" aria-label="Esempi di indizi">
-          <div><span className="correct">CA</span><p><strong>Verde</strong>: la sillaba è nella posizione giusta.</p></div>
-          <div><span className="present">SA</span><p><strong>Giallo</strong>: la sillaba c’è, ma va spostata.</p></div>
-          <div><span className="absent">TA</span><p><strong>Grigio</strong>: la sillaba non è nella parola.</p></div>
+          <div><span className="correct">CA</span><p><strong>Verde</strong>: la sillaba intera è nella posizione giusta.</p></div>
+          <div><span className="present">A<small>S2</small></span><p><strong>Giallo</strong>: la lettera c’è; l’etichetta indica la sillaba in cui trovarla.</p></div>
+          <div><span className="absent">T</span><p><strong>Grigio</strong>: la lettera non è disponibile nella parola.</p></div>
         </div>
         <button className="sky-check" type="button" onClick={onClose}>Ho capito</button>
       </section>

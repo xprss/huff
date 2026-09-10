@@ -1,6 +1,7 @@
 package dev.huff.hexaquot.game;
 
 import dev.huff.hexaquot.game.HexastarDtos.SyllableResultDto;
+import dev.huff.hexaquot.game.HexastarDtos.LetterResultDto;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 @ApplicationScoped
 public class HexastarDailyGameProvider {
-    public static final int RULES_VERSION = 1;
+    public static final int RULES_VERSION = 2;
     public static final int MAX_ATTEMPTS = 6;
 
     @ConfigProperty(name = "app.hexastar.seed")
@@ -94,7 +95,8 @@ public class HexastarDailyGameProvider {
         for (int index = 0; index < solution.size(); index++) {
             String syllable = guess.get(index);
             if (syllable.equals(solution.get(index))) {
-                tiles.add(new SyllableResultDto(syllable, TileState.CORRECT));
+                tiles.add(new SyllableResultDto(syllable, TileState.CORRECT,
+                    lettersForCorrectSyllable(syllable, index)));
             } else {
                 tiles.add(null);
                 remaining.merge(solution.get(index), 1, Integer::sum);
@@ -104,10 +106,51 @@ public class HexastarDailyGameProvider {
             if (tiles.get(index) != null) continue;
             String syllable = guess.get(index);
             int available = remaining.getOrDefault(syllable, 0);
-            tiles.set(index, new SyllableResultDto(syllable, available > 0 ? TileState.PRESENT : TileState.ABSENT));
+            TileState state = available > 0 ? TileState.PRESENT : TileState.ABSENT;
+            tiles.set(index, new SyllableResultDto(syllable, state, List.of()));
             if (available > 0) remaining.put(syllable, available - 1);
         }
-        return List.copyOf(tiles);
+        return addLetterHints(tiles, solution);
+    }
+
+    private List<SyllableResultDto> addLetterHints(List<SyllableResultDto> tiles, List<String> solution) {
+        List<List<Character>> remaining = solution.stream().map(String::chars)
+            .map(characters -> characters.mapToObj(character -> (char) character).collect(java.util.stream.Collectors.toCollection(ArrayList::new)))
+            .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        for (int index = 0; index < tiles.size(); index++) {
+            if (tiles.get(index).state() != TileState.CORRECT) continue;
+            for (char letter : tiles.get(index).syllable().toCharArray()) remaining.get(index).remove((Character) letter);
+        }
+        List<SyllableResultDto> scored = new ArrayList<>();
+        for (int index = 0; index < tiles.size(); index++) {
+            SyllableResultDto tile = tiles.get(index);
+            if (tile.state() == TileState.CORRECT) {
+                scored.add(tile);
+                continue;
+            }
+            List<LetterResultDto> letters = new ArrayList<>();
+            for (char letter : tile.syllable().toCharArray()) {
+                int target = findSyllableWithLetter(remaining, letter);
+                letters.add(new LetterResultDto(String.valueOf(letter), target >= 0 ? TileState.PRESENT : TileState.ABSENT,
+                    target >= 0 ? target + 1 : null));
+                if (target >= 0) remaining.get(target).remove((Character) letter);
+            }
+            scored.add(new SyllableResultDto(tile.syllable(), tile.state(), List.copyOf(letters)));
+        }
+        return List.copyOf(scored);
+    }
+
+    private List<LetterResultDto> lettersForCorrectSyllable(String syllable, int syllableIndex) {
+        return syllable.chars()
+            .mapToObj(letter -> new LetterResultDto(String.valueOf((char) letter), TileState.CORRECT, syllableIndex + 1))
+            .toList();
+    }
+
+    private int findSyllableWithLetter(List<List<Character>> remaining, char letter) {
+        for (int index = 0; index < remaining.size(); index++) {
+            if (remaining.get(index).contains(letter)) return index;
+        }
+        return -1;
     }
 
     public record WordEntry(String word, List<String> syllables) {

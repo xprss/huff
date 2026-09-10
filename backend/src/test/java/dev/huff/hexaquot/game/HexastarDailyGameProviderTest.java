@@ -55,4 +55,16 @@ class HexastarDailyGameProviderTest {
         assertEquals(List.of(TileState.CORRECT, TileState.ABSENT, TileState.CORRECT),
             tiles.stream().map(HexastarDtos.SyllableResultDto::state).toList());
     }
+
+    @Test
+    void marksPresentLettersAndIdentifiesTheirSolutionSyllable() {
+        var tiles = provider.score(List.of("ba", "sa", "na"), List.of("ca", "sa", "ta"));
+
+        assertEquals(List.of(TileState.ABSENT, TileState.PRESENT), tiles.get(0).letters().stream()
+            .map(HexastarDtos.LetterResultDto::state).toList());
+        assertEquals(List.of(null, 1), tiles.get(0).letters().stream()
+            .map(HexastarDtos.LetterResultDto::solutionSyllableIndex).toList());
+        assertEquals(List.of(TileState.CORRECT, TileState.CORRECT), tiles.get(1).letters().stream()
+            .map(HexastarDtos.LetterResultDto::state).toList());
+    }
 }
