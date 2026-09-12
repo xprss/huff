@@ -1883,16 +1883,33 @@ html[data-theme="chromatic"] .key.absent {
   flex: 1 1 auto;
   flex-direction: column;
   gap: 12px;
+  overflow: hidden;
 }
 
 .hexastar-board {
   width: 100%;
-  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   padding: 6px 0;
+  overflow: hidden;
 }
 
-.hexastar-attempts { display: grid; gap: 10px; }
+.hexastar-attempts {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-auto-rows: clamp(48px, calc(var(--app-vh) * 7.25), 62px);
+  align-content: end;
+  gap: clamp(5px, calc(var(--app-vh) * 1.1), 10px);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  scrollbar-gutter: stable;
+}
 
 .hexastar-attempt-row,
 .hexastar-entry .hexastar-syllables,
@@ -1902,7 +1919,7 @@ html[data-theme="chromatic"] .key.absent {
   gap: 8px;
 }
 
-.hexastar-attempt-row { min-height: 74px; }
+.hexastar-attempt-row { min-height: 0; }
 
 .hexastar-attempt-tile,
 .hexastar-empty-row span {
@@ -1916,8 +1933,8 @@ html[data-theme="chromatic"] .key.absent {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
-  padding: 6px;
+  gap: 3px;
+  padding: 4px 6px;
   background: var(--color-surface-raised);
   animation: marker-reveal 420ms var(--ease-out) both;
 }
@@ -1925,6 +1942,11 @@ html[data-theme="chromatic"] .key.absent {
 .hexastar-attempt-tile.correct { border-color: var(--color-correct); }
 .hexastar-attempt-tile.present { border-color: var(--color-present); }
 .hexastar-attempt-tile.absent { border-color: var(--color-surface-border); }
+
+.hexastar-attempt-tile .hexastar-syllable-label { font-size: .52rem; }
+.hexastar-attempt-tile .hexastar-letter-slot { min-height: clamp(26px, calc(var(--app-vh) * 4), 34px); }
+.hexastar-attempt-tile .hexastar-letter-slot strong { font-size: clamp(.88rem, 4vw, 1.18rem); }
+.hexastar-attempt-tile .hexastar-letter-slot small { min-height: .55rem; margin-top: 1px; font-size: .46rem; }
 
 .hexastar-empty-row { min-height: 13px; opacity: .65; }
 .hexastar-empty-row span { background: var(--color-feedback-empty); }
