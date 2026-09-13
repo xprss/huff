@@ -1,5 +1,5 @@
 import React from "react";
-import { Share2, Waves } from "lucide-react";
+import { CircleHelp, Share2, Waves, X } from "lucide-react";
 import type { HexaflowFoundAnswerDto, HexaflowPathActionDto, HexaflowPathRequestDto, HexaflowTodayDto } from "../../types";
 
 type Point = { x: number; y: number };
@@ -15,6 +15,7 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
   const [path, setPath] = React.useState<number[]>([]);
   const [gridGeometry, setGridGeometry] = React.useState<{ width: number; height: number; centers: ReadonlyMap<number, Point> }>({ width: 0, height: 0, centers: new Map() });
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const helpRef = React.useRef<HTMLDialogElement>(null);
   const cellsRef = React.useRef(new Map<number, HTMLButtonElement>());
   const pathRef = React.useRef<number[]>([]);
   const gestureRef = React.useRef<{ pointerId: number; startCell: number; swiping: boolean } | null>(null);
@@ -134,10 +135,10 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
   if (!today.available) return <section className="hexaflow unavailable"><Waves size={42} /><h2>Hexaflow</h2><strong>Non disponibile oggi</strong><p>Il prossimo flusso apparirà qui quando sarà pubblicato.</p></section>;
 
   const currentWord = path.map((cell) => today.grid[cell]).join("");
-  return <section className="hexaflow" aria-label="Hexaflow">
-    <header className="hexaflow-head"><div><p className="eyebrow">Hexaflow · {formatGameDate(today.puzzleDate)}</p><h2>{today.themeClue}</h2>{today.authorUsername ? <p className="text-muted hexaflow-author">Autore: {today.authorUsername}</p> : null}</div><div className="hexaflow-actions"><button className="hexaflow-share" type="button" onClick={() => void share(today)} aria-label="Condividi Hexaflow"><Share2 size={16} /></button><span aria-label={`${game?.foundAnswers.length ?? 0} parole su ${today.totalAnswers}`}>{game?.foundAnswers.length ?? 0}<i>/</i>{today.totalAnswers}</span></div></header>
-    <div className={`hexaflow-current ${currentWord ? "is-tracing" : ""}`} aria-live="polite"><span>{currentWord || "Traccia una parola"}</span><b>{currentWord ? `${path.length} celle` : "scorri e connetti"}</b></div>
-    <p className="hexaflow-instruction"><span className="hexaflow-gesture" aria-hidden="true">↗</span> Scorri e rilascia per inviare. Con i tocchi, premi di nuovo l'ultima cella.</p>
+  return <section className="hexaflow" aria-label="Hexaflow" style={{ "--flow-rows": Math.ceil(today.grid.length / 6) } as React.CSSProperties}>
+    <header className="hexaflow-head"><div><p className="eyebrow">Hexaflow <span className="hexaflow-progress" aria-label={`${game?.foundAnswers.length ?? 0} parole su ${today.totalAnswers}`}>{game?.foundAnswers.length ?? 0}/{today.totalAnswers}</span></p><h2>{today.themeClue}</h2></div><button className="hexaflow-help" type="button" onClick={() => helpRef.current?.showModal()} aria-label="Istruzioni e dettagli Hexaflow"><CircleHelp size={20} /></button></header>
+    <div className={`hexaflow-current ${currentWord ? "is-tracing" : ""}`} aria-live="polite"><span>{completed ? "Flusso completato!" : currentWord || "Traccia una parola"}</span><b>{completed ? "✓" : currentWord ? `${path.length} celle` : "scorri e connetti"}</b></div>
+    <div className="hexaflow-board-space">
     <div ref={gridRef} className="hexaflow-grid" onPointerDown={(event) => { const target = event.target; if (!(target instanceof Element) || !target.closest("[data-cell]")) clearPath(); }} onPointerMove={(event) => { if (gestureRef.current?.pointerId === event.pointerId) trackPointer(event.clientX, event.clientY); }} onPointerUp={(event) => {
       const gesture = gestureRef.current;
       if (!gesture || gesture.pointerId !== event.pointerId) return;
@@ -160,7 +161,14 @@ export function HexaflowView({ today, busy, onPath, onUpdate, onComplete, onErro
         onPointerDown={(event) => { if (completed || busy || submittingRef.current) return; event.preventDefault(); gestureRef.current = { pointerId: event.pointerId, startCell: index, swiping: false }; gridRef.current?.setPointerCapture(event.pointerId); }}
         aria-label={`Cella ${index + 1}: ${letter}`}><span className="hexaflow-cell-letter">{letter}</span><small>{pathOrderByCell.get(index) ?? ""}</small></button>)}
     </div>
-    {completed ? <div className="hexaflow-complete"><h3>Flusso completato!</h3><p>Hai connesso ogni percorso.</p></div> : null}
+    </div>
+    <dialog ref={helpRef} className="modal hexaflow-details" aria-labelledby="hexaflow-details-title" onClick={(event) => { if (event.target === event.currentTarget) helpRef.current?.close(); }}>
+      <header className="modal-head"><h2 id="hexaflow-details-title">Come giocare</h2><button className="close-button" type="button" onClick={() => helpRef.current?.close()} aria-label="Chiudi" autoFocus><X size={19} /></button></header>
+      <p>Collega le lettere vicine in ogni direzione per trovare le parole del tema e il Flusso che attraversa la griglia.</p>
+      <p>Scorri e rilascia per inviare. Se usi i tocchi, premi di nuovo l’ultima cella. Ogni parola deve avere almeno quattro lettere.</p>
+      <p><strong>{today.themeClue}</strong><br />{formatGameDate(today.puzzleDate)}{today.authorUsername ? <><br />Autore: {today.authorUsername}</> : null}</p>
+      <button className="hexaflow-share-details" type="button" onClick={() => void share(today).catch(() => onError("Condivisione non disponibile."))}><Share2 size={18} /> Condividi Hexaflow</button>
+    </dialog>
   </section>;
 }
 
