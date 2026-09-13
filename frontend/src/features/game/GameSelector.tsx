@@ -1,18 +1,10 @@
 import React from "react";
-import { ArrowUpRight, Binary, Check, SpellCheck2, Building2, Waves, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Clock3, Sparkles } from "lucide-react";
+import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
 export function GameSelector({
-  hexawordCompleted,
-  hexahackCompleted,
-  hexaskyCompleted,
-  hexaflowCompleted,
-  hexaflowAvailable,
-  hexastarCompleted,
-  onHexaword,
-  onHexahack,
-  onHexasky,
-  onHexaflow,
-  onHexastar
+  hexawordCompleted, hexahackCompleted, hexaskyCompleted, hexaflowCompleted,
+  hexaflowAvailable, hexastarCompleted, onHexaword, onHexahack, onHexasky, onHexaflow, onHexastar
 }: {
   hexawordCompleted: boolean;
   hexahackCompleted: boolean;
@@ -27,76 +19,44 @@ export function GameSelector({
   onHexastar: () => void;
 }) {
   const selectorRef = React.useRef<HTMLElement | null>(null);
+  React.useEffect(() => { selectorRef.current?.scrollTo(0, 0); }, []);
 
-  React.useEffect(() => {
-    selectorRef.current?.scrollTo(0, 0);
-  }, []);
+  const games: { id: PuzzleKind; name: string; category: string; description: string; completed: boolean; available: boolean; onPlay: () => void }[] = [
+    { id: "word", name: "Hexaword", category: "Parole · 6 tentativi", description: "Sei lettere. Una parola. Segui gli indizi e trova quella giusta.", completed: hexawordCompleted, available: true, onPlay: onHexaword },
+    { id: "hack", name: "Hexahack", category: "Codici e deduzione", description: "Decifra il codice. Resta invisibile.", completed: hexahackCompleted, available: true, onPlay: onHexahack },
+    { id: "sky", name: "Hexasky", category: "Logica e prospettiva", description: "Ogni indizio cambia il tuo skyline.", completed: hexaskyCompleted, available: true, onPlay: onHexasky },
+    { id: "flow", name: "Hexaflow", category: "Parole da collegare", description: "Unisci le lettere. Trova il Flusso.", completed: hexaflowCompleted, available: hexaflowAvailable, onPlay: onHexaflow },
+    { id: "star", name: "Hexastar", category: "Sillabe e intuizione", description: "Le sillabe giuste, al posto giusto.", completed: hexastarCompleted, available: true, onPlay: onHexastar }
+  ];
+  const availableGames = games.filter((game) => game.available);
+  const completed = availableGames.filter((game) => game.completed).length;
 
   return (
-    <section ref={selectorRef} className="game-selector" aria-labelledby="game-selector-title">
-      <div>
-        <p className="eyebrow">La sfida quotidiana</p>
-        <h2 id="game-selector-title">A cosa giochiamo?</h2>
-        <p>Scegli il gioco di oggi. Le partite e le statistiche restano indipendenti.</p>
+    <section ref={selectorRef} className="game-selector" aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
+      <div className="daily-welcome">
+        <div className="daily-welcome-copy">
+          <p className="eyebrow"><span className="live-dot" /> Un piccolo rituale, ogni giorno</p>
+          <h2 id="game-selector-title">Fai spazio<br />a un bel <span>rompicapo.</span></h2>
+          <p>Stacca un momento. Accendi la mente.</p>
+        </div>
+        <div className="daily-progress" aria-label={`${completed} sfide completate su ${availableGames.length} disponibili oggi`}>
+          <span className="daily-progress-icon"><Sparkles size={20} aria-hidden="true" /></span>
+          <div><strong>{completed === availableGames.length ? "Tutte fatte. Ben giocato!" : "Il tuo percorso di oggi"}</strong><span>{completed} di {availableGames.length} sfide completate</span></div>
+          <div className="daily-progress-track" aria-hidden="true">{availableGames.map((game) => <i key={game.id} className={game.completed ? "filled" : ""} />)}</div>
+        </div>
       </div>
+      <div className="collection-heading"><h3>La tua dose di sfida</h3><span>Ogni giorno, nuove soluzioni</span></div>
       <div className="game-selector-grid">
-        <button className={`game-selector-card game-selector-card--word${hexawordCompleted ? " completed" : ""}`} type="button" onClick={onHexaword}>
-          <span className="game-selector-card-top">
-            <span className="game-selector-icon"><SpellCheck2 aria-hidden="true" /></span>
-          </span>
-          <span className="game-selector-copy">
-            <span className="game-selector-name">
-              <strong>Hexaword</strong>
-              {hexawordCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}
-            </span>
-            <span className="game-selector-description">Indovina la parola italiana di sei lettere in sei tentativi.</span>
-          </span>
-          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
-        </button>
-        <button className={`game-selector-card game-selector-card--hack${hexahackCompleted ? " completed" : ""}`} type="button" onClick={onHexahack}>
-          <span className="game-selector-card-top">
-            <span className="game-selector-icon"><Binary aria-hidden="true" /></span>
-          </span>
-          <span className="game-selector-copy">
-            <span className="game-selector-name">
-              <strong>Hexahack</strong>
-              {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
-            </span>
-            <span className="game-selector-description">Scopri il codice di sei cifre usando le sonde e conserva lo Stealth.</span>
-          </span>
-          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
-        </button>
-        <button className={`game-selector-card game-selector-card--sky${hexaskyCompleted ? " completed" : ""}`} type="button" onClick={onHexasky}>
-          <span className="game-selector-card-top">
-            <span className="game-selector-icon"><Building2 aria-hidden="true" /></span>
-          </span>
-          <span className="game-selector-copy">
-            <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-            <span className="game-selector-description">Completa la griglia 4×4 seguendo gli indizi dei grattacieli.</span>
-          </span>
-          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
-        </button>
-        <button className={`game-selector-card game-selector-card--flow${hexaflowCompleted ? " completed" : ""}`} type="button" onClick={onHexaflow} disabled={!hexaflowAvailable}>
-          <span className="game-selector-card-top">
-            <span className="game-selector-icon"><Waves aria-hidden="true" /></span>
-          </span>
-          <span className="game-selector-copy">
-            <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-            <span className="game-selector-description">{hexaflowAvailable ? "Unisci le lettere per trovare le parole a tema e il Flusso." : "Non disponibile oggi"}</span>
-          </span>
-          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
-        </button>
-        <button className={`game-selector-card game-selector-card--star${hexastarCompleted ? " completed" : ""}`} type="button" onClick={onHexastar}>
-          <span className="game-selector-card-top">
-            <span className="game-selector-icon"><Sparkles aria-hidden="true" /></span>
-          </span>
-          <span className="game-selector-copy">
-            <span className="game-selector-name"><strong>Hexastar</strong>{hexastarCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-            <span className="game-selector-description">Ricostruisci la parola del giorno inserendo le sillabe giuste.</span>
-          </span>
-          <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
-        </button>
+        {games.map((game, index) => (
+          <button key={game.id} className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}`} type="button" onClick={game.onPlay} disabled={!game.available} aria-label={`${game.name}: ${!game.available ? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}>
+            <span className="puzzle-card-heading"><span className="puzzle-category">{game.category}</span>{game.completed ? <span className="puzzle-status"><Check size={13} aria-hidden="true" /> Fatto</span> : index === 0 ? <span className="puzzle-tag">Il classico</span> : null}</span>
+            <PuzzleArtwork kind={game.id} />
+            <span className="puzzle-card-copy"><strong>{game.name}</strong><span>{game.available ? game.description : "Una nuova sfida è in arrivo."}</span></span>
+            <span className="puzzle-card-footer"><span>{!game.available ? "Non disponibile oggi" : game.completed ? "Vedi risultato" : "Giochiamo"}</span><ArrowRight size={18} aria-hidden="true" /></span>
+          </button>
+        ))}
       </div>
+      <div className="daily-note"><Clock3 size={17} aria-hidden="true" /><p>Un nuovo giorno, una nuova sfida.<br /><span>I rompicapi si rinnovano a mezzanotte.</span></p></div>
     </section>
   );
 }
