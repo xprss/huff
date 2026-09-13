@@ -1894,21 +1894,18 @@ html[data-theme="chromatic"] .key.absent {
   flex-direction: column;
   gap: 10px;
   padding: 6px 0;
-  overflow: hidden;
-}
-
-.hexastar-attempts {
-  min-height: 0;
-  flex: 1 1 auto;
-  display: grid;
-  grid-auto-rows: clamp(48px, calc(var(--app-vh) * 7.25), 62px);
-  align-content: end;
-  gap: clamp(5px, calc(var(--app-vh) * 1.1), 10px);
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   scrollbar-gutter: stable;
+}
+
+.hexastar-attempts {
+  flex: 0 0 auto;
+  display: grid;
+  grid-auto-rows: clamp(48px, calc(var(--app-vh) * 7.25), 62px);
+  gap: clamp(5px, calc(var(--app-vh) * 1.1), 10px);
 }
 
 .hexastar-attempt-row,

@@ -31,7 +31,7 @@ export function HexastarView({
   const [phase, setPhase] = React.useState<AnimationPhase>("idle");
   const [pendingAttempt, setPendingAttempt] = React.useState<HexastarAttemptDto | null>(null);
   const [tutorialOpen, setTutorialOpen] = React.useState(() => localStorage.getItem("huff.hexastar.tutorial.v2.closed") !== "true");
-  const attemptsRef = React.useRef<HTMLDivElement>(null);
+  const boardRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setSyllables(lengths.map(() => ""));
@@ -40,8 +40,8 @@ export function HexastarView({
   }, [today.puzzleDate, lengths.join(",")]);
 
   React.useLayoutEffect(() => {
-    const attempts = attemptsRef.current;
-    if (attempts) attempts.scrollTop = attempts.scrollHeight;
+    const board = boardRef.current;
+    if (board) board.scrollTop = board.scrollHeight;
   }, [today.puzzleDate, game?.attempts.length]);
 
   React.useEffect(() => {
@@ -142,8 +142,8 @@ export function HexastarView({
     </header>
     <p className="sky-intro">Inserisci sillabe complete. I colori indicano posizione corretta, presenza altrove o assenza.</p>
 
-    <div className="hexastar-board" aria-live="polite">
-      <div className="hexastar-attempts" ref={attemptsRef} role="region" aria-label="Tentativi precedenti" tabIndex={0}>
+    <div className="hexastar-board" ref={boardRef} role="region" aria-label="Tentativi e soluzione" aria-live="polite" tabIndex={0}>
+      <div className="hexastar-attempts" aria-label="Tentativi precedenti">
         {(game?.attempts ?? []).map((attempt) => <AttemptRow attempt={attempt} lengths={lengths} key={attempt.requestId}/>) }
       </div>
 
