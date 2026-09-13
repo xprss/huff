@@ -97,9 +97,8 @@ export function AppHeader({
       <div className="title-row">
         <h1 className="brand-heading"><button className="brand-home" type="button" onClick={onOpenGames} aria-label={`${APP_NAME}, torna ai giochi`}>
           <span className="brand-symbol" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</span>
-          <span className="title-mark"><span className="brand-name">{APP_NAME}</span><span className="brand-caption">Il piacere di pensarci.</span></span>
+          <span className="title-mark"><span className="brand-name">{APP_NAME}</span><span className="brand-date">{puzzleDate}</span></span>
         </button></h1>
-        <p className="date">{puzzleDate}</p>
         <div className="actions" ref={actionsMenuRef}>
           {showStarButton ? (
             <button

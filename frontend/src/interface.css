@@ -11,6 +11,7 @@
 }
 
 html, body, #root { touch-action: pan-y pinch-zoom; }
+html { scroll-padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px); }
 button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 button, input, textarea, select { font-family: var(--font-body); }
 button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
@@ -28,10 +29,18 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .app-shell.has-navigation { padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 12px); }
 .game-surface { width: min(100%, 560px); min-width: 0; animation-fill-mode: backwards; }
 .app-footer { display: none; }
-.topbar { flex: 0 0 auto; z-index: 10; padding: 0 0 12px; border-bottom: 1px solid var(--color-surface-border); }
+.topbar { flex: 0 0 auto; z-index: 10; padding: 0 0 6px; border-bottom: 1px solid var(--color-surface-border); }
 .title-row { gap: 8px; flex-wrap: wrap; }
 .brand-home, .login-brand { display: flex; align-items: center; gap: 10px; }
 .brand-heading { margin: 0; font: inherit; }
+.topbar .title-row { flex-wrap: nowrap; }
+.topbar .brand-heading { min-width: 0; flex: 1; }
+.topbar .brand-home { gap: 8px; max-width: 100%; }
+.topbar .title-mark { min-width: 0; width: auto; }
+.topbar .brand-name { font-size: 1.3rem; }
+.topbar .brand-symbol { grid-template-columns: repeat(3, 7px); }
+.topbar .brand-symbol i { width: 7px; height: 11px; }
+.brand-date { margin-top: 4px; color: var(--color-muted); font-size: .6rem; font-weight: 400; line-height: 1.25; text-transform: capitalize; }
 .brand-home { padding: 2px 0; min-height: 44px; border: 0; background: transparent; color: var(--color-text); text-align: left; cursor: pointer; }
 .brand-symbol { display: grid; flex: 0 0 auto; grid-template-columns: repeat(3, 8px); gap: 3px; transform: rotate(-10deg); }
 .brand-symbol i { width: 8px; height: 13px; border-radius: 3px; background: var(--color-primary); }
@@ -172,6 +181,19 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 .daily-game-intro p:last-child { font-size: .8rem; line-height: 1.5; font-weight: 400; }
 .daily-game-intro .eyebrow { color: var(--color-primary); font-size: .64rem; }
 .daily-game-intro strong.present { color: color-mix(in srgb, var(--color-present) 40%, var(--color-text)); }
+/* Keep the board's intrinsic height: a short viewport scrolls instead of
+   letting the centered grid overflow into the keyboard's flex item. */
+.route-game { --surface-gap: 8px; }
+.route-game .game-surface { overflow-y: auto; touch-action: pan-y pinch-zoom; }
+.route-game .play-area { flex: 1 0 auto; min-height: min-content; }
+.route-game .game-board-wrap { gap: 8px; }
+.route-game .daily-game-intro { padding: 2px 0; text-align: left; }
+.route-game .daily-game-intro.with-help > div { display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 8px; padding: 0 48px 0 0; }
+.route-game .daily-game-intro .eyebrow { font-size: .58rem; letter-spacing: .07em; }
+.route-game .daily-game-intro h2 { margin: 0; font-size: 1.2rem; line-height: 1.2; }
+.route-game .daily-game-intro p:last-child { grid-column: 1 / -1; max-width: none; margin: 4px 0 0; font-size: .72rem; line-height: 1.4; }
+.route-game .board { padding: 10px; gap: 10px; grid-template-rows: none; grid-auto-rows: auto; }
+.route-game .feedback-stack { min-height: min-content; }
 .board { border-radius: 20px; box-shadow: 0 4px 16px color-mix(in srgb, var(--color-board-shadow) 45%, transparent); }
 .terminal-input { background: transparent; box-shadow: none; color: var(--color-text); font-family: var(--font-body); gap: 6px; }
 .terminal-input .terminal-cell { border: 1px solid var(--color-tile-border); border-radius: 10px; background: var(--color-surface-soft); min-height: 48px; }
@@ -326,7 +348,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 
 @media (min-width: 900px) {
   .route-games .game-surface, .route-profile .game-surface, .route-leaderboard .game-surface, .route-player .game-surface, .route-stats .game-surface { width: min(100%, 1080px); }
-  .topbar { padding-bottom: 18px; }
+  .topbar { padding-bottom: 6px; }
   .brand-name { font-size: 1.65rem; }
   .brand-symbol { grid-template-columns: repeat(3, 9px); }
   .brand-symbol i { width: 9px; height: 14px; }
@@ -372,7 +394,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 @media (max-height: 700px) and (max-width: 899px) {
   .app-shell { --nav-height: 62px; --surface-gap: 8px; padding-top: max(8px, env(safe-area-inset-top, 0px)); }
   .nav-item { min-height: 46px; gap: 3px; }
-  .topbar { padding-bottom: 8px; }
+  .topbar { padding-bottom: 6px; }
   .daily-game-intro { padding: 3px 0; }
   .daily-game-intro h2 { font-size: 1.5rem; }
   .route-game .brand-caption, .route-hexahack .brand-caption, .route-hexasky .brand-caption, .route-hexaflow .brand-caption, .route-hexastar .brand-caption { display: none; }

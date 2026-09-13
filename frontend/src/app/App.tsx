@@ -1031,7 +1031,7 @@ export function App() {
           ) : !game ? (
             <>
               <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
-                Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
+                <strong className="correct">Verde</strong>: al posto giusto. <strong className="present">Giallo</strong>: altrove. <strong className="absent">Grigio</strong>: assente.
               </DailyGameIntro>
               <div className="play-area">
                 <ModeSelection modes={modes} selectedMode={null} onSelect={(mode) => void selectGameMode(mode)} />
@@ -1040,7 +1040,7 @@ export function App() {
           ) : (
             <>
               <DailyGameIntro game="Hexaword" title="Trova la parola" onOpenTutorial={() => setHexawordTutorialOpen(true)}>
-                Il colore indica la posizione: <strong className="correct">verde</strong> è corretta, <strong className="present">giallo</strong> è presente altrove e <strong className="absent">grigio</strong> è assente.
+                <strong className="correct">Verde</strong>: al posto giusto. <strong className="present">Giallo</strong>: altrove. <strong className="absent">Grigio</strong>: assente.
               </DailyGameIntro>
               <div className="play-area">
                 <GameBoard
