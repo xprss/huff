@@ -1,7 +1,7 @@
 import { ChevronLeft } from "lucide-react";
 import { MedalCounts } from "../../shared/components/MedalCounts";
 import React from "react";
-import { HexahackStatsPanel, HexaskyStatsPanel, HexaflowStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
+import { HexahackStatsPanel, HexaskyStatsPanel, HexaflowStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsView";
 import type { PublicPlayerProfileDto } from "../../types";
 
 export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerProfileDto; onBack: () => void }) {

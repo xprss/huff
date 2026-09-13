@@ -1,8 +1,8 @@
 import React from "react";
-import { X } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
-import type { GameDto, HexahackRank, HexahackStatsDto, HexaskyStatsDto, HexaflowStatsDto, StatsDto, StatsSetDto } from "../../types";
+import type { HexahackRank, HexahackStatsDto, HexaskyStatsDto, HexaflowStatsDto, StatsDto, StatsSetDto } from "../../types";
 
 export type StatsGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow" | "hexastar";
 
@@ -67,24 +67,22 @@ export function HexaflowStatsPanel({ stats }: { stats: HexaflowStatsDto }) {
   return <div className="stat-grid"><Metric label="Iniziate" value={stats.started}/><Metric label="Completate" value={stats.completed}/><Metric label="Serie" value={stats.currentStreak}/><Metric label="Record" value={stats.maxStreak}/></div>;
 }
 
-export function StatsModal({ game, stats, initialGame = "overall", onClose }: {
-  game: GameDto | null;
+export function StatsView({ stats, active, onChangeGame }: {
   stats: StatsSetDto;
-  initialGame?: StatsGame;
-  onClose: () => void;
+  active: StatsGame;
+  onChangeGame: (game: StatsGame) => void;
 }) {
-  const [active, setActive] = React.useState<StatsGame>(initialGame);
   const selected = active === "hexahack" || active === "hexasky" || active === "hexaflow" ? null : stats[active];
-  const completed = active === "hexaword" ? game : null;
+  const titles = { overall: "Il quadro completo", hexaword: "Le tue parole vincenti", hexahack: "La tua maestria nei codici", hexasky: "La tua prospettiva", hexaflow: "Il tuo Flusso", hexastar: "Le tue intuizioni" };
   return (
-    <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
-      <section className="modal" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
-        <header className="modal-head"><h2>Statistiche</h2><button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button></header>
-        <StatsTabs active={active} onChange={setActive} />
+    <section className="stats-view" aria-labelledby="stats-page-title">
+      <header className="account-page-heading"><span className="account-page-icon"><BarChart3 size={23} aria-hidden="true" /></span><div><p className="eyebrow">Un passo alla volta</p><h2 id="stats-page-title">Le tue statistiche</h2><p>Ogni sfida racconta un po’ dei tuoi progressi.</p></div></header>
+      <StatsTabs active={active} onChange={onChangeGame} />
+      <section className="account-panel stats-detail" aria-label={titles[active]}>
+        <h3>{titles[active]}</h3>
         {active === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : active === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : active === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : <StatsPanel stats={selected} />}
-        {completed?.status === "WON" ? <p className="result won">Risolta.</p> : null}
-        {completed?.status === "LOST" ? <p className="result lost">Soluzione: {completed.solution?.toUpperCase()}</p> : null}
       </section>
-    </div>
+      <p className="account-note">Le statistiche si aggiornano dopo ogni partita. Torna quando vuoi per scoprire come stai andando.</p>
+    </section>
   );
 }

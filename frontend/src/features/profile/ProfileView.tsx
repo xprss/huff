@@ -1,9 +1,11 @@
 import React from "react";
-import { Check, ChevronLeft, Edit3, X } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Metric } from "../../shared/components/Metric";
+import { ArrowRight, Check, ChevronLeft, Edit3, Flame, Hand, Sparkles, Trophy, X } from "lucide-react";
 import { PROFILE_EMOJIS } from "../../app/constants";
 import { MedalCounts } from "../../shared/components/MedalCounts";
 import type { InputHandPreference, ProfileUpdateDto, StatsSetDto, UserDto } from "../../types";
-import { HexahackStatsPanel, HexaskyStatsPanel, HexaflowStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsModal";
+import type { StatsGame } from "../stats/StatsView";
 
 export function ProfileView({
   user,
@@ -11,6 +13,7 @@ export function ProfileView({
   editing,
   onEditingChange,
   onBack,
+  onOpenStats,
   onSave,
   onSuccess,
   onError
@@ -20,6 +23,7 @@ export function ProfileView({
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
   onBack: () => void;
+  onOpenStats: (game: StatsGame) => void;
   onSave: (profile: ProfileUpdateDto) => Promise<UserDto>;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
@@ -30,7 +34,14 @@ export function ProfileView({
   const [inputHandPreference, setInputHandPreference] = React.useState<InputHandPreference>(user.inputHandPreference);
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
-  const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
+  const editorRef = React.useRef<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (!editing) return;
+    editorRef.current?.scrollIntoView({ block: "start" });
+    editorRef.current?.querySelector("input")?.focus({ preventScroll: true });
+  }, [editing]);
+
 
   React.useEffect(() => {
     setDisplayName(user.displayName ?? "");
@@ -78,27 +89,33 @@ export function ProfileView({
     );
   }
 
+  const games = [
+    { id: "hexaword", name: "Hexaword", played: stats.hexaword.played, completed: stats.hexaword.won, label: "vinte" },
+    { id: "hexahack", name: "Hexahack", played: null, completed: stats.hexahack.completedAccesses, label: "accessi completati" },
+    { id: "hexasky", name: "Hexasky", played: stats.hexasky.played, completed: stats.hexasky.won, label: "vinte" },
+    { id: "hexaflow", name: "Hexaflow", played: stats.hexaflow.started, completed: stats.hexaflow.completed, label: "completate" },
+    { id: "hexastar", name: "Hexastar", played: stats.hexastar.played, completed: stats.hexastar.won, label: "vinte" }
+  ] as const;
+  const winRate = stats.overall.played ? Math.round(stats.overall.won / stats.overall.played * 100) : 0;
+
   return (
-    <section className="profile-view" aria-label="Profilo">
-      <div className="profile-summary">
-        <div className="profile-head">
-          <button className="icon-button profile-back" type="button" onClick={onBack} aria-label="Torna al gioco" title="Torna">
-            <ChevronLeft size={23} />
+    <section className="profile-view personal-profile" aria-labelledby="profile-page-title">
+      <header className="account-page-heading">
+        <button className="icon-button" type="button" onClick={onBack} aria-label="Torna ai giochi"><ChevronLeft size={21} /></button>
+        <div><p className="eyebrow">Il tuo spazio</p><h2 id="profile-page-title">Profilo</h2></div>
+      </header>
+      <section className="profile-hero" aria-label="La tua identità">
+        <div className="profile-cover" aria-hidden="true"><Sparkles size={50} /><span>Ogni giorno, una nuova intuizione.</span></div>
+        <div className="profile-hero-body">
+          <button className="profile-emoji" type="button" onClick={() => setShowEmojiPicker(true)} disabled={saving || editing} aria-label="Modifica emoji profilo">
+            <span className="profile-emoji-glyph">{user.profileEmoji}</span><span className="profile-emoji-edit"><Edit3 size={13} aria-hidden="true" /></span>
           </button>
-          <button
-            className="profile-emoji"
-            type="button"
-            onClick={() => setShowEmojiPicker(true)}
-            aria-label="Modifica emoji profilo"
-            title="Modifica emoji"
-          >
-            <span className="profile-emoji-glyph">{user.profileEmoji}</span>
-            <span className="profile-emoji-edit" aria-hidden="true">
-              <Edit3 size={10} />
-            </span>
-          </button>
-          <div className="profile-identity">
-            {editing ? (
+          <div className="profile-identity"><strong>{user.displayName || user.nickname}</strong><span>{user.nickname}</span></div>
+          {!editing ? <button className="profile-action-button" type="button" onClick={() => onEditingChange(true)}><Edit3 size={16} aria-hidden="true" /> Modifica profilo</button> : null}
+          <p className={`profile-bio${user.bio ? "" : " empty-bio"}`}>{user.bio || "Ogni giocatore ha una storia. Aggiungi una bio per raccontare la tua."}</p>
+        </div>
+      </section>
+      {editing ? <section ref={editorRef} className="account-panel profile-editor" aria-label="Modifica profilo"><h3>Un profilo che ti somiglia</h3><p>Personalizza la tua identità e scegli come giocare.</p>
               <form className="profile-form" onSubmit={submitProfile}>
                 <label>
                   <span>Nome</span>
@@ -134,7 +151,9 @@ export function ProfileView({
                     maxLength={200}
                     disabled={saving}
                     rows={3}
+                    aria-describedby="bio-length"
                   />
+                  <small id="bio-length">{bio.length}/200 caratteri</small>
                 </label>
                 <fieldset className="profile-hand-preference" disabled={saving}>
                   <legend>Joystick di navigazione</legend>
@@ -165,24 +184,33 @@ export function ProfileView({
                   </button>
                 </div>
               </form>
-            ) : (
-              <>
-                <strong>{user.displayName}</strong>
-                <span>{user.nickname}</span>
-                {user.bio ? <p className="profile-bio">{user.bio}</p> : null}
-              </>
-            )}
-          </div>
-        </div>
+      </section> : null}
+      <div className="profile-sections">
+        <section className="account-panel profile-overview" aria-labelledby="profile-progress-title">
+          <div className="account-panel-heading"><h3 id="profile-progress-title"><Flame size={19} aria-hidden="true" /> Il tuo percorso</h3></div>
+          <div className="profile-metrics"><Metric label="Partite giocate" value={stats.overall.played} /><Metric label="Vittorie" value={`${winRate}%`} /><Metric label="Serie attuale" value={stats.overall.currentStreak} /><Metric label="Serie record" value={stats.overall.maxStreak} /></div>
+          <button className="profile-text-link" type="button" onClick={() => onOpenStats("overall")}>Esplora tutte le statistiche <ArrowRight size={17} aria-hidden="true" /></button>
+        </section>
+        <section className="account-panel profile-medals" aria-label="I tuoi traguardi">
+          <h3><Trophy size={19} aria-hidden="true" /> I tuoi traguardi</h3>
+          <p>Le medaglie conquistate nella classifica generale.</p>
+          <MedalCounts medals={user.medals} />
+          {user.medals.gold + user.medals.silver + user.medals.bronze === 0 ? <p className="account-note">La prima medaglia ti aspetta. Continua a metterti in gioco!</p> : null}
+        </section>
+        <section className="account-panel profile-games" aria-labelledby="profile-games-title">
+          <h3 id="profile-games-title">Cinque modi di metterti alla prova</h3>
+          <div className="profile-game-list">{games.map((game) => <button className={`profile-game-row profile-game-row--${game.id}`} key={game.id} type="button" onClick={() => onOpenStats(game.id)}>
+            <span className="profile-game-mark" aria-hidden="true">{game.name.slice(4, 5).toUpperCase()}</span><span><strong>{game.name}</strong><small>{game.completed} {game.label}{game.played !== null ? ` · ${game.played} giocate` : ""}</small></span><ArrowRight size={17} aria-hidden="true" />
+          </button>)}</div>
+        </section>
+        <section className="account-panel profile-preferences" aria-label="Preferenze di gioco">
+          <h3><Hand size={19} aria-hidden="true" /> A modo tuo</h3>
+          <p>Il joystick di navigazione è a {user.inputHandPreference === "LEFT" ? "sinistra" : "destra"}, per seguire la tua mano.</p>
+          <button className="profile-text-link" type="button" onClick={() => onEditingChange(true)}>Modifica preferenze <ArrowRight size={17} aria-hidden="true" /></button>
+          {user.email ? <div className="profile-account"><span>Account collegato</span><strong>{user.email}</strong></div> : null}
+        </section>
       </div>
-
-      <div className="profile-stats" aria-label="Statistiche personali">
-        <MedalCounts medals={user.medals} />
-        <StatsTabs active={activeStats} onChange={setActiveStats} />
-        {activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : activeStats === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : <StatsPanel stats={stats[activeStats]} />}
-      </div>
-
-      {showEmojiPicker ? (
+      {showEmojiPicker ? createPortal(
         <div className="modal-backdrop" role="presentation" onMouseDown={() => setShowEmojiPicker(false)}>
           <section
             className="modal emoji-modal"
@@ -224,11 +252,10 @@ export function ProfileView({
             </div>
           </section>
         </div>
-      ) : null}
+      , document.body) : null}
     </section>
   );
 }
-
 function toEditableNickname(nickname: string) {
   return nickname.replace(/@/g, "");
 }

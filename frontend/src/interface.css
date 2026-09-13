@@ -26,7 +26,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   row-gap: 0;
 }
 .app-shell.has-navigation { padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 12px); }
-.game-surface { width: min(100%, 560px); }
+.game-surface { width: min(100%, 560px); min-width: 0; animation-fill-mode: backwards; }
 .app-footer { display: none; }
 .topbar { flex: 0 0 auto; z-index: 10; padding: 0 0 12px; border-bottom: 1px solid var(--color-surface-border); }
 .title-row { gap: 8px; flex-wrap: wrap; }
@@ -248,7 +248,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 .leaderboard-list li:first-child > button { border-color: color-mix(in srgb, var(--color-present) 60%, var(--color-surface-border)); background: color-mix(in srgb, var(--color-present) 8%, var(--color-surface)); }
 .metric { border-radius: 14px; box-shadow: none; padding: 15px 8px; }
 .metric strong { letter-spacing: -.05em; font-weight: 700; }
-.modal-backdrop { padding: 12px; align-items: end; backdrop-filter: blur(8px); }
+.modal-backdrop { padding: 12px; place-items: center; backdrop-filter: blur(8px); }
 .modal { width: min(100%, 480px); max-height: calc(var(--app-height) - 40px - env(safe-area-inset-top, 0px)); border-radius: 24px; padding: 22px 18px max(22px, env(safe-area-inset-bottom, 0px)); touch-action: pan-y pinch-zoom; box-shadow: 0 20px 70px var(--color-modal-shadow); }
 .modal h2 { font-weight: 700; line-height: 1.15; letter-spacing: -.03em; }
 .modal p { line-height: 1.6; }
@@ -325,7 +325,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 }
 
 @media (min-width: 900px) {
-  .route-games .game-surface, .route-profile .game-surface, .route-leaderboard .game-surface, .route-player .game-surface { width: min(100%, 1080px); }
+  .route-games .game-surface, .route-profile .game-surface, .route-leaderboard .game-surface, .route-player .game-surface, .route-stats .game-surface { width: min(100%, 1080px); }
   .topbar { padding-bottom: 18px; }
   .brand-name { font-size: 1.65rem; }
   .brand-symbol { grid-template-columns: repeat(3, 9px); }

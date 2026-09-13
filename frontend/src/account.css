@@ -1,0 +1,136 @@
+/* Account pages use document scrolling; no intrinsic-width track may expand the shell. */
+.app-shell { grid-template-columns: minmax(0, 1fr); }
+body { min-width: 0; }
+.game-surface > *, .profile-view, .leaderboard-view, .stats-view,
+.profile-stats, .profile-head, .profile-identity, .leaderboard-list,
+.leaderboard-list li, .game-stats-tabs, .leaderboard-games { min-width: 0; max-width: 100%; }
+.game-stats-tabs, .leaderboard-games { width: 100%; }
+.profile-identity strong, .profile-identity > span, .profile-bio { overflow-wrap: anywhere; white-space: normal; }
+.leaderboard-player { min-width: 0; }
+.leaderboard-list button { width: 100%; min-width: 0; }
+.leaderboard-wins { flex-shrink: 0; }
+
+html.page-scroll, html.page-scroll body, html.page-scroll #root,
+html.zoomed, html.zoomed body, html.zoomed #root {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  overscroll-behavior: auto;
+  touch-action: pan-x pan-y pinch-zoom;
+}
+html.page-scroll .app-shell, html.zoomed .app-shell {
+  height: auto;
+  min-height: var(--app-height);
+  overflow: visible;
+}
+html.page-scroll .game-surface, html.zoomed .game-surface { height: auto; overflow: visible; }
+html.page-scroll :is(.game-selector, .profile-view, .profile-stats, .leaderboard-view, .leaderboard-list),
+html.zoomed :is(.game-selector, .profile-view, .profile-stats, .leaderboard-view, .leaderboard-list, .play-area, .sky-shell, .hexaflow, .hexastar-shell, .hexastar-board, .hack-shell) {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  flex: 0 0 auto;
+}
+/* During pinch zoom, navigation stays in the page flow and can be panned into view. */
+html.zoomed .app-navigation { position: static; width: 100%; max-width: 560px; transform: none; margin: 20px auto 0; }
+html.zoomed .app-shell.has-navigation { padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
+
+.puzzle-card.completed {
+  border-color: #639862;
+  box-shadow: 0 0 0 1px #68a36950, 0 0 14px 4px #6ebd7038, 0 0 32px 10px #6ebd701a;
+}
+.puzzle-card.completed .puzzle-status { background: #e2f4dd; color: #28572a; }
+@media (hover: hover) and (pointer: fine) {
+  .puzzle-card.completed:hover { box-shadow: 0 0 0 1px #68a36970, 0 0 18px 5px #6ebd7048, 0 0 36px 12px #6ebd7020; }
+}
+
+.account-page-heading { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; min-width: 0; }
+.account-page-heading > div { min-width: 0; }
+.account-page-heading h2 { margin: 6px 0; font-size: clamp(1.7rem, 6vw, 2.2rem); font-weight: 700; letter-spacing: -.045em; line-height: 1.1; }
+.account-page-heading p:not(.eyebrow) { margin: 8px 0 0; color: var(--color-muted); font-size: .86rem; line-height: 1.5; }
+.account-page-heading .eyebrow { font-size: .63rem; }
+.account-page-icon { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; border-radius: 15px; background: var(--color-surface-strong); color: var(--color-primary); }
+.account-panel { min-width: 0; padding: 20px; border: 1px solid var(--color-surface-border); border-radius: 22px; background: var(--color-surface); }
+.account-panel h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-size: 1rem; line-height: 1.35; font-weight: 700; letter-spacing: -.02em; }
+.account-panel h3 svg { flex-shrink: 0; color: var(--color-primary); }
+.account-panel > p { margin: -4px 0 16px; color: var(--color-muted); font-size: .82rem; line-height: 1.6; }
+.account-note { color: var(--color-muted); font-size: .78rem; line-height: 1.6; }
+.stats-view { width: 100%; max-width: 720px; margin: 0 auto; display: grid; gap: 20px; padding-bottom: 24px; }
+.stats-detail > .stat-grid + .stat-grid { margin-top: 10px; }
+.stats-detail .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats-detail .hack-mastery { border: 0; padding: 0; }
+.stats-view .account-note { margin: 0 4px; }
+
+.personal-profile { display: flex; flex-direction: column; gap: 20px; padding-bottom: 24px; }
+.personal-profile > * { flex: 0 0 auto; }
+.profile-hero { border: 1px solid var(--color-surface-border); background: var(--color-surface); border-radius: 24px; overflow: hidden; }
+.profile-cover { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 16px; min-height: 108px; padding: 20px 24px 34px; background: var(--color-surface-strong); color: var(--color-primary); }
+.profile-cover svg { opacity: .6; flex-shrink: 0; }
+.profile-cover > span { max-width: 20ch; font-size: .75rem; line-height: 1.5; font-weight: 600; }
+.profile-hero-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 0 20px 22px; }
+.personal-profile .profile-emoji { position: relative; width: 78px; height: 78px; flex: 0 0 78px; margin-top: -24px; border: 4px solid var(--color-surface); border-radius: 24px; background: var(--color-surface-soft); font-size: 2.6rem; }
+.personal-profile .profile-emoji:disabled { cursor: default; }
+.personal-profile .profile-emoji-edit { width: 23px; height: 23px; right: -4px; bottom: -4px; border: 2px solid var(--color-surface); }
+.profile-hero-body .profile-identity { flex: 1 1 140px; margin-top: 12px; }
+.personal-profile .profile-identity strong { font-size: 1.5rem; line-height: 1.15; }
+.personal-profile .profile-identity > span { margin-top: 6px; font-size: .83rem; }
+.profile-hero-body > .profile-action-button { flex-basis: 100%; justify-content: center; }
+.personal-profile .profile-bio { flex-basis: 100%; margin: 0; font-size: .86rem; line-height: 1.65; font-weight: 400; }
+.personal-profile .empty-bio { color: var(--color-muted); }
+.profile-sections { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.profile-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.profile-metrics .metric { padding: 18px 8px; }
+.profile-metrics .metric strong { font-size: 1.8rem; }
+.profile-metrics .metric span { font-size: .68rem; }
+.profile-text-link { min-height: 44px; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 8px 0; border: 0; background: transparent; color: var(--color-primary); text-align: left; font-size: .8rem; font-weight: 600; cursor: pointer; }
+.profile-text-link svg { flex-shrink: 0; }
+.profile-medals .medal-counts { margin: 0; gap: 8px; }
+.profile-medals .medal-counts > h3 { display: none; }
+.profile-medals .medal-count { min-width: 0; padding: 14px 4px; border-radius: 16px; }
+.profile-game-list { display: grid; }
+.profile-game-row { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; padding: 14px 0; border: 0; border-bottom: 1px solid var(--color-surface-border); background: transparent; color: var(--color-text); text-align: left; cursor: pointer; }
+.profile-game-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.profile-game-row > span:nth-child(2) { min-width: 0; flex: 1; }
+.profile-game-row strong, .profile-game-row small { display: block; overflow-wrap: anywhere; }
+.profile-game-row strong { font-size: .87rem; }
+.profile-game-row small { margin-top: 5px; font-size: .7rem; color: var(--color-muted); line-height: 1.4; }
+.profile-game-row > svg { color: var(--color-muted); flex-shrink: 0; }
+.profile-game-mark { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: var(--color-surface-strong); color: var(--color-primary); font-weight: 700; }
+.profile-game-row--hexaword .profile-game-mark { background: #e7def7; color: #493469; }
+.profile-game-row--hexasky .profile-game-mark { background: #f7e8cc; color: #715326; }
+.profile-game-row--hexaflow .profile-game-mark { background: #d9eee8; color: #265e52; }
+.profile-game-row--hexastar .profile-game-mark { background: #f4dfdf; color: #80484f; }
+.profile-account { display: grid; gap: 6px; padding-top: 16px; margin-top: 8px; border-top: 1px solid var(--color-surface-border); }
+.profile-account span { font-size: .7rem; color: var(--color-muted); }
+.profile-account strong { font-size: .8rem; font-weight: 500; overflow-wrap: anywhere; }
+.profile-editor { scroll-margin-top: 16px; }
+.profile-editor .profile-form { gap: 18px; min-width: 0; }
+.profile-editor .profile-form input, .profile-editor .profile-form textarea { width: 100%; min-width: 0; }
+.profile-editor .profile-form label { min-width: 0; }
+.profile-editor .profile-form label > span { font-size: .76rem; }
+.profile-editor .profile-form label > small { color: var(--color-muted); font-size: .68rem; justify-self: end; }
+.profile-editor .profile-hand-preference { min-width: 0; margin: 0; }
+.profile-form-actions { flex-wrap: wrap; }
+.profile-form-actions > button { flex: 1; justify-content: center; }
+
+@media (min-width: 600px) {
+  .profile-hero-body > .profile-action-button { flex-basis: auto; }
+  .profile-cover { min-height: 130px; }
+  .stats-detail .stat-grid:not(.compact) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+  .route-profile .personal-profile { max-width: 900px; }
+  .profile-sections { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .profile-games { grid-column: 1; }
+  .profile-preferences { grid-column: 2; }
+  .account-panel { padding: 24px; }
+}
+
+/* Browser zoom and landscape phones need a page that grows beyond the viewport. */
+@media (max-height: 600px) {
+  html, body, #root { height: auto; min-height: 100%; overflow: visible; }
+  .app-shell { height: auto; min-height: var(--app-height); overflow: visible; }
+  .game-surface { height: auto; overflow: visible; }
+  .game-surface > :is(.play-area, .sky-shell, .hexaflow, .hexastar-shell, .hack-shell) { height: auto; overflow: visible; flex: 0 0 auto; }
+  .hexastar-board { flex: 0 0 auto; overflow: visible; }
+}

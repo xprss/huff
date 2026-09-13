@@ -47,7 +47,12 @@ function scheduleAppViewportHeightSync() {
 }
 
 function syncAppViewportHeight() {
-  const visualViewportHeight = window.visualViewport?.height;
+  const viewport = window.visualViewport;
+  const scale = viewport?.scale ?? 1;
+  // Pinch zoom changes the visible region, not the size of the page layout.
+  // Keep the keyboard-aware height in layout pixels and allow document panning.
+  const visualViewportHeight = viewport ? viewport.height * scale : undefined;
+  document.documentElement.classList.toggle("zoomed", scale > 1.01);
   const viewportHeight = Math.round(
     visualViewportHeight && visualViewportHeight > 0 ? visualViewportHeight : window.innerHeight
   );

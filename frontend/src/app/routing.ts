@@ -1,12 +1,13 @@
 import React from "react";
 
-export type AppRoute = "games" | "game" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "profile" | "admin" | "leaderboard" | "player";
+export type AppRoute = "games" | "game" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "profile" | "stats" | "admin" | "leaderboard" | "player";
 
 function routeFromHash(hash: string): AppRoute {
   if (hash.startsWith("#/leaderboard/player/")) return "player";
   if (hash === "#/leaderboard") return "leaderboard";
   if (hash === "#/admin") return "admin";
   if (hash === "#/profile") return "profile";
+  if (hash === "#/stats") return "stats";
   if (hash === "#/hexaword") return "game";
   if (hash === "#/hexahack") return "hexahack";
   if (hash === "#/hexasky") return "hexasky";
@@ -19,6 +20,7 @@ function hashFromRoute(route: AppRoute) {
   if (route === "leaderboard" || route === "player") return "#/leaderboard";
   if (route === "admin") return "#/admin";
   if (route === "profile") return "#/profile";
+  if (route === "stats") return "#/stats";
   if (route === "game") return "#/hexaword";
   if (route === "hexahack") return "#/hexahack";
   if (route === "hexasky") return "#/hexasky";

@@ -80,8 +80,8 @@ import { NotificationPromptModal } from "../features/notifications/NotificationP
 import { ProfileView } from "../features/profile/ProfileView";
 import { PublicProfileView } from "../features/profile/PublicProfileView";
 import { LeaderboardView } from "../features/leaderboard/LeaderboardView";
-import { StatsModal } from "../features/stats/StatsModal";
-import type { StatsGame } from "../features/stats/StatsModal";
+import { StatsView } from "../features/stats/StatsView";
+import type { StatsGame } from "../features/stats/StatsView";
 import { GameSelector } from "../features/game/GameSelector";
 import { HexahackView } from "../features/hexahack/HexahackView";
 import { HexaskyView } from "../features/hexasky/HexaskyView";
@@ -108,7 +108,6 @@ export function App() {
   const queryClient = useQueryClient();
   const [currentGuess, setCurrentGuess] = React.useState<string[]>([]);
   const [selectedCellIndex, setSelectedCellIndex] = React.useState<number | null>(0);
-  const [showStats, setShowStats] = React.useState(false);
   const [statsInitialGame, setStatsInitialGame] = React.useState<StatsGame>("overall");
   const [leaderboardGame, setLeaderboardGame] = React.useState<LeaderboardGame>("overall");
   const [showInfo, setShowInfo] = React.useState(false);
@@ -284,12 +283,13 @@ export function App() {
     const documentElement = document.documentElement;
     const isAdminRoute = activeRoute === "admin";
     documentElement.classList.toggle("admin-scroll", isAdminRoute);
+    documentElement.classList.toggle("page-scroll", ["games", "profile", "leaderboard", "player", "stats"].includes(activeRoute));
 
     if (!isAdminRoute) {
       window.scrollTo(0, 0);
     }
 
-    return () => documentElement.classList.remove("admin-scroll");
+    return () => documentElement.classList.remove("admin-scroll", "page-scroll");
   }, [activeRoute]);
 
   const useKittenMutation = useMutation({
@@ -353,7 +353,6 @@ export function App() {
     queryClient.removeQueries({ queryKey: ["player"] });
     setCurrentGuess([]);
     setSelectedCellIndex(0);
-    setShowStats(false);
     setShowInfo(false);
     setProfileEditing(false);
     setShowActionsMenu(false);
@@ -464,7 +463,7 @@ export function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (activeRoute !== "game" || showStats || showInfo || starReveal || showNotificationPrompt || launchModalOpen) return;
+      if (activeRoute !== "game" || showInfo || starReveal || showNotificationPrompt || launchModalOpen) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -575,7 +574,6 @@ export function App() {
       if (remainingMilliseconds > 0 || refreshTimer !== undefined) return;
 
       setRefreshingChallenge(true);
-      setShowStats(false);
       refreshTimer = window.setTimeout(() => {
         window.location.reload();
       }, NEXT_CHALLENGE_REFRESH_DELAY_MS);
@@ -674,14 +672,10 @@ export function App() {
 
       if (updated.status === "WON") {
         await Promise.all([statsRequest, launchVictoryConfetti()]);
-        setShowStats(true);
         return;
       }
 
       await statsRequest;
-      if (updated.status === "LOST") {
-        setShowStats(true);
-      }
     } catch (error) {
       if (handleAuthRequired(error)) return;
       showToast(error instanceof Error ? error.message : "Tentativo non valido", "warning");
@@ -699,10 +693,7 @@ export function App() {
   }
 
   function completeHexastar(action: HexastarGuessActionDto) {
-    void refreshStats().finally(() => {
-      setStatsInitialGame("hexastar");
-      setShowStats(true);
-    });
+    void refreshStats();
     if (action.game.status === "WON") void launchVictoryConfetti();
   }
 
@@ -904,7 +895,7 @@ export function App() {
             }}
             onOpenStats={() => {
               setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : "overall");
-              setShowStats(true);
+              setActiveRoute("stats");
               setShowActionsMenu(false);
             }}
             onOpenLeaderboard={() => {
@@ -931,6 +922,8 @@ export function App() {
             <div className="play-area">
               <LoadingSpinner />
             </div>
+          ) : activeRoute === "stats" ? (
+            <StatsView stats={statsSet} active={statsInitialGame} onChangeGame={setStatsInitialGame} />
           ) : activeRoute === "leaderboard" ? (
             leaderboardsQuery.isPending ? (
               <div className="play-area"><LoadingSpinner /></div>
@@ -957,6 +950,7 @@ export function App() {
             )
           ) : activeRoute === "profile" && me?.user ? (
             <ProfileView
+              onOpenStats={(game) => { setStatsInitialGame(game); setActiveRoute("stats"); }}
               user={me.user}
               stats={statsSet}
               editing={profileEditing}
@@ -1014,8 +1008,6 @@ export function App() {
               onComplete={(action) => {
                 void refreshStats();
                 if (action.game.status === "WON") void launchVictoryConfetti();
-                setShowStats(true);
-                setStatsInitialGame("hexasky");
               }}
             />
           ) : activeRoute === "hexaflow" && hexaflowToday && hexaflowStatsQuery.data ? (
@@ -1024,10 +1016,7 @@ export function App() {
               onPath={(request) => hexaflowPathMutation.mutateAsync(request)}
               onUpdate={(action) => setHexaflowGame(action.game)} onError={(message) => showToast(message, "warning")}
               onComplete={() => {
-                void refreshStats().finally(() => {
-                  setStatsInitialGame("hexaflow");
-                  setShowStats(true);
-                });
+                void refreshStats();
                 void launchVictoryConfetti();
               }} />
           ) : activeRoute === "hexastar" && hexastarToday && hexastarStatsQuery.data ? (
@@ -1123,10 +1112,6 @@ export function App() {
           )}
         </section>
 
-        {showStats ? (
-          <StatsModal game={game} stats={statsSet} initialGame={statsInitialGame} onClose={() => setShowStats(false)} />
-        ) : null}
-
         {showInfo ? <InfoModal onClose={() => setShowInfo(false)} /> : null}
 
         {activeRoute === "game" && hexawordTutorialOpen ? <HexawordTutorial onClose={() => {
@@ -1162,13 +1147,13 @@ export function App() {
           />
         ) : null}
 
-        {canUseGameActions ? <AppNavigation activeRoute={activeRoute} statsOpen={showStats} onNavigate={(route) => {
+        {canUseGameActions ? <AppNavigation activeRoute={activeRoute} onNavigate={(route) => {
           setActiveRoute(route);
           setProfileEditing(false);
           setShowActionsMenu(false);
         }} onOpenStats={() => {
           setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : "overall");
-          setShowStats(true);
+          setActiveRoute("stats");
           setShowActionsMenu(false);
         }} /> : null}
         <footer className="app-footer">
