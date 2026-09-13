@@ -29,6 +29,7 @@ import {
   TOAST_DURATION_MS
 } from "./constants";
 import { AppHeader } from "./AppHeader";
+import { AppNavigation } from "./AppNavigation";
 import {
   globalStatsQueryOptions,
   hexahackStatsQueryOptions,
@@ -92,7 +93,6 @@ import { AdminView } from "../features/admin/AdminView";
 import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
 import { useAppViewportHeight } from "../shared/hooks/useAppViewportHeight";
-import { usePreventZoom } from "../shared/hooks/usePreventZoom";
 import type { ToastMessage, ToastVariant } from "../shared/toast";
 import {
   formatCountdownDuration,
@@ -328,7 +328,6 @@ export function App() {
   });
 
   useAppViewportHeight(me?.loggedIn);
-  usePreventZoom();
 
   function clearToast() {
     setToast(null);
@@ -847,7 +846,7 @@ export function App() {
   if ((me?.authEnabled === true && !me.loggedIn) || isAuthRequiredError(meQuery.error)) {
     return (
       <AppThemeProvider theme={appTheme}>
-        <main className="app-shell">
+        <main className="app-shell login-shell">
           <GoogleLoginScreen
             onAccessToken={(token) => {
               storeAccessToken(token);
@@ -861,7 +860,7 @@ export function App() {
 
   return (
     <AppThemeProvider theme={appTheme}>
-      <main className={`app-shell${activeRoute === "admin" ? " admin-shell" : ""}`}>
+      <main className={`app-shell route-${activeRoute}${activeRoute === "admin" ? " admin-shell" : ""}${canUseGameActions ? " has-navigation" : ""}`}>
         <section className={`game-surface${activeRoute === "admin" ? " admin-surface" : ""}`} aria-busy={loading}>
           <AppHeader
             puzzleDate={puzzleDate}
@@ -1163,6 +1162,15 @@ export function App() {
           />
         ) : null}
 
+        {canUseGameActions ? <AppNavigation activeRoute={activeRoute} statsOpen={showStats} onNavigate={(route) => {
+          setActiveRoute(route);
+          setProfileEditing(false);
+          setShowActionsMenu(false);
+        }} onOpenStats={() => {
+          setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : "overall");
+          setShowStats(true);
+          setShowActionsMenu(false);
+        }} /> : null}
         <footer className="app-footer">
           <span>Sviluppato con</span>
           <Heart className="footer-heart" aria-hidden="true" />

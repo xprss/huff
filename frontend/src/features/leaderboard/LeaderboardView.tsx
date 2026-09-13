@@ -37,13 +37,13 @@ export function LeaderboardView({
   const period = leaderboards[activeTab];
 
   return (
-    <section className="leaderboard-view" aria-label="Leaderboard">
+    <section className="leaderboard-view" aria-label="Classifica">
       <header className="leaderboard-head">
         <button className="icon-button profile-back" type="button" onClick={onBack} aria-label="Torna al gioco" title="Torna">
           <ChevronLeft size={23} />
         </button>
         <div>
-          <h2><Trophy size={21} aria-hidden="true" /> Leaderboard</h2>
+          <h2><Trophy size={21} aria-hidden="true" /> Classifica</h2>
           <p>{periodLabel(period, activeTab)}</p>
         </div>
       </header>

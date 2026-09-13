@@ -95,10 +95,11 @@ export function AppHeader({
   return (
     <header className="topbar">
       <div className="title-row">
-        <div className="title-mark">
-          <h1>{APP_NAME}</h1>
-          <p className="date">{puzzleDate}</p>
-        </div>
+        <h1 className="brand-heading"><button className="brand-home" type="button" onClick={onOpenGames} aria-label={`${APP_NAME}, torna ai giochi`}>
+          <span className="brand-symbol" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</span>
+          <span className="title-mark"><span className="brand-name">{APP_NAME}</span><span className="brand-caption">Il piacere di pensarci.</span></span>
+        </button></h1>
+        <p className="date">{puzzleDate}</p>
         <div className="actions" ref={actionsMenuRef}>
           {showStarButton ? (
             <button
@@ -129,7 +130,7 @@ export function AppHeader({
             onClick={onToggleMenu}
             aria-haspopup="menu"
             aria-expanded={showActionsMenu}
-            aria-label="Apri menu"
+            aria-label={showActionsMenu ? "Chiudi menu" : "Apri menu"}
             title="Menu"
           >
             <Menu size={21} />

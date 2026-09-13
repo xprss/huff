@@ -35,7 +35,7 @@ export function ModeSelection({
               ) : (
                 <span className="classic-mark" aria-hidden="true" />
               )}
-              {isSelected ? <span>{mode.label}</span> : null}
+              <span>{mode.label}</span>
             </button>
           );
         })}

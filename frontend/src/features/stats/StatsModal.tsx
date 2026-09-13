@@ -16,7 +16,7 @@ const RANK_LABELS: Readonly<Record<HexahackRank, string>> = {
 export function StatsTabs({ active, onChange }: { active: StatsGame; onChange: (game: StatsGame) => void }) {
   return (
     <div className="game-stats-tabs" role="tablist" aria-label="Gioco">
-      {([['overall', 'Overall'], ['hexaword', 'Hexaword'], ['hexahack', 'Hexahack'], ['hexasky', 'Hexasky'], ['hexaflow', 'Hexaflow'], ['hexastar', 'Hexastar']] as const).map(([id, label]) =>
+      {([['overall', 'Tutti'], ['hexaword', 'Hexaword'], ['hexahack', 'Hexahack'], ['hexasky', 'Hexasky'], ['hexaflow', 'Hexaflow'], ['hexastar', 'Hexastar']] as const).map(([id, label]) =>
         <button key={id} type="button" role="tab" aria-selected={active === id} className={active === id ? "selected" : ""} onClick={() => onChange(id)}>{label}</button>
       )}
     </div>
