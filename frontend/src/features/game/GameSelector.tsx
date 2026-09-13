@@ -49,7 +49,7 @@ export function GameSelector({
               <strong>Hexaword</strong>
               {hexawordCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}
             </span>
-            <span className="game-selector-description">Trova la parola italiana di sei lettere.</span>
+            <span className="game-selector-description">Indovina la parola italiana di sei lettere in sei tentativi.</span>
           </span>
           <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
@@ -62,7 +62,7 @@ export function GameSelector({
               <strong>Hexahack</strong>
               {hexahackCompleted ? <small><Check aria-hidden="true" /> Accesso completato</small> : null}
             </span>
-            <span className="game-selector-description">Viola il nodo senza perdere Stealth.</span>
+            <span className="game-selector-description">Scopri il codice di sei cifre usando le sonde e conserva lo Stealth.</span>
           </span>
           <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
@@ -72,7 +72,7 @@ export function GameSelector({
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name"><strong>Hexasky</strong>{hexaskyCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-            <span className="game-selector-description">Risolvi il grattacielo quotidiano 4×4.</span>
+            <span className="game-selector-description">Completa la griglia 4×4 seguendo gli indizi dei grattacieli.</span>
           </span>
           <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
@@ -82,7 +82,7 @@ export function GameSelector({
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name"><strong>Hexaflow</strong>{hexaflowCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-            <span className="game-selector-description">{hexaflowAvailable ? "Collega le parole del tema e trova il Flusso." : "Non disponibile oggi"}</span>
+            <span className="game-selector-description">{hexaflowAvailable ? "Unisci le lettere per trovare le parole a tema e il Flusso." : "Non disponibile oggi"}</span>
           </span>
           <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
@@ -92,7 +92,7 @@ export function GameSelector({
           </span>
           <span className="game-selector-copy">
             <span className="game-selector-name"><strong>Hexastar</strong>{hexastarCompleted ? <small><Check aria-hidden="true" /> Completato</small> : null}</span>
-            <span className="game-selector-description">Trova la parola componendo le sue sillabe.</span>
+            <span className="game-selector-description">Ricostruisci la parola del giorno inserendo le sillabe giuste.</span>
           </span>
           <span className="game-selector-open" aria-hidden="true"><ArrowUpRight /></span>
         </button>
