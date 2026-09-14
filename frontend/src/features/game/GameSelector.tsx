@@ -56,7 +56,7 @@ export function GameSelector({
           </button>
         ))}
       </div>
-      <div className="daily-note"><Clock3 size={17} aria-hidden="true" /><p>Un nuovo giorno, una nuova sfida.<br /><span>I rompicapi si rinnovano a mezzanotte.</span></p></div>
+      <div className="daily-note"><span>Sviluppato con ❤️ da vins e yumi.</span></div>
     </section>
   );
 }
