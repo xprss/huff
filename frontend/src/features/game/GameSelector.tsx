@@ -56,7 +56,7 @@ export function GameSelector({
           </button>
         ))}
       </div>
-      <div className="daily-note"><Clock3 size={17} aria-hidden="true" /><span>Sviluppato con ❤️ da vins e yumi.</span></p></div>
+      <div className="daily-note"><span>Sviluppato con ❤️ da vins e yumi.</span></p></div>
     </section>
   );
 }
