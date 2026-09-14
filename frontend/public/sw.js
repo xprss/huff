@@ -1,5 +1,5 @@
-const CACHE_NAME = "hexaquot-shell-v2";
-const APP_SHELL = ["/", "/manifest.json", "/icons/huff-icon.svg?v=2", "/icons/hexaquot-180.png", "/icons/hexaquot-192.png", "/icons/hexaquot-512.png"];
+const CACHE_NAME = "hexaquot-shell-v3";
+const APP_SHELL = ["/", "/manifest.json?v=2", "/icons/huff-icon.svg?v=2", "/icons/hexaquot-180.png", "/icons/hexaquot-192.png", "/icons/hexaquot-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
