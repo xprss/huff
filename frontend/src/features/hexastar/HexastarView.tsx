@@ -1,9 +1,9 @@
 import React from "react";
 import { CircleHelp, Share2 } from "lucide-react";
 import { GameKeyboard } from "../game/components/GameKeyboard";
-import { SHARE_EMOJI } from "../../app/constants";
+import { SHARE_EMOJI, STATE_RANK } from "../../app/constants";
 import { formatPuzzleDate } from "../../shared/utils/date";
-import type { HexastarAttemptDto, HexastarGuessActionDto, HexastarSyllableResultDto, HexastarTodayDto } from "../../types";
+import type { HexastarAttemptDto, HexastarGuessActionDto, HexastarSyllableResultDto, HexastarTodayDto, TileState } from "../../types";
 import { HexastarTutorial } from "./HexastarTutorial";
 
 type AnimationPhase = "idle" | "assembling" | "separating" | "won" | "rejected";
@@ -44,6 +44,24 @@ export function HexastarView({
     if (board) board.scrollTop = board.scrollHeight;
   }, [today.puzzleDate, game?.attempts.length]);
 
+  // Match Hexaword's keyboard feedback. A letter can occur more than once in
+  // a guess, so retain its strongest confirmed state across every attempt.
+  const keyStates = React.useMemo(() => {
+    const states = new Map<string, Exclude<TileState, "HIDDEN">>();
+    game?.attempts.forEach((attempt) => {
+      attempt.tiles.forEach((tile) => {
+        tile.letters.forEach(({ letter, state }) => {
+          const normalizedLetter = letter.toUpperCase();
+          const previous = states.get(normalizedLetter);
+          if (!previous || STATE_RANK[state] > STATE_RANK[previous]) {
+            states.set(normalizedLetter, state);
+          }
+        });
+      });
+    });
+    return states;
+  }, [game]);
+
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (!canPlay || tutorialOpen || phase !== "idle") return;
@@ -60,6 +78,7 @@ export function HexastarView({
   function addLetter(rawLetter: string) {
     if (!canPlay || phase !== "idle") return;
     const letter = rawLetter.toUpperCase();
+    if (keyStates.get(letter) === "ABSENT") return;
     setSyllables((current) => {
       const next = [...current];
       let index = selected;
@@ -177,7 +196,7 @@ export function HexastarView({
     {game && game.status !== "IN_PROGRESS" && phase === "idle" ? <button className="share-button" type="button" onClick={() => void share()}><Share2 size={18}/><span>Condividi risultato</span></button> : null}
 
     <div className="keyboard-zone">
-      <GameKeyboard canPlay={canPlay && phase === "idle"} canSubmit={canPlay && phase === "idle" && complete} keyStates={new Map()} shouldHideKeyboardHints onAddLetter={addLetter} onBackspace={removeLetter} onSubmit={() => void submit()}/>
+      <GameKeyboard canPlay={canPlay && phase === "idle"} canSubmit={canPlay && phase === "idle" && complete} keyStates={keyStates} shouldHideKeyboardHints={false} onAddLetter={addLetter} onBackspace={removeLetter} onSubmit={() => void submit()}/>
     </div>
 
     {tutorialOpen ? <HexastarTutorial onClose={() => {
