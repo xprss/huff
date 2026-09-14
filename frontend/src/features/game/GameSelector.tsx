@@ -56,7 +56,7 @@ export function GameSelector({
           </button>
         ))}
       </div>
-      <div className="daily-note"><span>Sviluppato con ❤️ da vins e yumi.</span></p></div>
+      <div className="daily-note"><span>Sviluppato con ❤️ da vins e yumi.</span></div>
     </section>
   );
 }
