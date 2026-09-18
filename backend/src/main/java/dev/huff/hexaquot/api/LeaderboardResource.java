@@ -67,6 +67,7 @@ public class LeaderboardResource {
             case "hexasky" -> LeaderboardRepository.Board.HEXASKY;
             case "hexaflow" -> LeaderboardRepository.Board.HEXAFLOW;
             case "hexastar" -> LeaderboardRepository.Board.HEXASTAR;
+            case "hexaeco" -> LeaderboardRepository.Board.HEXAECO;
             default -> throw new jakarta.ws.rs.BadRequestException("Gioco della leaderboard non valido.");
         };
     }

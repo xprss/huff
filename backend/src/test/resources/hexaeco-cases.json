@@ -1,0 +1,917 @@
+[
+  {
+    "board": {
+      "walls": [
+        3,
+        6,
+        12,
+        13,
+        16
+      ],
+      "lightStart": 10,
+      "echoStart": 20,
+      "lightGoal": 22,
+      "echoGoal": 2
+    },
+    "moves": [
+      "DOWN",
+      "UP",
+      "RIGHT",
+      "UP",
+      "UP",
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "WAIT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        7,
+        15,
+        17
+      ],
+      "lightStart": 1,
+      "echoStart": 23,
+      "lightGoal": 16,
+      "echoGoal": 5
+    },
+    "moves": [
+      "UP",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "UP",
+      "DOWN",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        1,
+        7,
+        10,
+        13,
+        21,
+        22
+      ],
+      "lightStart": 4,
+      "echoStart": 20,
+      "lightGoal": 19,
+      "echoGoal": 8
+    },
+    "moves": [
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "UP",
+      "UP",
+      "LEFT",
+      "WAIT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        4,
+        16,
+        18,
+        19,
+        24
+      ],
+      "lightStart": 15,
+      "echoStart": 23,
+      "lightGoal": 7,
+      "echoGoal": 1
+    },
+    "moves": [
+      "DOWN",
+      "LEFT",
+      "UP",
+      "UP",
+      "LEFT",
+      "DOWN",
+      "UP",
+      "UP",
+      "RIGHT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        16,
+        19,
+        22,
+        23,
+        24
+      ],
+      "lightStart": 3,
+      "echoStart": 7,
+      "lightGoal": 20,
+      "echoGoal": 14
+    },
+    "moves": [
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "DOWN",
+      "UP",
+      "RIGHT",
+      "WAIT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        4,
+        6,
+        13,
+        18
+      ],
+      "lightStart": 5,
+      "echoStart": 14,
+      "lightGoal": 22,
+      "echoGoal": 2
+    },
+    "moves": [
+      "UP",
+      "LEFT",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        11,
+        13,
+        18,
+        24
+      ],
+      "lightStart": 10,
+      "echoStart": 19,
+      "lightGoal": 20,
+      "echoGoal": 0
+    },
+    "moves": [
+      "DOWN",
+      "RIGHT",
+      "UP",
+      "UP",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "WAIT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        11,
+        12,
+        13,
+        17,
+        24
+      ],
+      "lightStart": 22,
+      "echoStart": 14,
+      "lightGoal": 23,
+      "echoGoal": 20
+    },
+    "moves": [
+      "UP",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        7,
+        8,
+        9,
+        17,
+        18,
+        23
+      ],
+      "lightStart": 24,
+      "echoStart": 22,
+      "lightGoal": 1,
+      "echoGoal": 11
+    },
+    "moves": [
+      "UP",
+      "UP",
+      "LEFT",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "UP",
+      "RIGHT",
+      "WAIT",
+      "UP"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        6,
+        7,
+        8,
+        22,
+        23
+      ],
+      "lightStart": 14,
+      "echoStart": 4,
+      "lightGoal": 2,
+      "echoGoal": 21
+    },
+    "moves": [
+      "UP",
+      "LEFT",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "WAIT",
+      "WAIT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        2,
+        6,
+        9,
+        17,
+        20
+      ],
+      "lightStart": 18,
+      "echoStart": 11,
+      "lightGoal": 4,
+      "echoGoal": 24
+    },
+    "moves": [
+      "UP",
+      "UP",
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "WAIT",
+      "WAIT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        7,
+        9,
+        10,
+        11,
+        15,
+        18,
+        24
+      ],
+      "lightStart": 5,
+      "echoStart": 6,
+      "lightGoal": 17,
+      "echoGoal": 2
+    },
+    "moves": [
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "WAIT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        1,
+        2,
+        4,
+        7,
+        11,
+        18
+      ],
+      "lightStart": 14,
+      "echoStart": 3,
+      "lightGoal": 5,
+      "echoGoal": 24
+    },
+    "moves": [
+      "DOWN",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "LEFT",
+      "UP",
+      "UP",
+      "RIGHT",
+      "WAIT",
+      "UP"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        6,
+        9,
+        16,
+        22,
+        24
+      ],
+      "lightStart": 15,
+      "echoStart": 8,
+      "lightGoal": 12,
+      "echoGoal": 21
+    },
+    "moves": [
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "UP",
+      "UP",
+      "UP",
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "DOWN",
+      "RIGHT",
+      "WAIT",
+      "WAIT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        11,
+        17,
+        22,
+        24
+      ],
+      "lightStart": 18,
+      "echoStart": 5,
+      "lightGoal": 21,
+      "echoGoal": 19
+    },
+    "moves": [
+      "UP",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "WAIT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        5,
+        8,
+        9,
+        17,
+        20,
+        22
+      ],
+      "lightStart": 0,
+      "echoStart": 3,
+      "lightGoal": 4,
+      "echoGoal": 10
+    },
+    "moves": [
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "RIGHT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        9,
+        12,
+        14,
+        21,
+        23
+      ],
+      "lightStart": 2,
+      "echoStart": 19,
+      "lightGoal": 22,
+      "echoGoal": 3
+    },
+    "moves": [
+      "RIGHT",
+      "LEFT",
+      "UP",
+      "UP",
+      "UP",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "WAIT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        4,
+        10,
+        12,
+        19
+      ],
+      "lightStart": 7,
+      "echoStart": 15,
+      "lightGoal": 17,
+      "echoGoal": 9
+    },
+    "moves": [
+      "RIGHT",
+      "UP",
+      "UP",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "WAIT",
+      "LEFT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        6,
+        15,
+        17,
+        19,
+        20,
+        22
+      ],
+      "lightStart": 24,
+      "echoStart": 13,
+      "lightGoal": 7,
+      "echoGoal": 23
+    },
+    "moves": [
+      "DOWN",
+      "LEFT",
+      "UP",
+      "RIGHT",
+      "UP",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "WAIT",
+      "UP"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        4,
+        7,
+        12,
+        18,
+        21
+      ],
+      "lightStart": 19,
+      "echoStart": 23,
+      "lightGoal": 24,
+      "echoGoal": 9
+    },
+    "moves": [
+      "DOWN",
+      "LEFT",
+      "UP",
+      "LEFT",
+      "UP",
+      "UP",
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "RIGHT",
+      "WAIT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        3,
+        10,
+        13,
+        16,
+        19,
+        24
+      ],
+      "lightStart": 2,
+      "echoStart": 9,
+      "lightGoal": 21,
+      "echoGoal": 1
+    },
+    "moves": [
+      "UP",
+      "DOWN",
+      "RIGHT",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "UP",
+      "LEFT",
+      "WAIT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        3,
+        7,
+        8,
+        13
+      ],
+      "lightStart": 15,
+      "echoStart": 4,
+      "lightGoal": 10,
+      "echoGoal": 1
+    },
+    "moves": [
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "UP",
+      "LEFT",
+      "UP",
+      "UP",
+      "WAIT",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        5,
+        12,
+        15,
+        16,
+        17
+      ],
+      "lightStart": 1,
+      "echoStart": 0,
+      "lightGoal": 24,
+      "echoGoal": 22
+    },
+    "moves": [
+      "RIGHT",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "WAIT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        3,
+        7,
+        14,
+        17,
+        22
+      ],
+      "lightStart": 4,
+      "echoStart": 10,
+      "lightGoal": 2,
+      "echoGoal": 21
+    },
+    "moves": [
+      "DOWN",
+      "LEFT",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "UP",
+      "UP",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "WAIT",
+      "WAIT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        4,
+        6,
+        11,
+        24
+      ],
+      "lightStart": 1,
+      "echoStart": 5,
+      "lightGoal": 0,
+      "echoGoal": 8
+    },
+    "moves": [
+      "DOWN",
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "UP",
+      "UP",
+      "RIGHT",
+      "WAIT",
+      "LEFT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        13,
+        14,
+        23
+      ],
+      "lightStart": 24,
+      "echoStart": 19,
+      "lightGoal": 20,
+      "echoGoal": 1
+    },
+    "moves": [
+      "LEFT",
+      "UP",
+      "LEFT",
+      "UP",
+      "UP",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "LEFT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        9,
+        10,
+        11,
+        24
+      ],
+      "lightStart": 22,
+      "echoStart": 13,
+      "lightGoal": 0,
+      "echoGoal": 20
+    },
+    "moves": [
+      "UP",
+      "UP",
+      "UP",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "WAIT",
+      "UP"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        1,
+        7,
+        9,
+        12,
+        20
+      ],
+      "lightStart": 2,
+      "echoStart": 18,
+      "lightGoal": 24,
+      "echoGoal": 17
+    },
+    "moves": [
+      "UP",
+      "UP",
+      "RIGHT",
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "RIGHT",
+      "DOWN",
+      "DOWN"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        0,
+        8,
+        9,
+        10,
+        20,
+        24
+      ],
+      "lightStart": 4,
+      "echoStart": 2,
+      "lightGoal": 12,
+      "echoGoal": 23
+    },
+    "moves": [
+      "DOWN",
+      "DOWN",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "WAIT",
+      "WAIT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        7,
+        9,
+        13,
+        14,
+        18,
+        20,
+        21
+      ],
+      "lightStart": 8,
+      "echoStart": 22,
+      "lightGoal": 10,
+      "echoGoal": 2
+    },
+    "moves": [
+      "UP",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "DOWN",
+      "RIGHT",
+      "UP",
+      "UP",
+      "UP",
+      "RIGHT",
+      "LEFT",
+      "LEFT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        5,
+        6,
+        10,
+        12,
+        20
+      ],
+      "lightStart": 4,
+      "echoStart": 21,
+      "lightGoal": 8,
+      "echoGoal": 0
+    },
+    "moves": [
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "UP",
+      "UP",
+      "UP",
+      "LEFT",
+      "LEFT",
+      "DOWN",
+      "LEFT",
+      "WAIT",
+      "RIGHT"
+    ]
+  },
+  {
+    "board": {
+      "walls": [
+        12,
+        14,
+        15,
+        18,
+        20
+      ],
+      "lightStart": 11,
+      "echoStart": 22,
+      "lightGoal": 4,
+      "echoGoal": 13
+    },
+    "moves": [
+      "UP",
+      "RIGHT",
+      "LEFT",
+      "UP",
+      "UP",
+      "RIGHT",
+      "RIGHT",
+      "DOWN",
+      "UP",
+      "RIGHT"
+    ]
+  }
+]

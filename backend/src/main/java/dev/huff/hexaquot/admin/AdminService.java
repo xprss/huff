@@ -17,6 +17,7 @@ import dev.huff.hexaquot.persistence.HexahackGameEntity;
 import dev.huff.hexaquot.persistence.HexaflowGameEntity;
 import dev.huff.hexaquot.persistence.HexaskyGameEntity;
 import dev.huff.hexaquot.persistence.HexastarGameEntity;
+import dev.huff.hexaquot.persistence.HexaecoGameEntity;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -130,6 +131,7 @@ public class AdminService {
         games += HexaskyGameEntity.delete("userId = ?1", userId);
         games += HexaflowGameEntity.delete("userId = ?1", userId);
         games += HexastarGameEntity.delete("userId = ?1", userId);
+        games += HexaecoGameEntity.delete("userId = ?1", userId);
         long subscriptions = PushSubscriptionEntity.delete("userId = ?1", userId);
         long adminRows = AdminUserEntity.delete("userId = ?1", userId);
         long users = UserEntity.delete("id = ?1", userId);
@@ -168,12 +170,13 @@ public class AdminService {
     private AdminPlayerSummaryDto summary(UserEntity user) {
         long started = GameEntity.count("userId", user.id) + HexahackGameEntity.count("userId", user.id)
             + HexaskyGameEntity.count("userId", user.id) + HexaflowGameEntity.count("userId", user.id)
-            + HexastarGameEntity.count("userId", user.id);
+            + HexastarGameEntity.count("userId", user.id) + HexaecoGameEntity.count("userId", user.id);
         long won = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.WON)
             + HexahackGameEntity.count("userId = ?1 and status = ?2", user.id, HexahackDtos.Status.COMPLETED)
             + HexaskyGameEntity.count("userId = ?1 and status = ?2", user.id, dev.huff.hexaquot.game.HexaskyDtos.Status.WON)
             + HexaflowGameEntity.count("userId = ?1 and status = ?2", user.id, dev.huff.hexaquot.game.HexaflowDtos.GameStatus.COMPLETED)
-            + HexastarGameEntity.count("userId = ?1 and status = ?2", user.id, dev.huff.hexaquot.game.HexastarDtos.Status.WON);
+            + HexastarGameEntity.count("userId = ?1 and status = ?2", user.id, dev.huff.hexaquot.game.HexastarDtos.Status.WON)
+            + HexaecoGameEntity.count("userId", user.id);
         long lost = GameEntity.count("userId = ?1 and status = ?2", user.id, GameStatus.LOST)
             + HexaskyGameEntity.count("userId = ?1 and status = ?2", user.id, dev.huff.hexaquot.game.HexaskyDtos.Status.LOST)
             + HexastarGameEntity.count("userId = ?1 and status = ?2", user.id, dev.huff.hexaquot.game.HexastarDtos.Status.LOST);
@@ -191,7 +194,9 @@ public class AdminService {
             .firstResultOptional().map(game -> game.updatedAt).orElse(user.createdAt);
         String starActivity = HexastarGameEntity.<HexastarGameEntity>find("userId = ?1 order by updatedAt desc", user.id)
             .firstResultOptional().map(game -> game.updatedAt).orElse(user.createdAt);
-        String lastActivityAt = java.util.stream.Stream.of(wordActivity,hackActivity,skyActivity,flowActivity,starActivity).max(String::compareTo).orElse(user.createdAt);
+        String ecoActivity = HexaecoGameEntity.<HexaecoGameEntity>find("userId = ?1 order by updatedAt desc", user.id)
+            .firstResultOptional().map(game -> game.updatedAt).orElse(user.createdAt);
+        String lastActivityAt = java.util.stream.Stream.of(wordActivity,hackActivity,skyActivity,flowActivity,starActivity,ecoActivity).max(String::compareTo).orElse(user.createdAt);
         return new AdminPlayerSummaryDto(
             user.id,
             user.email,
@@ -300,6 +305,8 @@ public class AdminService {
                   SELECT id, user_id, CASE WHEN status = 'COMPLETED' THEN 'WON' ELSE status END AS status, updated_at FROM hexaflow_games
                   UNION ALL
                   SELECT id, user_id, status, updated_at FROM hexastar_games
+                  UNION ALL
+                  SELECT id, user_id, status, updated_at FROM hexaeco_games
                 ) g ON g.user_id = u.id
                 LEFT JOIN admin_users a ON a.user_id = u.id
                 WHERE :query = ''

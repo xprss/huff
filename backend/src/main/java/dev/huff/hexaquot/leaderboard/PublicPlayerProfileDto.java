@@ -17,6 +17,7 @@ public record PublicPlayerProfileDto(
     HexaskyDtos.StatsDto hexaskyStats,
     HexaflowDtos.StatsDto hexaflowStats,
     StatsDto hexastarStats,
+    dev.huff.hexaquot.game.HexaecoDtos.StatsDto hexaecoStats,
     MedalCountsDto medals
 ) {
 }

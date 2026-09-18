@@ -14,7 +14,7 @@ import java.util.Set;
 
 @ApplicationScoped
 public class LeaderboardRepository {
-    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY, HEXAFLOW, HEXASTAR }
+    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY, HEXAFLOW, HEXASTAR, HEXAECO }
 
     public List<PlayerScore> winnerScores(String startDate, String endDate) {
         return winnerScores(Board.HEXAWORD, startDate, endDate);
@@ -27,6 +27,7 @@ public class LeaderboardRepository {
         if (board == Board.OVERALL || board == Board.HEXASKY) merge(scores, hexaskyRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXAFLOW) merge(scores, hexaflowRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXASTAR) merge(scores, hexastarRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXAECO) merge(scores, hexaecoRows(startDate, endDate));
         if (scores.isEmpty()) return List.of();
         Set<String> ids = scores.keySet();
         Map<String, UserEntity> users = new HashMap<>();
@@ -85,6 +86,15 @@ public class LeaderboardRepository {
         var typed = Panache.getEntityManager().createQuery(query, Object[].class)
             .setParameter(1, dev.huff.hexaquot.game.HexastarDtos.Status.WON);
         if (startDate != null) typed.setParameter(2, startDate).setParameter(3, endDate);
+        return typed.getResultList();
+    }
+
+    private List<Object[]> hexaecoRows(String startDate, String endDate) {
+        String query = "SELECT g.userId, COUNT(g), MAX(g.completedAt) FROM HexaecoGameEntity g WHERE g.status = 'WON'";
+        if (startDate != null) query += " AND g.puzzleDate >= ?1 AND g.puzzleDate < ?2";
+        query += " GROUP BY g.userId";
+        var typed = Panache.getEntityManager().createQuery(query, Object[].class);
+        if (startDate != null) typed.setParameter(1, startDate).setParameter(2, endDate);
         return typed.getResultList();
     }
 

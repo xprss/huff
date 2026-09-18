@@ -93,6 +93,7 @@ public class AuthResource {
     }
 
     public record UserDto(
+        String id,
         String email,
         String displayName,
         String nickname,
@@ -105,6 +106,7 @@ public class AuthResource {
     ) {
         static UserDto from(dev.huff.hexaquot.auth.AppUser user, MedalCountsDto medals) {
             return new UserDto(
+                user.id(),
                 user.email(),
                 user.displayName(),
                 user.nickname(),
