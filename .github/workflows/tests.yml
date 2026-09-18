@@ -76,6 +76,10 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Test game rules
+        working-directory: frontend
+        run: npm test
+
       - name: Verify built version
         working-directory: frontend
         run: npm run verify:version -- "${VITE_APP_VERSION}"

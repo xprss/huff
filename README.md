@@ -5,6 +5,49 @@
 
 Daily Italian word puzzle built with React, TypeScript, and a Java Quarkus backend.
 
+## Hexaeco
+
+Open `/#/hexaeco` for the daily movement puzzle. Move the circle with the arrow
+buttons or arrow keys; the diamond repeats each command two turns later.
+`Aspetta` (Space) holds the circle while the echo continues. Walls and edges
+stop only the affected light and still consume the command. Both lights must
+occupy their matching goals at the end of the same turn. Undo (Backspace or Z)
+and restart are free; there is no timer or attempt limit.
+
+The version 1 catalogue contains 32 connected boards, each with a shortest
+solution of 10–14 commands. Rotations and reflections provide 256 daily layouts
+before the sequence repeats. The server selects the board using the existing
+`GAME_TIMEZONE`. Keep the version 1 catalogue and its ordering immutable, since
+stored solutions depend on them; future catalogues need a new rules version.
+
+Drafts are saved locally by stable account ID, puzzle date and rules version.
+The authenticated `/api/me` user object now includes that ID. Only verified
+completions are stored on the server; reloading an unfinished puzzle on another
+device does not transfer its draft. Completion updates the daily progress,
+personal/public statistics and both Hexaeco and overall leaderboards. Like the
+other non-word puzzles, a completion contributes one win to aggregate statistics.
+
+- `GET /api/hexaeco/today`: date, rules version, board and saved completion.
+- `POST /api/hexaeco/today/submissions`: `requestId`, `puzzleDate`,
+  `rulesVersion` and `moves` (`UP`, `RIGHT`, `DOWN`, `LEFT`, `WAIT`). The server
+  replays the sequence and atomically records at most one completion per user
+  and date. Stale uncompleted puzzles return 409; completed submissions replay
+  the saved result, including retries after midnight.
+- `GET /api/hexaeco/stats` and `GET /api/hexaeco/leaderboards` expose the
+  completion count, streaks and rankings. The shared leaderboard also accepts
+  `?game=hexaeco`.
+
+Flyway migration `V19__add_hexaeco.sql` creates the completion table. Deploy the
+frontend and backend together through the existing delivery workflow; no new
+environment variables or push campaign are required.
+
+Run `npm test` in `frontend` for the movement/draft tests and `mvn test` in
+`backend` for rules, all 256 layouts, persistence, concurrency and API tests.
+Both engines use the same golden examples in
+`backend/src/test/resources/hexaeco-cases.json`. Automated checks establish
+solvability; the planned five-person playtest is still needed to validate the
+3–5 minute target and unaided tutorial comprehension before launch.
+
 ## Local Development
 
 Backend:
