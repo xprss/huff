@@ -17,7 +17,8 @@ const GAME_TABS: ReadonlyArray<{ id: LeaderboardGame; label: string }> = [
   { id: "hexahack", label: "Hexahack" },
   { id: "hexasky", label: "Hexasky" },
   { id: "hexaflow", label: "Hexaflow" },
-  { id: "hexastar", label: "Hexastar" }
+  { id: "hexastar", label: "Hexastar" },
+  { id: "hexaeco", label: "Hexaeco" }
 ];
 
 export function LeaderboardView({

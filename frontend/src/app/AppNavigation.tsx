@@ -6,7 +6,7 @@ export function AppNavigation({ activeRoute, onNavigate, onOpenStats }: {
   onNavigate: (route: AppRoute) => void;
   onOpenStats: () => void;
 }) {
-  const gameActive = ["games", "game", "hexahack", "hexasky", "hexaflow", "hexastar"].includes(activeRoute);
+  const gameActive = ["games", "game", "hexahack", "hexasky", "hexaflow", "hexastar", "hexaeco"].includes(activeRoute);
   const items = [
     { label: "Giochi", Icon: Grid2X2, active: gameActive, onClick: () => onNavigate("games") },
     { label: "Classifica", Icon: Trophy, active: activeRoute === "leaderboard" || activeRoute === "player", onClick: () => onNavigate("leaderboard") },

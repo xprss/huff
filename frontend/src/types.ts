@@ -2,6 +2,42 @@ export type TileState = "CORRECT" | "PRESENT" | "ABSENT" | "HIDDEN";
 export type GameStatus = "IN_PROGRESS" | "WON" | "LOST";
 export type GameMode = "CLASSIC" | "MISCHIEVOUS_MOUSE" | "STUBBORN_CRAB";
 export type IsoDateString = `${number}-${number}-${number}`;
+export type HexaecoCommand = "UP" | "RIGHT" | "DOWN" | "LEFT" | "WAIT";
+export interface HexaecoBoardDto {
+  readonly walls: readonly number[];
+  readonly lightStart: number;
+  readonly echoStart: number;
+  readonly lightGoal: number;
+  readonly echoGoal: number;
+}
+export interface HexaecoGameDto {
+  readonly puzzleDate: IsoDateString;
+  readonly rulesVersion: number;
+  readonly status: "WON";
+  readonly moves: readonly HexaecoCommand[];
+  readonly completedAt: string;
+}
+export interface HexaecoTodayDto {
+  readonly puzzleDate: IsoDateString;
+  readonly rulesVersion: number;
+  readonly board: HexaecoBoardDto;
+  readonly game: HexaecoGameDto | null;
+}
+export interface HexaecoSubmitRequestDto {
+  readonly requestId: string;
+  readonly puzzleDate: IsoDateString;
+  readonly rulesVersion: number;
+  readonly moves: readonly HexaecoCommand[];
+}
+export interface HexaecoSubmitActionDto {
+  readonly game: HexaecoGameDto;
+  readonly replayed: boolean;
+}
+export interface HexaecoStatsDto {
+  readonly completed: number;
+  readonly currentStreak: number;
+  readonly maxStreak: number;
+}
 export type GuessAttempt = "1" | "2" | "3" | "4" | "5" | "6";
 export type GuessDistributionDto = Partial<Record<GuessAttempt, number>>;
 
@@ -283,6 +319,7 @@ export interface StatsSetDto {
   readonly hexasky: HexaskyStatsDto;
   readonly hexaflow: HexaflowStatsDto;
   readonly hexastar: StatsDto;
+  readonly hexaeco: HexaecoStatsDto;
 }
 
 export interface AdminPrivilegesDto {
@@ -294,6 +331,7 @@ export interface AdminPrivilegesDto {
 }
 
 export interface UserDto {
+  readonly id: string;
   readonly email: string | null;
   readonly displayName: string | null;
   readonly nickname: string;
@@ -334,7 +372,7 @@ export interface LeaderboardsDto {
   readonly weekly: LeaderboardPeriodDto;
 }
 
-export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow" | "hexastar";
+export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "hexaeco";
 
 export interface PublicPlayerProfileDto {
   readonly displayName: string;
@@ -348,6 +386,7 @@ export interface PublicPlayerProfileDto {
   readonly hexaskyStats: HexaskyStatsDto;
   readonly hexaflowStats: HexaflowStatsDto;
   readonly hexastarStats: StatsDto;
+  readonly hexaecoStats: HexaecoStatsDto;
   readonly medals: MedalCountsDto;
 }
 
@@ -511,6 +550,10 @@ export type ApiEndpointMap = {
   "/api/hexastar/today": { GET: { response: HexastarTodayDto } };
   "/api/hexastar/today/guesses": { POST: { body: HexastarGuessRequestDto; response: HexastarGuessActionDto } };
   "/api/hexastar/stats": { GET: { response: StatsDto } };
+  "/api/hexaeco/today": { GET: { response: HexaecoTodayDto } };
+  "/api/hexaeco/today/submissions": { POST: { body: HexaecoSubmitRequestDto; response: HexaecoSubmitActionDto } };
+  "/api/hexaeco/stats": { GET: { response: HexaecoStatsDto } };
+  "/api/hexaeco/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/overall/stats": { GET: { response: StatsDto } };
   "/api/game/today": {
     GET: {

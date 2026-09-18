@@ -8,6 +8,7 @@ import type {
   HexahackProbeRequestDto,
   HexahackSubmissionRequestDto,
   HexaskyCheckRequestDto,
+  HexaecoSubmitRequestDto,
   HexaflowBoardGenerationRequestDto,
   HexaflowPathRequestDto,
   HexaflowPuzzleDraftDto,
@@ -97,6 +98,9 @@ export type ApiClient = {
   readonly hexastarToday: EndpointHandler<"/api/hexastar/today", "GET">;
   readonly hexastarGuess: EndpointHandler<"/api/hexastar/today/guesses", "POST", [requestId: string, syllables: readonly string[]]>;
   readonly hexastarStats: EndpointHandler<"/api/hexastar/stats", "GET">;
+  readonly hexaecoToday: EndpointHandler<"/api/hexaeco/today", "GET">;
+  readonly hexaecoSubmit: EndpointHandler<"/api/hexaeco/today/submissions", "POST", [request: HexaecoSubmitRequestDto]>;
+  readonly hexaecoStats: EndpointHandler<"/api/hexaeco/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
@@ -205,6 +209,9 @@ export const api = {
   hexastarGuess: (requestId: string, syllables: readonly string[]) =>
     request("/api/hexastar/today/guesses", { method: "POST", body: { requestId, syllables } }),
   hexastarStats: () => request("/api/hexastar/stats", { method: "GET" }),
+  hexaecoToday: () => request("/api/hexaeco/today", { method: "GET" }),
+  hexaecoSubmit: (submission: HexaecoSubmitRequestDto) => request("/api/hexaeco/today/submissions", { method: "POST", body: submission }),
+  hexaecoStats: () => request("/api/hexaeco/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {

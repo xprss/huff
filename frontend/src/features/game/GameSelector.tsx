@@ -4,7 +4,7 @@ import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
 export function GameSelector({
   hexawordCompleted, hexahackCompleted, hexaskyCompleted, hexaflowCompleted,
-  hexaflowAvailable, hexastarCompleted, onHexaword, onHexahack, onHexasky, onHexaflow, onHexastar
+  hexaflowAvailable, hexastarCompleted, hexaecoCompleted, onHexaword, onHexahack, onHexasky, onHexaflow, onHexastar, onHexaeco
 }: {
   hexawordCompleted: boolean;
   hexahackCompleted: boolean;
@@ -12,11 +12,13 @@ export function GameSelector({
   hexaflowCompleted: boolean;
   hexaflowAvailable: boolean;
   hexastarCompleted: boolean;
+  hexaecoCompleted: boolean;
   onHexaword: () => void;
   onHexahack: () => void;
   onHexasky: () => void;
   onHexaflow: () => void;
   onHexastar: () => void;
+  onHexaeco: () => void;
 }) {
   const selectorRef = React.useRef<HTMLElement | null>(null);
   React.useEffect(() => { selectorRef.current?.scrollTo(0, 0); }, []);
@@ -26,7 +28,8 @@ export function GameSelector({
     { id: "hack", name: "Hexahack", category: "Codici e deduzione", description: "Decifra il codice. Resta invisibile.", completed: hexahackCompleted, available: true, onPlay: onHexahack },
     { id: "sky", name: "Hexasky", category: "Logica e prospettiva", description: "Ogni indizio cambia il tuo skyline.", completed: hexaskyCompleted, available: true, onPlay: onHexasky },
     { id: "flow", name: "Hexaflow", category: "Parole da collegare", description: "Unisci le lettere. Trova il Flusso.", completed: hexaflowCompleted, available: hexaflowAvailable, onPlay: onHexaflow },
-    { id: "star", name: "Hexastar", category: "Sillabe e intuizione", description: "Le sillabe giuste, al posto giusto.", completed: hexastarCompleted, available: true, onPlay: onHexastar }
+    { id: "star", name: "Hexastar", category: "Sillabe e intuizione", description: "Le sillabe giuste, al posto giusto.", completed: hexastarCompleted, available: true, onPlay: onHexastar },
+    { id: "eco", name: "Hexaeco", category: "Logica e sincronia", description: "Guida la luce. Anticipa la sua eco.", completed: hexaecoCompleted, available: true, onPlay: onHexaeco }
   ];
   const availableGames = games.filter((game) => game.available);
   const completed = availableGames.filter((game) => game.completed).length;

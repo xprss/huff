@@ -94,7 +94,8 @@ export function ProfileView({
     { id: "hexahack", name: "Hexahack", played: null, completed: stats.hexahack.completedAccesses, label: "accessi completati" },
     { id: "hexasky", name: "Hexasky", played: stats.hexasky.played, completed: stats.hexasky.won, label: "vinte" },
     { id: "hexaflow", name: "Hexaflow", played: stats.hexaflow.started, completed: stats.hexaflow.completed, label: "completate" },
-    { id: "hexastar", name: "Hexastar", played: stats.hexastar.played, completed: stats.hexastar.won, label: "vinte" }
+    { id: "hexastar", name: "Hexastar", played: stats.hexastar.played, completed: stats.hexastar.won, label: "vinte" },
+    { id: "hexaeco", name: "Hexaeco", played: stats.hexaeco.completed, completed: stats.hexaeco.completed, label: "completate" }
   ] as const;
   const winRate = stats.overall.played ? Math.round(stats.overall.won / stats.overall.played * 100) : 0;
 
@@ -198,7 +199,7 @@ export function ProfileView({
           {user.medals.gold + user.medals.silver + user.medals.bronze === 0 ? <p className="account-note">La prima medaglia ti aspetta. Continua a metterti in gioco!</p> : null}
         </section>
         <section className="account-panel profile-games" aria-labelledby="profile-games-title">
-          <h3 id="profile-games-title">Cinque modi di metterti alla prova</h3>
+          <h3 id="profile-games-title">I tuoi giochi, un passo alla volta</h3>
           <div className="profile-game-list">{games.map((game) => <button className={`profile-game-row profile-game-row--${game.id}`} key={game.id} type="button" onClick={() => onOpenStats(game.id)}>
             <span className="profile-game-mark" aria-hidden="true">{game.name.slice(4, 5).toUpperCase()}</span><span><strong>{game.name}</strong><small>{game.completed} {game.label}{game.played !== null ? ` · ${game.played} giocate` : ""}</small></span><ArrowRight size={17} aria-hidden="true" />
           </button>)}</div>

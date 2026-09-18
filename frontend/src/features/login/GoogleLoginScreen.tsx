@@ -89,7 +89,7 @@ export function GoogleLoginScreen({ onAccessToken }: { onAccessToken: (token: st
       <div className="login-copy">
         <p className="eyebrow"><Sparkles size={15} aria-hidden="true" /> Il tuo appuntamento con la curiosità</p>
         <h1 id="login-title">Una piccola pausa.<br /><span>Una bella sfida.</span></h1>
-        <p>Cinque giochi di parole e logica per accendere la mente. Nuovi rompicapi, ogni giorno.</p>
+        <p>Sei giochi di parole e logica per accendere la mente. Nuovi rompicapi, ogni giorno.</p>
       </div>
       <div className="login-showcase" aria-hidden="true">
         <span className="login-showcase-label">Meno rumore. Più intuizione.<ArrowUpRight size={22} /></span>

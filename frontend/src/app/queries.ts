@@ -14,6 +14,8 @@ export const queryKeys = {
   hexaflowStats: ["hexaflow", "stats"] as const,
   hexastarToday: ["hexastar", "today"] as const,
   hexastarStats: ["hexastar", "stats"] as const,
+  hexaecoToday: ["hexaeco", "today"] as const,
+  hexaecoStats: ["hexaeco", "stats"] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: (game?: LeaderboardGame) => game ? ["leaderboards", game] as const : ["leaderboards"] as const,
@@ -64,6 +66,8 @@ export const hexaflowTodayQueryOptions = () => queryOptions({ queryKey: queryKey
 export const hexaflowStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaflowStats, queryFn: api.hexaflowStats });
 export const hexastarTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexastarToday, queryFn: api.hexastarToday });
 export const hexastarStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexastarStats, queryFn: api.hexastarStats });
+export const hexaecoTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaecoToday, queryFn: api.hexaecoToday, refetchInterval: 60_000, refetchOnWindowFocus: "always" });
+export const hexaecoStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexaecoStats, queryFn: api.hexaecoStats });
 
 export const overallStatsQueryOptions = () => queryOptions({
   queryKey: queryKeys.overallStats,
