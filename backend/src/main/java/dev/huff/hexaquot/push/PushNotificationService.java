@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.game.DailyGameService;
 import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
 import dev.huff.hexaquot.persistence.PushCampaignDeliveryEntity;
+import dev.huff.hexaquot.persistence.ScheduledAlertEntity;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -189,6 +190,29 @@ public class PushNotificationService {
                 "/#/hexasky", "/icons/huff-icon.svg", "hexasky-launch"
             );
             if (sendNotification(subscription, payload, CAMPAIGN_PUSH_TTL_SECONDS)) delivery.sentAt = Instant.now().toString();
+        }
+    }
+
+    @Transactional
+    public void dispatchScheduledAlert(ScheduledAlertEntity alert) {
+        if (!configured()) return;
+        // Expired push messages stay in the admin history and are not delivered late.
+        long secondsRemaining = Instant.parse(alert.scheduledAt).plusSeconds(CAMPAIGN_PUSH_TTL_SECONDS).getEpochSecond() - Instant.now().getEpochSecond();
+        if (secondsRemaining <= 0) return;
+        String campaign = "ALERT_" + alert.id;
+        for (PushCampaignDeliveryEntity delivery : PushCampaignDeliveryEntity.<PushCampaignDeliveryEntity>list(
+            "campaign = ?1 and sentAt is null order by createdAt", campaign)) {
+            PushSubscriptionEntity subscription = PushSubscriptionEntity.findById(delivery.subscriptionId);
+            if (subscription == null) { delivery.delete(); continue; }
+            delivery.attempts = (delivery.attempts == null ? 0 : delivery.attempts) + 1;
+            delivery.lastAttemptAt = Instant.now().toString();
+            NotificationPayload payload = new NotificationPayload(
+                "scheduled-alert", alert.title, alert.body,
+                alert.url == null ? "/" : alert.url, "/icons/huff-icon.svg", campaign
+            );
+            if (sendNotification(subscription, payload, (int) secondsRemaining)) {
+                delivery.sentAt = Instant.now().toString();
+            }
         }
     }
 
