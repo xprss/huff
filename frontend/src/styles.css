@@ -4037,6 +4037,11 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
 .hexaflow-complete { text-align:center; border-radius:1rem; padding:1rem; background:color-mix(in srgb,#37a9a0 16%,transparent); }
 .admin-sections { margin:0 auto 1rem; }
 .admin-sections .selected { background:#37a9a0; color:#071f1d; }
+.alert-admin { display: grid; gap: 1rem; }
+.alert-form { width: min(100%, 720px); }
+.alert-hint { color: var(--color-muted); line-height: 1.5; margin: 0; }
+.alert-row { overflow-wrap: anywhere; }
+.alert-row p, .scheduled-alert-body { white-space: pre-wrap; }
 
 /* Hexaflow CMS: a task-focused workspace rather than a long form. */
 .hexaflow-cms { width:min(100%,76rem); margin:0 auto; padding:0 0 1rem; display:grid; gap:1rem; color:var(--color-text); }

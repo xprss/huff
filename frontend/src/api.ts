@@ -15,7 +15,8 @@ import type {
   LeaderboardGame,
   LeaderboardsDto,
   ProfileUpdateDto,
-  PushSubscriptionDto
+  PushSubscriptionDto,
+  ScheduledAlertRequestDto
 } from "./types";
 
 type ApiPath = keyof ApiEndpointMap;
@@ -79,6 +80,12 @@ export type ApiClient = {
   readonly me: EndpointHandler<"/api/me", "GET">;
   readonly markHexahackLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAHACK_LAUNCH/seen", "POST">;
   readonly markHexaflowLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAFLOW_LAUNCH/seen", "POST">;
+  readonly pendingAlerts: EndpointHandler<"/api/me/alerts", "GET">;
+  readonly markAlertSeen: EndpointHandler<"/api/me/alerts/:id/seen", "POST", [id: string]>;
+  readonly adminAlerts: EndpointHandler<"/api/admin/alerts", "GET">;
+  readonly createAdminAlert: EndpointHandler<"/api/admin/alerts", "POST", [draft: ScheduledAlertRequestDto]>;
+  readonly updateAdminAlert: EndpointHandler<"/api/admin/alerts/:id", "PUT", [id: string, draft: ScheduledAlertRequestDto]>;
+  readonly deleteAdminAlert: EndpointHandler<"/api/admin/alerts/:id", "DELETE", [id: string]>;
   readonly today: EndpointHandler<"/api/hexaword/today", "GET">;
   readonly selectMode: EndpointHandler<"/api/hexaword/today/mode", "POST", [mode: GameMode]>;
   readonly guess: EndpointHandler<"/api/hexaword/today/guesses", "POST", [guess: string]>;
@@ -175,6 +182,12 @@ export const api = {
   me: () => request("/api/me", { method: "GET" }),
   markHexahackLaunchSeen: () => request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" }),
   markHexaflowLaunchSeen: () => request("/api/me/announcements/HEXAFLOW_LAUNCH/seen", { method: "POST" }),
+  pendingAlerts: () => request("/api/me/alerts", { method: "GET" }),
+  markAlertSeen: (id: string) => request(`/api/me/alerts/${encodeURIComponent(id)}/seen` as "/api/me/alerts/:id/seen", { method: "POST" }),
+  adminAlerts: () => request("/api/admin/alerts", { method: "GET" }),
+  createAdminAlert: (draft: ScheduledAlertRequestDto) => request("/api/admin/alerts", { method: "POST", body: draft }),
+  updateAdminAlert: (id: string, draft: ScheduledAlertRequestDto) => request(`/api/admin/alerts/${encodeURIComponent(id)}` as "/api/admin/alerts/:id", { method: "PUT", body: draft }),
+  deleteAdminAlert: (id: string) => request(`/api/admin/alerts/${encodeURIComponent(id)}` as "/api/admin/alerts/:id", { method: "DELETE" }),
   today: () => request("/api/hexaword/today", { method: "GET" }),
   selectMode: (mode: GameMode) =>
     request("/api/hexaword/today/mode", {

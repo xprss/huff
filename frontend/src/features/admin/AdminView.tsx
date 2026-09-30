@@ -17,6 +17,7 @@ import type {
   AdminPlayerUpdateDto
 } from "../../types";
 import { HexaflowPuzzleAdmin } from "./HexaflowPuzzleAdmin";
+import { AlertAdmin } from "./AlertAdmin";
 
 type ConfirmAction = { readonly kind: "save" } | { readonly kind: "delete"; readonly typedValue: string };
 
@@ -43,7 +44,7 @@ export function AdminView({
   onError: (message: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow">(canViewPlayers ? "players" : "hexaflow");
+  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow" | "alerts">(canViewPlayers ? "players" : canManageHexaflowPuzzles ? "hexaflow" : "alerts");
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [playerSort, setPlayerSort] = React.useState<AdminPlayerSortDto>("alphabetical");
@@ -152,13 +153,20 @@ export function AdminView({
   const totalPages = playersPage?.totalPages ?? 1;
   const currentPage = playersPage?.page ?? page;
 
+  const sections = <nav className="admin-sections" aria-label="Sezioni admin">
+    {canViewPlayers ? <button className={adminSection === "players" ? "selected" : ""} type="button" onClick={() => setAdminSection("players")}>Giocatori</button> : null}
+    {canManageHexaflowPuzzles ? <button className={adminSection === "hexaflow" ? "selected" : ""} type="button" onClick={() => setAdminSection("hexaflow")}>Puzzle Hexaflow</button> : null}
+    <button className={adminSection === "alerts" ? "selected" : ""} type="button" onClick={() => setAdminSection("alerts")}>Alert</button>
+  </nav>;
+
+  if (adminSection === "alerts") return <>{sections}<AlertAdmin onSuccess={onSuccess} onError={onError} /></>;
   if (adminSection === "hexaflow") return <>
-    <nav className="admin-sections">{canViewPlayers ? <button type="button" onClick={() => setAdminSection("players")}>Giocatori</button> : null}<button className="selected" type="button">Puzzle Hexaflow</button></nav>
+    {sections}
     <HexaflowPuzzleAdmin onSuccess={onSuccess} onError={onError} />
   </>;
 
   return (
-    <><nav className="admin-sections"><button className="selected" type="button">Giocatori</button>{canManageHexaflowPuzzles ? <button type="button" onClick={() => setAdminSection("hexaflow")}>Puzzle Hexaflow</button> : null}</nav><section className="admin-view" aria-label="Admin">
+    <>{sections}<section className="admin-view" aria-label="Admin">
       <div className="admin-toolbar">
         <div>
           <h2>Admin</h2>

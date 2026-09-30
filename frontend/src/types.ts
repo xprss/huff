@@ -179,6 +179,17 @@ export interface MeDto {
 }
 
 export type AnnouncementCampaign = "HEXAHACK_LAUNCH" | "HEXAFLOW_LAUNCH";
+export interface ScheduledAlertDto {
+  readonly id: string;
+  readonly type: "PUSH" | "MODAL";
+  readonly title: string;
+  readonly body: string;
+  readonly url: string | null;
+  readonly scheduledAt: string;
+  readonly createdAt: string;
+  readonly dispatchedAt: string | null;
+}
+export type ScheduledAlertRequestDto = Pick<ScheduledAlertDto, "type" | "title" | "body" | "url" | "scheduledAt">;
 export type HexahackStatus = "IN_PROGRESS" | "COMPLETED";
 export type HexahackRank = "GHOST" | "SHADOW" | "BREACH" | "TRACED";
 export type HexahackProbeType = "PING" | "BIT_SCAN" | "LINK_TRACE" | "CHECKSUM";
@@ -530,6 +541,16 @@ export type ApiEndpointMap = {
   };
   "/api/me/announcements/HEXAFLOW_LAUNCH/seen": {
     POST: { response: void };
+  };
+  "/api/me/alerts": { GET: { response: readonly ScheduledAlertDto[] } };
+  "/api/me/alerts/:id/seen": { POST: { response: void } };
+  "/api/admin/alerts": {
+    GET: { response: readonly ScheduledAlertDto[] };
+    POST: { body: ScheduledAlertRequestDto; response: ScheduledAlertDto };
+  };
+  "/api/admin/alerts/:id": {
+    PUT: { body: ScheduledAlertRequestDto; response: ScheduledAlertDto };
+    DELETE: { response: void };
   };
   "/api/hexaword/today": { GET: { response: TodayGameDto } };
   "/api/hexaword/today/mode": { POST: { body: ModeRequestDto; response: GameDto } };

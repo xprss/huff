@@ -19,7 +19,8 @@ import type {
   ProfileUpdateDto,
   TodayGameDto,
   TileState,
-  StatsSetDto
+  StatsSetDto,
+  ScheduledAlertDto
 } from "../types";
 import {
   APP_NAME,
@@ -93,6 +94,7 @@ import { HexastarView } from "../features/hexastar/HexastarView";
 import { HexaecoView } from "../features/hexaeco/HexaecoView";
 import { HexahackLaunchModal } from "../features/notifications/HexahackLaunchModal";
 import { HexaflowLaunchModal } from "../features/notifications/HexaflowLaunchModal";
+import { ScheduledAlertModal } from "../features/notifications/ScheduledAlertModal";
 import { AdminView } from "../features/admin/AdminView";
 import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
 import { LoadingSpinner } from "../shared/components/LoadingSpinner";
@@ -146,6 +148,11 @@ export function App() {
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
   const isLoggedIn = Boolean(me?.loggedIn);
+  const pendingAlertsQuery = useQuery({
+    queryKey: ["me", "alerts"], queryFn: api.pendingAlerts, enabled: isLoggedIn,
+    refetchInterval: 60_000, refetchOnWindowFocus: "always"
+  });
+  const pendingAlert = pendingAlertsQuery.data?.[0] ?? null;
   const needsNotificationPrompt =
     isLoggedIn &&
     !notificationsEnabled &&
@@ -214,7 +221,7 @@ export function App() {
     hexastar: hexastarStatsQuery.data ?? emptyStats,
     hexaeco: hexaecoStatsQuery.data ?? { completed: 0, currentStreak: 0, maxStreak: 0 }
   };
-  const canViewAdmin = Boolean(me?.user?.admin?.canViewPlayers || me?.user?.admin?.canManageHexaflowPuzzles);
+  const canViewAdmin = Boolean(me?.user?.admin);
   const canViewPlayers = Boolean(me?.user?.admin?.canViewPlayers);
   const canManagePlayers = Boolean(me?.user?.admin?.canManagePlayers);
   const canManageHexaflowPuzzles = Boolean(me?.user?.admin?.canManageHexaflowPuzzles);
@@ -466,6 +473,7 @@ export function App() {
     if (
       !needsNotificationPrompt ||
       launchModalOpen ||
+      Boolean(pendingAlert) ||
       notificationPromptHandledRef.current
     ) {
       return;
@@ -473,7 +481,7 @@ export function App() {
 
     notificationPromptHandledRef.current = true;
     setShowNotificationPrompt(true);
-  }, [launchModalOpen, needsNotificationPrompt]);
+  }, [launchModalOpen, needsNotificationPrompt, pendingAlert]);
 
   React.useEffect(() => {
     if (!toast) return;
@@ -491,7 +499,7 @@ export function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (activeRoute !== "game" || showInfo || starReveal || showNotificationPrompt || launchModalOpen) return;
+      if (activeRoute !== "game" || showInfo || starReveal || showNotificationPrompt || launchModalOpen || pendingAlert) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -862,6 +870,12 @@ export function App() {
     if (play) setActiveRoute("hexaflow");
   }
 
+  function dismissScheduledAlert(id: string) {
+    queryClient.setQueryData<readonly ScheduledAlertDto[] | undefined>(["me", "alerts"],
+      (current) => current?.filter((alert) => alert.id !== id));
+    void api.markAlertSeen(id).catch(() => void queryClient.invalidateQueries({ queryKey: ["me", "alerts"] }));
+  }
+
   if ((me?.authEnabled === true && !me.loggedIn) || isAuthRequiredError(meQuery.error)) {
     return (
       <AppThemeProvider theme={appTheme}>
@@ -1020,7 +1034,7 @@ export function App() {
             hexaecoToday && me?.user ? <HexaecoView
               today={hexaecoToday}
               userId={me.user.id}
-              inputBlocked={showInfo || showNotificationPrompt || launchModalOpen || showActionsMenu}
+              inputBlocked={showInfo || showNotificationPrompt || launchModalOpen || Boolean(pendingAlert) || showActionsMenu}
               onSubmit={(request) => hexaecoSubmitMutation.mutateAsync(request)}
               onComplete={() => showToast("Hexaeco completato. In perfetta sincronia!", "success")}
               onError={(error) => { handleAuthRequired(error); }}
@@ -1176,6 +1190,10 @@ export function App() {
 
         {showLaunchAnnouncement ? (
           <HexahackLaunchModal onPlay={() => dismissLaunchAnnouncement(true)} onClose={() => dismissLaunchAnnouncement(false)} />
+        ) : null}
+
+        {pendingAlert && !showNotificationPrompt && !launchModalOpen ? (
+          <ScheduledAlertModal alert={pendingAlert} onClose={() => dismissScheduledAlert(pendingAlert.id)} />
         ) : null}
 
         {starReveal ? (
