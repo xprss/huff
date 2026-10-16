@@ -1,0 +1,1001 @@
+[
+  {
+    "dossier": {
+      "litCount": 2,
+      "relation": "SAME",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 3,
+    "loyalAdvisor": 0,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          6,
+          25,
+          41,
+          49,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          6,
+          25,
+          41,
+          49,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": false,
+        "remaining": [
+          6,
+          25,
+          41,
+          73
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": true,
+        "remaining": [
+          6,
+          25
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 2,
+      "relation": "SAME",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 48,
+    "loyalAdvisor": 1,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          6,
+          25,
+          41,
+          49,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          6,
+          25,
+          41,
+          49,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          49,
+          81,
+          97
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": false,
+        "remaining": [
+          97
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          97
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          97
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 2,
+      "relation": "IMPLIES",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 3,
+    "loyalAdvisor": 0,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          6,
+          13,
+          21,
+          25,
+          37,
+          41,
+          49,
+          69,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          6,
+          25,
+          41,
+          49,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": false,
+        "remaining": [
+          6,
+          25,
+          41,
+          73
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": true,
+        "remaining": [
+          6,
+          25
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 2,
+      "relation": "IMPLIES",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 48,
+    "loyalAdvisor": 1,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          6,
+          13,
+          21,
+          25,
+          37,
+          41,
+          49,
+          69,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          6,
+          25,
+          41,
+          49,
+          73,
+          81,
+          97
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          49,
+          81,
+          97
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": false,
+        "remaining": [
+          97
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          97
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          97
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 2,
+      "relation": "AT_LEAST_ONE",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 3,
+    "loyalAdvisor": 0,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          6,
+          10,
+          13,
+          18,
+          21,
+          34,
+          37,
+          66,
+          69
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": false,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": true,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          6
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 2,
+      "relation": "AT_LEAST_ONE",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 34,
+    "loyalAdvisor": 1,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          6,
+          10,
+          13,
+          18,
+          21,
+          34,
+          37,
+          66,
+          69
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": true,
+        "remaining": [
+          10,
+          13,
+          18,
+          21,
+          34,
+          37,
+          66,
+          69
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          10,
+          21,
+          37,
+          69
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": false,
+        "remaining": [
+          37,
+          69
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": true,
+        "remaining": [
+          69
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          69
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 4,
+      "relation": "SAME",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 15,
+    "loyalAdvisor": 0,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          78
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": false,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 4,
+      "relation": "SAME",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 60,
+    "loyalAdvisor": 1,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": false,
+        "remaining": [
+          54,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": true,
+        "remaining": [
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          121
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          121
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 4,
+      "relation": "IMPLIES",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 15,
+    "loyalAdvisor": 0,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          54,
+          61,
+          78,
+          86,
+          93,
+          102,
+          109,
+          117,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          78
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": false,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 4,
+      "relation": "IMPLIES",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 60,
+    "loyalAdvisor": 1,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          54,
+          61,
+          78,
+          86,
+          93,
+          102,
+          109,
+          117,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": false,
+        "remaining": [
+          54,
+          86,
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": true,
+        "remaining": [
+          102,
+          121
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          121
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          121
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 4,
+      "relation": "AT_LEAST_ONE",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 15,
+    "loyalAdvisor": 0,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          54,
+          58,
+          61,
+          78,
+          86,
+          90,
+          93,
+          102,
+          106,
+          109,
+          114,
+          117
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": false,
+        "remaining": [
+          30,
+          46,
+          54,
+          78,
+          86,
+          102
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          78
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": false,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          30
+        ],
+        "unlocked": true
+      }
+    ]
+  },
+  {
+    "dossier": {
+      "litCount": 4,
+      "relation": "AT_LEAST_ONE",
+      "firstSeal": 0,
+      "secondSeal": 1
+    },
+    "configuration": 58,
+    "loyalAdvisor": 1,
+    "steps": [
+      {
+        "advisor": 0,
+        "seal": 0,
+        "answer": true,
+        "remaining": [
+          30,
+          46,
+          54,
+          58,
+          61,
+          78,
+          86,
+          90,
+          93,
+          102,
+          106,
+          109,
+          114,
+          117
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 1,
+        "answer": true,
+        "remaining": [
+          58,
+          61,
+          90,
+          93,
+          106,
+          109,
+          114,
+          117
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 2,
+        "answer": true,
+        "remaining": [
+          58,
+          90,
+          106,
+          117
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 1,
+        "seal": 3,
+        "answer": true,
+        "remaining": [
+          106,
+          117
+        ],
+        "unlocked": false
+      },
+      {
+        "advisor": 0,
+        "seal": 4,
+        "answer": false,
+        "remaining": [
+          117
+        ],
+        "unlocked": true
+      },
+      {
+        "advisor": 1,
+        "seal": 5,
+        "answer": true,
+        "remaining": [
+          117
+        ],
+        "unlocked": true
+      }
+    ]
+  }
+]
