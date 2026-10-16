@@ -113,6 +113,7 @@ public class LeaderboardService {
             stats.hexaflow(),
             stats.hexastar(),
             stats.hexaeco(),
+            stats.hexatrap(),
             medalCounts(user.id)
         );
     }
@@ -133,6 +134,9 @@ public class LeaderboardService {
         Comparator<LeaderboardRepository.PlayerScore> comparator = Comparator
             .comparingInt(LeaderboardRepository.PlayerScore::wins)
             .reversed();
+        if (board == LeaderboardRepository.Board.HEXATRAP) {
+            comparator = comparator.thenComparing(LeaderboardRepository.PlayerScore::points, Comparator.reverseOrder());
+        }
         if (weekly) {
             comparator = comparator
                 .thenComparing(LeaderboardRepository.PlayerScore::lastWinAt, Comparator.nullsLast(String::compareTo))
@@ -145,13 +149,13 @@ public class LeaderboardService {
             .stream()
             .sorted(comparator)
             .map(score -> new LeaderboardEntryDto(0, score.user().displayName, score.user().nickname, score.user().profileEmoji,
-                score.wins()))
+                score.wins(), score.points()))
             .toList();
         List<LeaderboardEntryDto> ranked = java.util.stream.IntStream.range(0, entries.size())
             .mapToObj(index -> {
                 LeaderboardEntryDto entry = entries.get(index);
                 return new LeaderboardEntryDto(index + 1, entry.displayName(), entry.nickname(), entry.profileEmoji(),
-                    entry.wins());
+                    entry.wins(), entry.points());
             })
             .toList();
         return new LeaderboardPeriodDto(

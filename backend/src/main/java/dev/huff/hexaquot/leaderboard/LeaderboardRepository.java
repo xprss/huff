@@ -14,7 +14,7 @@ import java.util.Set;
 
 @ApplicationScoped
 public class LeaderboardRepository {
-    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY, HEXAFLOW, HEXASTAR, HEXAECO }
+    public enum Board { OVERALL, HEXAWORD, HEXAHACK, HEXASKY, HEXAFLOW, HEXASTAR, HEXAECO, HEXATRAP }
 
     public List<PlayerScore> winnerScores(String startDate, String endDate) {
         return winnerScores(Board.HEXAWORD, startDate, endDate);
@@ -28,13 +28,14 @@ public class LeaderboardRepository {
         if (board == Board.OVERALL || board == Board.HEXAFLOW) merge(scores, hexaflowRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXASTAR) merge(scores, hexastarRows(startDate, endDate));
         if (board == Board.OVERALL || board == Board.HEXAECO) merge(scores, hexaecoRows(startDate, endDate));
+        if (board == Board.OVERALL || board == Board.HEXATRAP) merge(scores, hexatrapRows(startDate, endDate));
         if (scores.isEmpty()) return List.of();
         Set<String> ids = scores.keySet();
         Map<String, UserEntity> users = new HashMap<>();
         UserEntity.<UserEntity>list("id in ?1", ids).forEach(user -> users.put(user.id, user));
         return scores.entrySet().stream()
             .filter(entry -> users.containsKey(entry.getKey()))
-            .map(entry -> new PlayerScore(users.get(entry.getKey()), entry.getValue().wins, entry.getValue().lastWinAt))
+            .map(entry -> new PlayerScore(users.get(entry.getKey()), entry.getValue().wins, entry.getValue().lastWinAt, board == Board.HEXATRAP ? entry.getValue().points : null))
             .toList();
     }
 
@@ -98,17 +99,29 @@ public class LeaderboardRepository {
         return typed.getResultList();
     }
 
+    private List<Object[]> hexatrapRows(String startDate, String endDate) {
+        String query = "SELECT g.userId, COUNT(g), MAX(g.completedAt), SUM(g.points) FROM HexatrapGameEntity g WHERE g.status = 'WON'";
+        if (startDate != null) query += " AND g.puzzleDate >= ?1 AND g.puzzleDate < ?2";
+        query += " GROUP BY g.userId";
+        var typed = Panache.getEntityManager().createQuery(query, Object[].class);
+        if (startDate != null) typed.setParameter(1, startDate).setParameter(2, endDate);
+        return typed.getResultList();
+    }
+
     private void merge(Map<String, MutableScore> scores, List<Object[]> rows) {
         for (Object[] row : rows) {
             MutableScore score = scores.computeIfAbsent((String) row[0], ignored -> new MutableScore());
             int wins = ((Long) row[1]).intValue();
             score.wins += wins;
+            if (row.length > 3) score.points += ((Number) row[3]).longValue();
             String timestamp = (String) row[2];
             if (score.lastWinAt == null || timestamp != null && timestamp.compareTo(score.lastWinAt) > 0) score.lastWinAt = timestamp;
         }
     }
 
-    private static class MutableScore { int wins; String lastWinAt; }
+    private static class MutableScore { int wins; long points; String lastWinAt; }
 
-    public record PlayerScore(UserEntity user, int wins, String lastWinAt) {}
+    public record PlayerScore(UserEntity user, int wins, String lastWinAt, Long points) {
+        public PlayerScore(UserEntity user, int wins, String lastWinAt) { this(user, wins, lastWinAt, null); }
+    }
 }

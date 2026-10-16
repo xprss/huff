@@ -307,6 +307,8 @@ public class AdminService {
                   SELECT id, user_id, status, updated_at FROM hexastar_games
                   UNION ALL
                   SELECT id, user_id, status, updated_at FROM hexaeco_games
+                  UNION ALL
+                  SELECT id, user_id, status, updated_at FROM hexatrap_games
                 ) g ON g.user_id = u.id
                 LEFT JOIN admin_users a ON a.user_id = u.id
                 WHERE :query = ''
