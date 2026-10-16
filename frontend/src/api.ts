@@ -1,5 +1,7 @@
 import type {
   ApiEndpointMap,
+  HexatrapQuestionRequestDto,
+  HexatrapSubmissionRequestDto,
   ApiErrorDto,
   HttpMethod,
   GameMode,
@@ -108,6 +110,11 @@ export type ApiClient = {
   readonly hexaecoToday: EndpointHandler<"/api/hexaeco/today", "GET">;
   readonly hexaecoSubmit: EndpointHandler<"/api/hexaeco/today/submissions", "POST", [request: HexaecoSubmitRequestDto]>;
   readonly hexaecoStats: EndpointHandler<"/api/hexaeco/stats", "GET">;
+  readonly hexatrapToday: EndpointHandler<"/api/hexatrap/today", "GET">;
+  readonly hexatrapQuestion: EndpointHandler<"/api/hexatrap/today/questions", "POST", [request: HexatrapQuestionRequestDto]>;
+  readonly hexatrapSubmit: EndpointHandler<"/api/hexatrap/today/submissions", "POST", [request: HexatrapSubmissionRequestDto]>;
+  readonly hexatrapEvents: EndpointHandler<"/api/hexatrap/today/events", "GET", [date: string, before?: number]>;
+  readonly hexatrapStats: EndpointHandler<"/api/hexatrap/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
@@ -225,6 +232,12 @@ export const api = {
   hexaecoToday: () => request("/api/hexaeco/today", { method: "GET" }),
   hexaecoSubmit: (submission: HexaecoSubmitRequestDto) => request("/api/hexaeco/today/submissions", { method: "POST", body: submission }),
   hexaecoStats: () => request("/api/hexaeco/stats", { method: "GET" }),
+  hexatrapToday: () => request("/api/hexatrap/today", { method: "GET" }),
+  hexatrapQuestion: (body: HexatrapQuestionRequestDto) => request("/api/hexatrap/today/questions", { method: "POST", body }),
+  hexatrapSubmit: (body: HexatrapSubmissionRequestDto) => request("/api/hexatrap/today/submissions", { method: "POST", body }),
+  hexatrapEvents: (date: string, before?: number) => request(
+    `/api/hexatrap/today/events?puzzleDate=${encodeURIComponent(date)}${before == null ? "" : `&before=${before}`}` as "/api/hexatrap/today/events", { method: "GET" }),
+  hexatrapStats: () => request("/api/hexatrap/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>
     request("/api/me/profile", {

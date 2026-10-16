@@ -1,0 +1,42 @@
+.trap-view { width: min(100%, 660px); margin: 0 auto; padding: 0 16px 32px; display: grid; gap: 16px; color: var(--color-text); }
+.trap-view button, .trap-view select, .trap-view input { font: inherit; color: inherit; }
+.trap-view button { min-height: 44px; border: 1px solid var(--color-surface-border); border-radius: 12px; background: var(--color-surface); padding: 10px 14px; cursor: pointer; }
+.trap-view button:disabled { opacity: .5; cursor: default; }
+.trap-view button:focus-visible, .trap-view input:focus-visible, .trap-view select:focus-visible, .trap-view summary:focus-visible { outline: 3px solid #a17cd6; outline-offset: 3px; }
+.trap-view button[aria-pressed=true] { background: #9471b926; border: 2px solid #9970bd; }
+.trap-panel { border: 1px solid var(--color-surface-border); border-radius: 16px; padding: 16px; background: var(--color-surface); }
+.trap-panel p { line-height: 1.55; margin: 10px 0; }
+.trap-panel summary { cursor: pointer; font-weight: 650; min-height: 28px; }
+.trap-score { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.trap-score strong { font-size: 26px; }
+.trap-score small { font-size: 14px; font-weight: 500; }
+.trap-score span, .trap-hint, .trap-view small { opacity: .8; }
+.trap-view fieldset { margin: 0; border: 0; padding: 0; min-width: 0; }
+.trap-view legend { margin-bottom: 10px; font-weight: 650; }
+.trap-advisors { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.trap-advisors button { display: grid; justify-items: center; gap: 8px; padding: 20px 8px; }
+.trap-advisors button span { font-size: 12px; }
+.trap-seals { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.trap-seals button { display: grid; justify-items: center; gap: 6px; }
+.trap-preview { text-align: center; }
+.trap-preview p { font-size: 19px; font-weight: 650; }
+.trap-view .trap-primary { background: #70518e; color: white; width: 100%; }
+.trap-submit label { display: block; font-weight: 650; margin-bottom: 10px; }
+.trap-submit > div { display: flex; gap: 10px; margin-bottom: 8px; }
+.trap-submit input { width: 100%; min-width: 0; min-height: 44px; border: 1px solid #8886; border-radius: 10px; padding: 10px; background: transparent; }
+.trap-notes { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin-bottom: 10px; }
+.trap-notes label { display: flex; justify-content: space-between; align-items: center; gap: 5px; }
+.trap-notes select { background: var(--color-surface); border: 1px solid #8886; border-radius: 6px; padding: 8px; max-width: 65%; }
+.trap-history ol { list-style: none; margin: 0; padding: 0; }
+.trap-event { display: grid; gap: 6px; border-top: 1px solid #8883; padding: 14px 0; }
+.trap-unlocked { padding: 12px 16px; border-radius: 12px; background: #9471b91a; }
+.trap-unlocked p { line-height: 1.5; }
+.trap-tutorial { border-top: 1px solid #8884; padding-top: 14px; margin-top: 14px; }
+.trap-error { color: #c44949; }
+.puzzle-card--trap { --art-node: #e1d6ed; --art-color: #88609f; }
+.puzzle-art--trap { color: #88609f; }
+@media (max-width: 360px) { .trap-view { padding-inline: 8px; } .trap-panel { padding: 12px; } .trap-notes { grid-template-columns: 1fr; } }
+
+.trap-view :is(button, input, select, summary) { scroll-margin-block: 100px; }
+.trap-reply:has(strong) { display: grid; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-surface-border); }
+.trap-reply strong { font-size: 24px; }

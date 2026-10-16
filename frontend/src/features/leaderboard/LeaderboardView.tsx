@@ -18,7 +18,8 @@ const GAME_TABS: ReadonlyArray<{ id: LeaderboardGame; label: string }> = [
   { id: "hexasky", label: "Hexasky" },
   { id: "hexaflow", label: "Hexaflow" },
   { id: "hexastar", label: "Hexastar" },
-  { id: "hexaeco", label: "Hexaeco" }
+  { id: "hexaeco", label: "Hexaeco" },
+  { id: "hexatrap", label: "Hexatrap" }
 ];
 
 export function LeaderboardView({
@@ -95,7 +96,7 @@ export function LeaderboardView({
                   <strong>{entry.displayName}</strong>
                   <small>{entry.nickname}</small>
                 </span>
-                <span className="leaderboard-wins"><strong>{entry.wins}</strong> vittorie</span>
+                <span className="leaderboard-wins"><strong>{entry.wins}</strong> vittorie{entry.points != null ? <small> · {entry.points} punti</small> : null}</span>
               </button>
             </li>
           ))}

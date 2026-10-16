@@ -16,6 +16,9 @@ export const queryKeys = {
   hexastarStats: ["hexastar", "stats"] as const,
   hexaecoToday: ["hexaeco", "today"] as const,
   hexaecoStats: ["hexaeco", "stats"] as const,
+  hexatrapToday: ["hexatrap", "today"] as const,
+  hexatrapStats: ["hexatrap", "stats"] as const,
+  hexatrapEvents: (date: string) => ["hexatrap", "events", date] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: (game?: LeaderboardGame) => game ? ["leaderboards", game] as const : ["leaderboards"] as const,
@@ -103,3 +106,6 @@ export const adminPlayerQueryOptions = (userId: string) =>
     queryKey: queryKeys.adminPlayer(userId),
     queryFn: () => api.adminPlayer(userId)
   });
+
+export const hexatrapTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexatrapToday, queryFn: api.hexatrapToday, refetchInterval: 60_000, refetchOnWindowFocus: "always", refetchOnMount: "always" });
+export const hexatrapStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexatrapStats, queryFn: api.hexatrapStats });

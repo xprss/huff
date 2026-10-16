@@ -76,7 +76,7 @@ export function AppHeader({
 
   const isMenuPageActive = (menuPage: "games" | "profile" | "leaderboard" | "admin") => {
     if (menuPage === "games") {
-      return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexahack" || activeRoute === "hexasky" || activeRoute === "hexaflow" || activeRoute === "hexastar" || activeRoute === "hexaeco";
+      return activeRoute === "games" || activeRoute === "game" || activeRoute === "hexahack" || activeRoute === "hexasky" || activeRoute === "hexaflow" || activeRoute === "hexastar" || activeRoute === "hexaeco" || activeRoute === "hexatrap";
     }
     if (menuPage === "leaderboard") {
       return activeRoute === "leaderboard" || activeRoute === "player";

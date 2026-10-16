@@ -1,9 +1,10 @@
-export type PuzzleKind = "word" | "hack" | "sky" | "flow" | "star" | "eco";
+export type PuzzleKind = "word" | "hack" | "sky" | "flow" | "star" | "eco" | "trap";
 
 /** Decorative previews, independent of the actual daily puzzle. */
 export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
   return (
     <span className={`puzzle-art puzzle-art--${kind}`} aria-hidden="true">
+      {kind === "trap" ? <svg viewBox="0 0 220 100" focusable="false">{[70,150].map(x => <g key={x}><circle cx={x} cy="30" r="14" fill="currentColor" opacity=".7"/><path d={`M${x-25} 82V69a25 25 0 0 1 50 0v13`} fill="currentColor" opacity=".25"/></g>)}<text x="110" y="58" textAnchor="middle" fill="currentColor" fontSize="25">?</text></svg> : null}
       {kind === "eco" ? <svg viewBox="0 0 220 100" focusable="false"><path d="M45 73V29H113V73H177" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="4 7" opacity=".3"/><circle cx="45" cy="73" r="24" fill="#bc7a16" opacity=".12"/><circle cx="45" cy="73" r="12" fill="#bc7a16"/><path d="m113 12 17 17-17 17-17-17Z" fill="#8060b0"/><path d="m113 1 28 28-28 28-28-28Z" fill="none" stroke="#8060b0" opacity=".2"/><circle cx="177" cy="73" r="12" fill="none" stroke="#bc7a16" strokeWidth="2"/></svg> : null}
       {kind === "word" ? <span className="art-word-grid">{"PAROLAGIOCHI".split("").map((letter, index) => <i key={index} className={index < 6 ? `art-tile-${index % 3}` : "art-tile-outline"}>{letter}</i>)}</span> : null}
       {kind === "hack" ? <span className="art-code"><span className="art-code-dots"><i /><i /><i /></span><span><b>0</b><b>6</b><b>•</b><b>•</b></span><small><i /> ACCESS_</small></span> : null}

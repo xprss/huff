@@ -42,6 +42,8 @@ import {
   hexaflowTodayQueryOptions,
   hexastarStatsQueryOptions,
   hexastarTodayQueryOptions,
+  hexatrapTodayQueryOptions,
+  hexatrapStatsQueryOptions,
   hexaecoTodayQueryOptions,
   hexaecoStatsQueryOptions,
   leaderboardsQueryOptions,
@@ -91,6 +93,7 @@ import { HexahackView } from "../features/hexahack/HexahackView";
 import { HexaskyView } from "../features/hexasky/HexaskyView";
 import { HexaflowView } from "../features/hexaflow/HexaflowView";
 import { HexastarView } from "../features/hexastar/HexastarView";
+import { HexatrapView } from "../features/hexatrap/HexatrapView";
 import { HexaecoView } from "../features/hexaeco/HexaecoView";
 import { HexahackLaunchModal } from "../features/notifications/HexahackLaunchModal";
 import { HexaflowLaunchModal } from "../features/notifications/HexaflowLaunchModal";
@@ -178,6 +181,8 @@ export function App() {
   const hexaflowStatsQuery = useQuery({ ...hexaflowStatsQueryOptions(), enabled: isLoggedIn });
   const hexastarTodayQuery = useQuery({ ...hexastarTodayQueryOptions(), enabled: isLoggedIn });
   const hexastarStatsQuery = useQuery({ ...hexastarStatsQueryOptions(), enabled: isLoggedIn });
+  const hexatrapTodayQuery = useQuery({ ...hexatrapTodayQueryOptions(), enabled: isLoggedIn });
+  const hexatrapStatsQuery = useQuery({ ...hexatrapStatsQueryOptions(), enabled: isLoggedIn });
   const hexaecoTodayQuery = useQuery({ ...hexaecoTodayQueryOptions(), enabled: isLoggedIn });
   const hexaecoStatsQuery = useQuery({ ...hexaecoStatsQueryOptions(), enabled: isLoggedIn });
   const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
@@ -211,6 +216,7 @@ export function App() {
   const hexaflowGame = hexaflowToday?.game ?? null;
   const hexastarToday = hexastarTodayQuery.data ?? null;
   const hexastarGame = hexastarToday?.game ?? null;
+  const hexatrapToday = hexatrapTodayQuery.data ?? null;
   const hexaecoToday = hexaecoTodayQuery.data ?? null;
   const statsSet: StatsSetDto = {
     overall: overallStatsQuery.data ?? emptyStats,
@@ -219,6 +225,7 @@ export function App() {
     hexasky: hexaskyStatsQuery.data ?? emptyHexaskyStats,
     hexaflow: hexaflowStatsQuery.data ?? emptyHexaflowStats,
     hexastar: hexastarStatsQuery.data ?? emptyStats,
+    hexatrap: hexatrapStatsQuery.data ?? { started: 0, won: 0, currentStreak: 0, maxStreak: 0, averagePoints: 0, bestPoints: null, averageQuestions: 0 },
     hexaeco: hexaecoStatsQuery.data ?? { completed: 0, currentStreak: 0, maxStreak: 0 }
   };
   const canViewAdmin = Boolean(me?.user?.admin);
@@ -233,7 +240,7 @@ export function App() {
     (isLoggedIn && (todayQuery.isPending || statsQuery.isPending ||
       hexahackTodayQuery.isPending || hexahackStatsQuery.isPending || hexaskyTodayQuery.isPending || hexaskyStatsQuery.isPending ||
       hexaflowTodayQuery.isPending || hexaflowStatsQuery.isPending || hexastarTodayQuery.isPending || hexastarStatsQuery.isPending ||
-      hexaecoTodayQuery.isPending || hexaecoStatsQuery.isPending || overallStatsQuery.isPending));
+      hexatrapTodayQuery.isPending || hexatrapStatsQuery.isPending || hexaecoTodayQuery.isPending || hexaecoStatsQuery.isPending || overallStatsQuery.isPending));
 
   function setTodayGame(gameUpdate: GameDto | null) {
     queryClient.setQueryData<TodayGameDto | undefined>(queryKeys.today, (current) =>
@@ -254,6 +261,7 @@ export function App() {
       queryClient.fetchQuery(hexaflowStatsQueryOptions()),
       queryClient.fetchQuery(hexastarStatsQueryOptions()),
       queryClient.fetchQuery(hexaecoStatsQueryOptions()),
+      queryClient.fetchQuery(hexatrapStatsQueryOptions()),
       queryClient.fetchQuery(overallStatsQueryOptions()),
       queryClient.fetchQuery(globalStatsQueryOptions())
     ]);
@@ -314,7 +322,7 @@ export function App() {
     const documentElement = document.documentElement;
     const isAdminRoute = activeRoute === "admin";
     documentElement.classList.toggle("admin-scroll", isAdminRoute);
-    documentElement.classList.toggle("page-scroll", ["games", "profile", "leaderboard", "player", "stats"].includes(activeRoute));
+    documentElement.classList.toggle("page-scroll", ["games", "profile", "leaderboard", "player", "stats", "hexatrap"].includes(activeRoute));
 
     if (!isAdminRoute) {
       window.scrollTo(0, 0);
@@ -374,6 +382,7 @@ export function App() {
     void queryClient.cancelQueries({ queryKey: queryKeys.stats });
     void queryClient.cancelQueries({ queryKey: ["hexastar"] });
     void queryClient.cancelQueries({ queryKey: ["hexaeco"] });
+    void queryClient.cancelQueries({ queryKey: ["hexatrap"] });
     void queryClient.cancelQueries({ queryKey: ["admin"] });
     void queryClient.cancelQueries({ queryKey: queryKeys.leaderboards() });
     void queryClient.cancelQueries({ queryKey: ["player"] });
@@ -381,6 +390,7 @@ export function App() {
     queryClient.removeQueries({ queryKey: queryKeys.stats });
     queryClient.removeQueries({ queryKey: ["hexastar"] });
     queryClient.removeQueries({ queryKey: ["hexaeco"] });
+    queryClient.removeQueries({ queryKey: ["hexatrap"] });
     queryClient.removeQueries({ queryKey: ["admin"] });
     queryClient.removeQueries({ queryKey: queryKeys.leaderboards() });
     queryClient.removeQueries({ queryKey: ["player"] });
@@ -409,6 +419,8 @@ export function App() {
       hexaflowStatsQuery.error ??
       hexastarTodayQuery.error ??
       hexastarStatsQuery.error ??
+      hexatrapTodayQuery.error ??
+      hexatrapStatsQuery.error ??
       hexaecoTodayQuery.error ??
       hexaecoStatsQuery.error ??
       overallStatsQuery.error ??
@@ -420,7 +432,7 @@ export function App() {
     showToast(error instanceof Error ? error.message : "Errore imprevisto", "error");
   }, [meQuery.error, globalStatsQuery.error, todayQuery.error, statsQuery.error, hexahackTodayQuery.error,
     hexahackStatsQuery.error, hexaskyTodayQuery.error, hexaskyStatsQuery.error, hexaflowTodayQuery.error,
-    hexaflowStatsQuery.error, hexastarTodayQuery.error, hexastarStatsQuery.error, hexaecoTodayQuery.error, hexaecoStatsQuery.error, overallStatsQuery.error,
+    hexaflowStatsQuery.error, hexastarTodayQuery.error, hexastarStatsQuery.error, hexaecoTodayQuery.error, hexaecoStatsQuery.error, hexatrapTodayQuery.error, hexatrapStatsQuery.error, overallStatsQuery.error,
     leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
@@ -567,7 +579,7 @@ export function App() {
   const shouldHideKeyboardHints = Boolean(game?.mode === "MISCHIEVOUS_MOUSE" && !game.kitten.used);
   const answerLength = game?.answerLength ?? 6;
   const puzzleDate = formatPuzzleDate(
-    activeRoute === "hexaeco" ? hexaecoToday?.puzzleDate : activeRoute === "hexahack" ? hexahackGame?.puzzleDate ?? hexahackToday?.puzzleDate : activeRoute === "hexasky" ? hexaskyGame?.puzzleDate ?? hexaskyToday?.puzzleDate : activeRoute === "hexaflow" ? hexaflowGame?.puzzleDate ?? hexaflowToday?.puzzleDate : activeRoute === "hexastar" ? hexastarGame?.puzzleDate ?? hexastarToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
+    activeRoute === "hexatrap" ? hexatrapToday?.puzzleDate : activeRoute === "hexaeco" ? hexaecoToday?.puzzleDate : activeRoute === "hexahack" ? hexahackGame?.puzzleDate ?? hexahackToday?.puzzleDate : activeRoute === "hexasky" ? hexaskyGame?.puzzleDate ?? hexaskyToday?.puzzleDate : activeRoute === "hexaflow" ? hexaflowGame?.puzzleDate ?? hexaflowToday?.puzzleDate : activeRoute === "hexastar" ? hexastarGame?.puzzleDate ?? hexastarToday?.puzzleDate : game?.puzzleDate ?? todayPuzzleDate ?? undefined
   );
   const canUseGameActions = Boolean(me && (!me.authEnabled || me.loggedIn));
   const notificationMenuLabel = getNotificationMenuLabel(notificationsEnabled, notificationPermission);
@@ -936,7 +948,7 @@ export function App() {
               setShowActionsMenu(false);
             }}
             onOpenStats={() => {
-              setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : activeRoute === "hexaeco" ? "hexaeco" : "overall");
+              setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : activeRoute === "hexaeco" ? "hexaeco" : activeRoute === "hexatrap" ? "hexatrap" : "overall");
               setActiveRoute("stats");
               setShowActionsMenu(false);
             }}
@@ -1022,6 +1034,8 @@ export function App() {
               hexaflowCompleted={hexaflowGame?.status === "COMPLETED"}
               hexaflowAvailable={Boolean(hexaflowToday?.available)}
               hexastarCompleted={Boolean(hexastarGame && hexastarGame.status !== "IN_PROGRESS")}
+              hexatrapCompleted={hexatrapToday?.game?.status === "WON"}
+              onHexatrap={() => setActiveRoute("hexatrap")}
               hexaecoCompleted={Boolean(hexaecoToday?.game)}
               onHexaword={() => setActiveRoute("game")}
               onHexahack={() => setActiveRoute("hexahack")}
@@ -1030,6 +1044,13 @@ export function App() {
               onHexastar={() => setActiveRoute("hexastar")}
               onHexaeco={() => setActiveRoute("hexaeco")}
             />
+          ) : activeRoute === "hexatrap" ? (
+            hexatrapToday && me?.user ? <HexatrapView key={`${me.user.id}.${hexatrapToday.puzzleDate}`}
+              today={hexatrapToday} userId={me.user.id}
+              inputBlocked={showInfo || showNotificationPrompt || launchModalOpen || Boolean(pendingAlert) || showActionsMenu}
+              onError={error => { handleAuthRequired(error); }}
+              onComplete={() => { showToast("Hexatrap risolto!", "success"); void launchVictoryConfetti(); }}
+            /> : <div className="eco-save-error"><p>Non riesco a caricare Hexatrap.</p><button type="button" onClick={() => void hexatrapTodayQuery.refetch()}>Riprova</button></div>
           ) : activeRoute === "hexaeco" ? (
             hexaecoToday && me?.user ? <HexaecoView
               today={hexaecoToday}
@@ -1209,7 +1230,7 @@ export function App() {
           setProfileEditing(false);
           setShowActionsMenu(false);
         }} onOpenStats={() => {
-          setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : activeRoute === "hexaeco" ? "hexaeco" : "overall");
+          setStatsInitialGame(activeRoute === "game" ? "hexaword" : activeRoute === "hexahack" ? "hexahack" : activeRoute === "hexasky" ? "hexasky" : activeRoute === "hexaflow" ? "hexaflow" : activeRoute === "hexastar" ? "hexastar" : activeRoute === "hexaeco" ? "hexaeco" : activeRoute === "hexatrap" ? "hexatrap" : "overall");
           setActiveRoute("stats");
           setShowActionsMenu(false);
         }} /> : null}

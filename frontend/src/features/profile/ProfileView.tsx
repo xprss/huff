@@ -95,7 +95,8 @@ export function ProfileView({
     { id: "hexasky", name: "Hexasky", played: stats.hexasky.played, completed: stats.hexasky.won, label: "vinte" },
     { id: "hexaflow", name: "Hexaflow", played: stats.hexaflow.started, completed: stats.hexaflow.completed, label: "completate" },
     { id: "hexastar", name: "Hexastar", played: stats.hexastar.played, completed: stats.hexastar.won, label: "vinte" },
-    { id: "hexaeco", name: "Hexaeco", played: stats.hexaeco.completed, completed: stats.hexaeco.completed, label: "completate" }
+    { id: "hexaeco", name: "Hexaeco", played: stats.hexaeco.completed, completed: stats.hexaeco.completed, label: "completate" },
+    { id: "hexatrap", name: "Hexatrap", played: stats.hexatrap.started, completed: stats.hexatrap.won, label: "vinte" }
   ] as const;
   const winRate = stats.overall.played ? Math.round(stats.overall.won / stats.overall.played * 100) : 0;
 

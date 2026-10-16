@@ -331,6 +331,7 @@ export interface StatsSetDto {
   readonly hexaflow: HexaflowStatsDto;
   readonly hexastar: StatsDto;
   readonly hexaeco: HexaecoStatsDto;
+  readonly hexatrap: HexatrapStatsDto;
 }
 
 export interface AdminPrivilegesDto {
@@ -368,6 +369,7 @@ export interface LeaderboardEntryDto {
   readonly nickname: string;
   readonly profileEmoji: string;
   readonly wins: number;
+  readonly points: number | null;
 }
 
 export interface LeaderboardPeriodDto {
@@ -383,7 +385,7 @@ export interface LeaderboardsDto {
   readonly weekly: LeaderboardPeriodDto;
 }
 
-export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "hexaeco";
+export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "hexaeco" | "hexatrap";
 
 export interface PublicPlayerProfileDto {
   readonly displayName: string;
@@ -398,6 +400,7 @@ export interface PublicPlayerProfileDto {
   readonly hexaflowStats: HexaflowStatsDto;
   readonly hexastarStats: StatsDto;
   readonly hexaecoStats: HexaecoStatsDto;
+  readonly hexatrapStats: HexatrapStatsDto;
   readonly medals: MedalCountsDto;
 }
 
@@ -526,6 +529,12 @@ export interface AdminDeleteResultDto {
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type ApiEndpointMap = {
+  "/api/hexatrap/today": { GET: { response: HexatrapTodayDto } };
+  "/api/hexatrap/today/questions": { POST: { body: HexatrapQuestionRequestDto; response: HexatrapActionDto } };
+  "/api/hexatrap/today/submissions": { POST: { body: HexatrapSubmissionRequestDto; response: HexatrapActionDto } };
+  "/api/hexatrap/today/events": { GET: { response: HexatrapEventsDto } };
+  "/api/hexatrap/stats": { GET: { response: HexatrapStatsDto } };
+  "/api/hexatrap/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/logout": {
     POST: {
       response: void;
@@ -677,3 +686,15 @@ export type ApiEndpointMap = {
   "/api/admin/hexaflow/puzzles/:date/publish": { POST: { response: HexaflowPuzzleAdminDto } };
   "/api/admin/hexaflow/puzzles/:date/draft": { POST: { response: HexaflowPuzzleAdminDto } };
 };
+
+
+export interface HexatrapDossierDto { readonly litCount: number; readonly relation: "SAME" | "IMPLIES" | "AT_LEAST_ONE"; readonly firstSeal: number; readonly secondSeal: number; }
+export interface HexatrapEnvelopeDto { readonly requestId: string; readonly puzzleDate: IsoDateString; readonly rulesVersion: number; }
+export interface HexatrapQuestionRequestDto extends HexatrapEnvelopeDto { readonly type: "SEAL" | "NUMBER"; readonly advisor: number; readonly seal: number | null; }
+export interface HexatrapSubmissionRequestDto extends HexatrapEnvelopeDto { readonly number: number; }
+export interface HexatrapEventDto { readonly sequence: number; readonly type: "SEAL" | "NUMBER" | "SUBMISSION"; readonly advisor: number | null; readonly seal: number | null; readonly answer: boolean | null; readonly number: number | null; readonly correct: boolean | null; readonly createdAt: string; }
+export interface HexatrapEventsDto { readonly events: readonly HexatrapEventDto[]; readonly nextBefore: number | null; }
+export interface HexatrapGameDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly status: "IN_PROGRESS" | "WON"; readonly questions: number; readonly wrongSubmissions: number; readonly points: number; readonly numberUnlocked: boolean; readonly numberRequested: boolean; readonly history: HexatrapEventsDto; readonly reveal: { readonly number: number; readonly loyalAdvisor: number; readonly configuration: number; readonly explanation: string } | null; }
+export interface HexatrapTodayDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly dossier: HexatrapDossierDto; readonly game: HexatrapGameDto | null; }
+export interface HexatrapActionDto { readonly game: HexatrapGameDto; readonly event: HexatrapEventDto; readonly replayed: boolean; }
+export interface HexatrapStatsDto { readonly started: number; readonly won: number; readonly currentStreak: number; readonly maxStreak: number; readonly averagePoints: number; readonly bestPoints: number | null; readonly averageQuestions: number; }
