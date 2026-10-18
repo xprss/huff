@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowRight, Check, Clock3, Sparkles } from "lucide-react";
+import { HEXATRAP_AVAILABLE } from "../../app/constants";
 import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
 export function GameSelector({
@@ -25,14 +26,14 @@ export function GameSelector({
   const selectorRef = React.useRef<HTMLElement | null>(null);
   React.useEffect(() => { selectorRef.current?.scrollTo(0, 0); }, []);
 
-  const games: { id: PuzzleKind; name: string; category: string; description: string; completed: boolean; available: boolean; onPlay: () => void }[] = [
+  const games: { id: PuzzleKind; name: string; category: string; description: string; completed: boolean; available: boolean; unavailableLabel?: string; onPlay: () => void }[] = [
     { id: "word", name: "Hexaword", category: "Parole · 6 tentativi", description: "Sei lettere. Una parola. Segui gli indizi e trova quella giusta.", completed: hexawordCompleted, available: true, onPlay: onHexaword },
     { id: "hack", name: "Hexahack", category: "Codici e deduzione", description: "Decifra il codice. Resta invisibile.", completed: hexahackCompleted, available: true, onPlay: onHexahack },
     { id: "sky", name: "Hexasky", category: "Logica e prospettiva", description: "Ogni indizio cambia il tuo skyline.", completed: hexaskyCompleted, available: true, onPlay: onHexasky },
     { id: "flow", name: "Hexaflow", category: "Parole da collegare", description: "Unisci le lettere. Trova il Flusso.", completed: hexaflowCompleted, available: hexaflowAvailable, onPlay: onHexaflow },
     { id: "star", name: "Hexastar", category: "Sillabe e intuizione", description: "Le sillabe giuste, al posto giusto.", completed: hexastarCompleted, available: true, onPlay: onHexastar },
     { id: "eco", name: "Hexaeco", category: "Logica e sincronia", description: "Guida la luce. Anticipa la sua eco.", completed: hexaecoCompleted, available: true, onPlay: onHexaeco },
-    { id: "trap", name: "Hexatrap", category: "Logica e inganno", description: "Due consiglieri. Di chi ti fidi?", completed: hexatrapCompleted, available: true, onPlay: onHexatrap }
+    { id: "trap", name: "Hexatrap", category: "Logica e inganno", description: "Due consiglieri. Di chi ti fidi?", completed: hexatrapCompleted, available: HEXATRAP_AVAILABLE, unavailableLabel: "Ci stiamo lavorando", onPlay: onHexatrap }
   ];
   const availableGames = games.filter((game) => game.available);
   const completed = availableGames.filter((game) => game.completed).length;
@@ -54,11 +55,11 @@ export function GameSelector({
       <div className="collection-heading"><h3>La tua dose di sfida</h3><span>Ogni giorno, nuove soluzioni</span></div>
       <div className="game-selector-grid">
         {games.map((game, index) => (
-          <button key={game.id} className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}`} type="button" onClick={game.onPlay} disabled={!game.available} aria-label={`${game.name}: ${!game.available ? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}>
+          <button key={game.id} className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}`} type="button" onClick={game.onPlay} disabled={!game.available} aria-label={`${game.name}: ${!game.available ? game.unavailableLabel ?? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}>
             <span className="puzzle-card-heading"><span className="puzzle-category">{game.category}</span>{game.completed ? <span className="puzzle-status"><Check size={13} aria-hidden="true" /> Fatto</span> : index === 0 ? <span className="puzzle-tag">Il classico</span> : null}</span>
             <PuzzleArtwork kind={game.id} />
             <span className="puzzle-card-copy"><strong>{game.name}</strong><span>{game.available ? game.description : "Una nuova sfida è in arrivo."}</span></span>
-            <span className="puzzle-card-footer"><span>{!game.available ? "Non disponibile oggi" : game.completed ? "Vedi risultato" : "Giochiamo"}</span><ArrowRight size={18} aria-hidden="true" /></span>
+            <span className="puzzle-card-footer"><span>{!game.available ? game.unavailableLabel ?? "Non disponibile oggi" : game.completed ? "Vedi risultato" : "Giochiamo"}</span><ArrowRight size={18} aria-hidden="true" /></span>
           </button>
         ))}
       </div>

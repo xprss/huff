@@ -17,6 +17,7 @@ export const VICTORY_CONFETTI_COLORS = ["#25d7a1", "#ffd166", "#ff6b7a", "#5ab9f
 export const COUNTDOWN_INTERVAL_MS = 1000;
 export const NEXT_CHALLENGE_REFRESH_DELAY_MS = 2000;
 export const STAR_REVEAL_DURATION_MS = 15000;
+export const HEXATRAP_AVAILABLE = false;
 export const TOAST_DURATION_MS = 3800;
 export const REPOSITORY_URL = "https://github.com/xprss/huff";
 export const VIEWPORT_SYNC_DELAYS_MS = [40, 120, 280, 600, 1200];

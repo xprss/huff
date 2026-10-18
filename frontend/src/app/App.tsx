@@ -25,6 +25,7 @@ import type {
 import {
   APP_NAME,
   COUNTDOWN_INTERVAL_MS,
+  HEXATRAP_AVAILABLE,
   NEXT_CHALLENGE_REFRESH_DELAY_MS,
   STAR_REVEAL_DURATION_MS,
   STATE_RANK,
@@ -181,8 +182,8 @@ export function App() {
   const hexaflowStatsQuery = useQuery({ ...hexaflowStatsQueryOptions(), enabled: isLoggedIn });
   const hexastarTodayQuery = useQuery({ ...hexastarTodayQueryOptions(), enabled: isLoggedIn });
   const hexastarStatsQuery = useQuery({ ...hexastarStatsQueryOptions(), enabled: isLoggedIn });
-  const hexatrapTodayQuery = useQuery({ ...hexatrapTodayQueryOptions(), enabled: isLoggedIn });
-  const hexatrapStatsQuery = useQuery({ ...hexatrapStatsQueryOptions(), enabled: isLoggedIn });
+  const hexatrapTodayQuery = useQuery({ ...hexatrapTodayQueryOptions(), enabled: isLoggedIn && HEXATRAP_AVAILABLE });
+  const hexatrapStatsQuery = useQuery({ ...hexatrapStatsQueryOptions(), enabled: isLoggedIn && HEXATRAP_AVAILABLE });
   const hexaecoTodayQuery = useQuery({ ...hexaecoTodayQueryOptions(), enabled: isLoggedIn });
   const hexaecoStatsQuery = useQuery({ ...hexaecoStatsQueryOptions(), enabled: isLoggedIn });
   const overallStatsQuery = useQuery({ ...overallStatsQueryOptions(), enabled: isLoggedIn });
@@ -240,7 +241,7 @@ export function App() {
     (isLoggedIn && (todayQuery.isPending || statsQuery.isPending ||
       hexahackTodayQuery.isPending || hexahackStatsQuery.isPending || hexaskyTodayQuery.isPending || hexaskyStatsQuery.isPending ||
       hexaflowTodayQuery.isPending || hexaflowStatsQuery.isPending || hexastarTodayQuery.isPending || hexastarStatsQuery.isPending ||
-      hexatrapTodayQuery.isPending || hexatrapStatsQuery.isPending || hexaecoTodayQuery.isPending || hexaecoStatsQuery.isPending || overallStatsQuery.isPending));
+      (HEXATRAP_AVAILABLE && (hexatrapTodayQuery.isPending || hexatrapStatsQuery.isPending)) || hexaecoTodayQuery.isPending || hexaecoStatsQuery.isPending || overallStatsQuery.isPending));
 
   function setTodayGame(gameUpdate: GameDto | null) {
     queryClient.setQueryData<TodayGameDto | undefined>(queryKeys.today, (current) =>
@@ -261,7 +262,7 @@ export function App() {
       queryClient.fetchQuery(hexaflowStatsQueryOptions()),
       queryClient.fetchQuery(hexastarStatsQueryOptions()),
       queryClient.fetchQuery(hexaecoStatsQueryOptions()),
-      queryClient.fetchQuery(hexatrapStatsQueryOptions()),
+      ...(HEXATRAP_AVAILABLE ? [queryClient.fetchQuery(hexatrapStatsQueryOptions())] : []),
       queryClient.fetchQuery(overallStatsQueryOptions()),
       queryClient.fetchQuery(globalStatsQueryOptions())
     ]);
@@ -1044,7 +1045,7 @@ export function App() {
               onHexastar={() => setActiveRoute("hexastar")}
               onHexaeco={() => setActiveRoute("hexaeco")}
             />
-          ) : activeRoute === "hexatrap" ? (
+          ) : activeRoute === "hexatrap" && HEXATRAP_AVAILABLE ? (
             hexatrapToday && me?.user ? <HexatrapView key={`${me.user.id}.${hexatrapToday.puzzleDate}`}
               today={hexatrapToday} userId={me.user.id}
               inputBlocked={showInfo || showNotificationPrompt || launchModalOpen || Boolean(pendingAlert) || showActionsMenu}
