@@ -1,4 +1,5 @@
 import React from "react";
+import { HEXATRAP_AVAILABLE } from "./constants";
 
 export type AppRoute = "games" | "game" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "hexatrap" | "hexaeco" | "profile" | "stats" | "admin" | "leaderboard" | "player";
 
@@ -13,7 +14,7 @@ function routeFromHash(hash: string): AppRoute {
   if (hash === "#/hexasky") return "hexasky";
   if (hash === "#/hexaflow") return "hexaflow";
   if (hash === "#/hexastar") return "hexastar";
-  if (hash === "#/hexatrap") return "hexatrap";
+  if (hash === "#/hexatrap") return HEXATRAP_AVAILABLE ? "hexatrap" : "games";
   if (hash === "#/hexaeco") return "hexaeco";
   return "games";
 }
@@ -28,7 +29,7 @@ function hashFromRoute(route: AppRoute) {
   if (route === "hexasky") return "#/hexasky";
   if (route === "hexaflow") return "#/hexaflow";
   if (route === "hexastar") return "#/hexastar";
-  if (route === "hexatrap") return "#/hexatrap";
+  if (route === "hexatrap") return HEXATRAP_AVAILABLE ? "#/hexatrap" : "#/";
   if (route === "hexaeco") return "#/hexaeco";
   return "#/";
 }
@@ -53,9 +54,13 @@ export function useAppRoute() {
 
   React.useEffect(() => {
     function syncRoute() {
+      if (!HEXATRAP_AVAILABLE && window.location.hash === "#/hexatrap") {
+        window.history.replaceState(null, "", "#/");
+      }
       setRouteState(routeFromHash(window.location.hash));
     }
 
+    syncRoute();
     window.addEventListener("hashchange", syncRoute);
     window.addEventListener("popstate", syncRoute);
     return () => {
@@ -65,11 +70,12 @@ export function useAppRoute() {
   }, []);
 
   const setRoute = React.useCallback((nextRoute: AppRoute) => {
-    const nextHash = hashFromRoute(nextRoute);
+    const resolvedRoute = nextRoute === "hexatrap" && !HEXATRAP_AVAILABLE ? "games" : nextRoute;
+    const nextHash = hashFromRoute(resolvedRoute);
     if (window.location.hash !== nextHash) {
       window.history.pushState(null, "", nextHash);
     }
-    setRouteState(nextRoute);
+    setRouteState(resolvedRoute);
   }, []);
 
   return [route, setRoute] as const;
