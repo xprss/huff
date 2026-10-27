@@ -95,10 +95,15 @@ jobs:
           [[ -n "${JENKINS_URL}" && -n "${JENKINS_STAGING_JOB}" ]]
           [[ -n "${JENKINS_TRIGGER_USER}" && -n "${JENKINS_TRIGGER_TOKEN}" ]]
 
-          jenkins_status="$(curl --fail-with-body --silent --show-error \
+          jenkins_response="${RUNNER_TEMP}/jenkins-trigger-response.txt"
+          if jenkins_status="$(curl --silent --show-error \
             --connect-timeout 15 \
             --max-time 60 \
-            --output "${RUNNER_TEMP}/jenkins-trigger-response.txt" \
+            --retry 3 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --retry-max-time 120 \
+            --output "${jenkins_response}" \
             --write-out '%{http_code}' \
             --user "${JENKINS_TRIGGER_USER}:${JENKINS_TRIGGER_TOKEN}" \
             --request POST \
@@ -107,9 +112,20 @@ jobs:
             --data-urlencode "DEPLOY_GIT_COMMIT=${DEPLOY_GIT_COMMIT}" \
             --data-urlencode "APP_VERSION=${APP_VERSION}" \
             --data-urlencode "GITHUB_RUN_URL=${GITHUB_RUN_URL}" \
-            "${JENKINS_URL%/}/job/${JENKINS_STAGING_JOB}/buildWithParameters")"
+            "${JENKINS_URL%/}/job/${JENKINS_STAGING_JOB}/buildWithParameters")"; then
+            :
+          else
+            curl_exit=$?
+            echo "Unable to reach Jenkins (curl exit ${curl_exit})." >&2
+            exit "${curl_exit}"
+          fi
 
           if [[ "${jenkins_status}" != "201" ]]; then
             echo "Jenkins did not queue the staging build (HTTP ${jenkins_status})." >&2
+            if [[ -s "${jenkins_response}" ]]; then
+              echo "Jenkins response (first 4 KiB):" >&2
+              head -c 4096 "${jenkins_response}" >&2
+              echo >&2
+            fi
             exit 1
           fi
