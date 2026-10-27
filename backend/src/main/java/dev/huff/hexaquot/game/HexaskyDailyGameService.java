@@ -18,14 +18,14 @@ public class HexaskyDailyGameService {
     @Inject HexaskyGameRepository repository;
     @Inject ObjectMapper objectMapper;
 
-    public HexaskyDtos.TodayDto today(AppUser user) { String date=dailyGameService.todayDate(); List<Integer> solution=provider.solutionFor(date); return new HexaskyDtos.TodayDto(date,HexaskyDailyGameProvider.RULES_VERSION,provider.cluesFor(solution),repository.findByUserAndDate(user.id(),date).map(this::toDto).orElse(null)); }
+    public HexaskyDtos.TodayDto today(AppUser user) { String date=dailyGameService.todayDate(); Optional<HexaskyGameRecord> record=repository.findByUserAndDate(user.id(),date); List<Integer> solution=record.map(r->readGrid(r.solutionJson())).orElseGet(()->provider.solutionFor(date)); int rulesVersion=record.map(HexaskyGameRecord::rulesVersion).orElse(HexaskyDailyGameProvider.RULES_VERSION); return new HexaskyDtos.TodayDto(date,rulesVersion,provider.cluesFor(solution),record.map(this::toDto).orElse(null)); }
     @Transactional public HexaskyDtos.CheckActionDto check(AppUser user, HexaskyDtos.CheckRequest request) {
         String requestId=provider.validateRequestId(request==null?null:request.requestId());
         HexaskyGameRecord record=currentForUpdate(user); List<HexaskyDtos.EventDto> events=readEvents(record);
         HexaskyDtos.EventDto replay=events.stream().filter(event->requestId.equals(event.requestId())).findFirst().orElse(null);
         if(replay!=null) return new HexaskyDtos.CheckActionDto(toDto(record),replay.check(),true);
         if(record.status()!=HexaskyDtos.Status.IN_PROGRESS) throw new WebApplicationException("La partita di oggi è già conclusa.",Response.Status.CONFLICT);
-        List<Integer> proposal=provider.validateSolution(request==null?null:request.solution()); List<Integer> solution=readGrid(record.solutionJson());
+        List<Integer> proposal=provider.validateSolution(request==null?null:request.solution(), record.rulesVersion()); List<Integer> solution=readGrid(record.solutionJson());
         boolean correct=proposal.equals(solution); int checks=record.checksUsed()+1; HexaskyDtos.Status status=correct?HexaskyDtos.Status.WON:checks>=2?HexaskyDtos.Status.LOST:HexaskyDtos.Status.IN_PROGRESS;
         List<Integer> incorrectCells = correct ? List.of() : mismatchedCells(proposal, solution);
         String now=Instant.now().toString(); HexaskyDtos.CheckResultDto result=new HexaskyDtos.CheckResultDto(requestId,correct,checks,status,status==HexaskyDtos.Status.LOST?solution:null,incorrectCells);

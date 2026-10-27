@@ -21,7 +21,7 @@ class HexaskyDailyGameServiceTest {
     @Test @TestTransaction
     void firstWrongCheckHighlightsIncorrectCellsSecondRevealsAndRequestIdsReplay() {
         AppUser user = user();
-        List<Integer> wrong = differentLatin(provider.solutionFor(clock.todayDate()));
+        List<Integer> wrong = differentSudoku(provider.solutionFor(clock.todayDate()));
         CheckRequest first = new CheckRequest("first", wrong);
         CheckActionDto firstResult = service.check(user, first);
         assertEquals(Status.IN_PROGRESS, firstResult.game().status());
@@ -48,9 +48,9 @@ class HexaskyDailyGameServiceTest {
         assertEquals(1, service.stats(user).checkDistribution().get(1));
     }
 
-    private List<Integer> differentLatin(List<Integer> solution) {
-        List<Integer> first = List.of(1,2,3,4, 2,3,4,1, 3,4,1,2, 4,1,2,3);
-        return first.equals(solution) ? List.of(4,3,2,1, 3,2,1,4, 2,1,4,3, 1,4,3,2) : first;
+    private List<Integer> differentSudoku(List<Integer> solution) {
+        List<Integer> first = List.of(1,2,3,4, 3,4,1,2, 2,1,4,3, 4,3,2,1);
+        return first.equals(solution) ? List.of(4,3,2,1, 2,1,4,3, 3,4,1,2, 1,2,3,4) : first;
     }
     private List<Integer> mismatchedCells(List<Integer> proposal, List<Integer> solution) { List<Integer> mismatches=new ArrayList<>(); for(int index=0;index<solution.size();index++)if(!proposal.get(index).equals(solution.get(index)))mismatches.add(index); return mismatches; }
     private AppUser user() { UserEntity entity = new UserEntity(); entity.id = "hexasky-test-" + UUID.randomUUID(); entity.displayName="Sky"; entity.nickname="@sky-"+UUID.randomUUID().toString().substring(0,8); entity.profileEmoji="🏙️"; entity.createdAt=Instant.now().toString(); entity.starAvailable=false; entity.persist(); return entity.toAppUser(false); }

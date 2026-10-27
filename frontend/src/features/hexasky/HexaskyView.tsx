@@ -64,7 +64,7 @@ export function HexaskyView({ today, busy, onCheck, onComplete, onError }: {
   const checksLeft = Math.max(0, 2 - (game?.checksUsed ?? 0));
   return <section className="sky-shell" aria-label="Hexasky">
     <header className="sky-heading"><div><p className="eyebrow">GRATTACIELO / {today.puzzleDate}</p><h2>Hexasky</h2></div><button className="tutorial-help" type="button" onClick={() => setTutorialOpen(true)} aria-label="Come si gioca"><CircleHelp size={20} /></button></header>
-    <p className="sky-intro">Ogni riga e colonna contiene 1–4 una sola volta. Gli indizi indicano quanti grattacieli sono visibili da quel lato.</p>
+    <p className="sky-intro">Ogni riga, colonna e quadrante 2×2 contiene 1–4 una sola volta. Gli indizi indicano quanti grattacieli sono visibili da quel lato.</p>
     <div className="sky-puzzle" aria-label="Griglia Hexasky e indizi di visibilità">
       <Clues className="top" clues={today.visibility.top} />
       <Clues className="bottom" clues={today.visibility.bottom} />
@@ -91,7 +91,7 @@ function Tutorial({ onClose }: { onClose: () => void }) {
           <button className="close-button" type="button" onClick={onClose} aria-label="Chiudi"><X size={19} /></button>
         </header>
         <p>Gli indizi ai quattro lati dicono quanti grattacieli vedi guardando quella riga o colonna: un edificio più alto nasconde quelli più bassi dietro di sé.</p>
-        <p>Inserisci i numeri da 1 a 4 senza ripetizioni in ogni riga e colonna. Tocca una cella, usa la tastiera virtuale e la selezione avanza automaticamente.</p>
+        <p>Inserisci i numeri da 1 a 4 senza ripetizioni in ogni riga, colonna e quadrante 2×2. Tocca una cella, usa la tastiera virtuale e la selezione avanza automaticamente.</p>
         <p>Hai due verifiche: le caselle errate vengono evidenziate; al secondo errore la partita termina e viene rivelata la soluzione.</p>
         <button className="sky-check" type="button" onClick={onClose}>Ho capito</button>
       </section>
