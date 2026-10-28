@@ -242,7 +242,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
         </button>
         <button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button>
       </div>
-      {historyExpanded ? <>
+      {historyExpanded ? <div className="game-stats-history-panel">
         {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
         {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
         <div className="game-stats-history-list">
@@ -253,7 +253,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
             <button type="button" className="game-stats-history-delete" onClick={() => void deleteThread(thread.id)} disabled={streaming || loadingThread} aria-label={`Elimina conversazione ${thread.title}`} title="Elimina conversazione"><Trash2 size={14} /></button>
           </div>)}
         </div>
-      </> : null}
+      </div> : null}
     </aside>
     <div className="game-stats-main">
       <header className="game-stats-header">
