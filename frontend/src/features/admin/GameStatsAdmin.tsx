@@ -15,6 +15,32 @@ const GAME_OPTIONS: readonly { id: AdminGameStatsGame; label: string }[] = [
   { id: "hexastar", label: "HexaStar" }, { id: "hexaeco", label: "HexaEco" },
   { id: "hexatrap", label: "HexaTrap" },
 ];
+const PROMPT_SUGGESTIONS = [
+  "Quante partite sono state giocate in questo periodo?",
+  "Qual è il tasso di vittoria per ciascun gioco?",
+  "Quali giochi hanno registrato più partite questa settimana?",
+  "Mostrami la classifica dei dieci giocatori con più vittorie.",
+  "Come sono cambiate le partite giocate giorno per giorno?",
+  "Quale gioco ha il maggior numero di partite completate?",
+  "Confronta il numero di vittorie tra i giochi.",
+  "Quali sono gli andamenti delle partite nell’ultimo mese?",
+  "Quante partite sono state iniziate ma non completate?",
+  "Mostrami la percentuale di completamento per gioco.",
+  "Qual è il giorno della settimana con più partite?",
+  "Quali giocatori hanno migliorato di più il proprio tasso di vittoria?",
+  "Confronta le statistiche degli utenti selezionati.",
+  "Come si distribuiscono le vittorie tra i giocatori?",
+  "Quali giochi hanno avuto più attività nel fine settimana?",
+  "Mostrami la classifica per numero di partite completate.",
+  "In quali periodi si nota un aumento delle partite giocate?",
+  "Quante vittorie e sconfitte ci sono state per ogni gioco?",
+  "Quale gioco ha il tasso di completamento più alto?",
+  "Confronta l’attività di questa settimana con quella precedente.",
+  "Quali utenti hanno giocato più spesso nel periodo selezionato?",
+  "Mostrami l’andamento settimanale delle vittorie.",
+  "Ci sono differenze nel tasso di vittoria tra i giochi?",
+  "Riassumi i risultati principali del periodo selezionato.",
+];
 
 function activeMention(value: string, caret: number): Mention | null {
   const beforeCaret = value.slice(0, caret);
@@ -34,6 +60,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   const [mention, setMention] = React.useState<Mention | null>(null);
   const [activeSuggestion, setActiveSuggestion] = React.useState(0);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [promptSuggestionIndex, setPromptSuggestionIndex] = React.useState(0);
   const [selectedGames, setSelectedGames] = React.useState<AdminGameStatsGame[]>([]);
   const [from, setFrom] = React.useState("");
   const [to, setTo] = React.useState("");
@@ -73,6 +100,14 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   }, [threads.error]);
 
   React.useEffect(() => () => abort.current?.abort(), []);
+
+  React.useEffect(() => {
+    if (messages.length > 0) return;
+    const interval = window.setInterval(() => {
+      setPromptSuggestionIndex((index) => (index + 1) % PROMPT_SUGGESTIONS.length);
+    }, 4_800);
+    return () => window.clearInterval(interval);
+  }, [messages.length]);
 
   function updateMention(value: string, caret: number) {
     setMention(activeMention(value, caret));
@@ -205,7 +240,19 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
       </header>
       <div className="game-stats-transcript" aria-live="polite" aria-busy={loadingThread}>
         {loadingThread ? <div className="game-stats-empty"><LoaderCircle className="spin" size={22} /><span>Ripristino conversazione…</span></div> : null}
-        {!loadingThread && messages.length === 0 ? <div className="game-stats-empty"><Bot size={25} /><strong>Da dove vuoi iniziare?</strong><span>Per esempio: “Quante partite sono state vinte questo mese?”</span></div> : null}
+        {!loadingThread && messages.length === 0 ? <div className="game-stats-empty"><Bot size={25} /><strong>Da dove vuoi iniziare?</strong>
+          <span className="game-stats-prompt-hint">Prova una di queste domande o selezionala per modificarla:</span>
+          <div className="game-stats-prompt-carousel" aria-label="Esempi di domande">
+            <button key={promptSuggestionIndex} className="game-stats-prompt-suggestion" type="button" onClick={() => {
+              setMessage(PROMPT_SUGGESTIONS[promptSuggestionIndex]);
+              setMention(null);
+              requestAnimationFrame(() => textarea.current?.focus());
+            }}>
+              <small>ESEMPIO {promptSuggestionIndex + 1} / {PROMPT_SUGGESTIONS.length}</small>
+              <span>“{PROMPT_SUGGESTIONS[promptSuggestionIndex]}”</span>
+            </button>
+          </div>
+        </div> : null}
         {!loadingThread && messages.map((item, index) => <article className={`game-stats-message ${item.role}`} key={`${index}-${item.role}`}>
           <span className="game-stats-avatar">{item.role === "assistant" ? <Bot size={17} /> : <UserRound size={17} />}</span>
           <div className="game-stats-bubble">

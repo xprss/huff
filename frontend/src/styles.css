@@ -4071,6 +4071,14 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
 .game-stats-empty { margin:auto; display:grid; justify-items:center; gap:.55rem; color:var(--color-muted); text-align:center; }
 .game-stats-empty svg { color:var(--color-correct); }
 .game-stats-empty strong { color:var(--color-text); font-size:1.1rem; }
+.game-stats-prompt-hint { max-width:32rem; font-size:.85rem; }
+.game-stats-prompt-carousel { width:min(100%,36rem); perspective:900px; }
+.game-stats-prompt-suggestion { width:100%; min-height:5.25rem; display:grid; align-content:center; justify-items:center; gap:.45rem; padding:.8rem 1rem; border:1px solid color-mix(in srgb,var(--color-correct) 35%,transparent); border-radius:1rem; color:var(--color-text); background:color-mix(in srgb,var(--color-correct) 8%,var(--color-surface,#fff)); cursor:pointer; transform-style:preserve-3d; animation:game-stats-prompt-roll 4.8s ease both; }
+.game-stats-prompt-suggestion small { color:var(--color-correct); font-size:.65rem; font-weight:850; letter-spacing:.11em; }
+.game-stats-prompt-suggestion span { line-height:1.45; }
+.game-stats-prompt-suggestion:hover { border-color:var(--color-correct); background:color-mix(in srgb,var(--color-correct) 14%,var(--color-surface,#fff)); }
+@keyframes game-stats-prompt-roll { 0% { opacity:0; transform:translateY(1.3rem) rotateX(-72deg); } 12% { opacity:1; transform:translateY(0) rotateX(0); } 82% { opacity:1; transform:translateY(0) rotateX(0); } 100% { opacity:0; transform:translateY(-1.1rem) rotateX(72deg); } }
+@media (prefers-reduced-motion:reduce) { .game-stats-prompt-suggestion { animation:none; } }
 .game-stats-message { display:flex; align-items:flex-start; gap:.6rem; max-width:90%; }
 .game-stats-message.user { align-self:flex-end; flex-direction:row-reverse; }
 .game-stats-avatar { width:2rem; height:2rem; color:var(--color-correct); background:color-mix(in srgb,var(--color-correct) 15%,transparent); }
