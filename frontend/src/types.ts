@@ -46,6 +46,45 @@ export interface ApiErrorDto {
   readonly message?: string;
 }
 
+export interface AdminGameStatsUserDto {
+  readonly nickname: string;
+  readonly displayName: string | null;
+}
+export interface AdminGameStatsUsersDto { readonly users: readonly AdminGameStatsUserDto[]; }
+export interface AdminGameStatsChatRequestDto {
+  readonly message: string;
+  readonly threadId: string;
+  readonly users: readonly string[];
+  readonly games: readonly AdminGameStatsGame[];
+  readonly from?: string;
+  readonly to?: string;
+}
+export type AdminGameStatsGame = "hexaword" | "hexahack" | "hexasky" | "hexaflow" | "hexastar" | "hexaeco" | "hexatrap";
+export interface AdminGameStatsFiltersDto {
+  readonly users: readonly string[];
+  readonly games: readonly AdminGameStatsGame[];
+  readonly from: string | null;
+  readonly to: string | null;
+}
+export interface AdminGameStatsThreadSummaryDto {
+  readonly id: string;
+  readonly title: string;
+  readonly updatedAt: string;
+  readonly preview: string;
+}
+export interface AdminGameStatsThreadMessageDto {
+  readonly role: "user" | "assistant";
+  readonly content: string;
+  readonly filters?: AdminGameStatsFiltersDto;
+  readonly createdAt?: string;
+}
+export interface AdminGameStatsThreadsDto { readonly threads: readonly AdminGameStatsThreadSummaryDto[]; }
+export interface AdminGameStatsThreadDto {
+  readonly id: string;
+  readonly title: string;
+  readonly messages: readonly AdminGameStatsThreadMessageDto[];
+}
+
 export interface TileResult {
   readonly letter: string;
   readonly state: TileState;
@@ -529,6 +568,13 @@ export interface AdminDeleteResultDto {
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type ApiEndpointMap = {
+  "/api/admin/game-stats/users": { GET: { response: AdminGameStatsUsersDto } };
+  "/api/admin/game-stats/stream": { POST: { body: AdminGameStatsChatRequestDto; response: void } };
+  "/api/admin/game-stats/threads": { GET: { response: AdminGameStatsThreadsDto } };
+  "/api/admin/game-stats/threads/:threadId": {
+    GET: { response: AdminGameStatsThreadDto };
+    DELETE: { response: { deleted: boolean } };
+  };
   "/api/hexatrap/today": { GET: { response: HexatrapTodayDto } };
   "/api/hexatrap/today/questions": { POST: { body: HexatrapQuestionRequestDto; response: HexatrapActionDto } };
   "/api/hexatrap/today/submissions": { POST: { body: HexatrapSubmissionRequestDto; response: HexatrapActionDto } };

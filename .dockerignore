@@ -1,6 +1,11 @@
 .git
 .agents
 .codex
+**/.env
+agents/.agents
+agents/skills-lock.json
+agents/node_modules
+agents/.mastra
 backend/target
 frontend/dist
 frontend/node_modules

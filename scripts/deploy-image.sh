@@ -71,8 +71,8 @@ if [[ "${ENVIRONMENT}" == "staging" ]]; then
   DEFAULT_POSTGRES_DB="huff_hexaquot_staging"
   DEFAULT_POSTGRES_USER="huff_staging"
   DEFAULT_POSTGRES_PASSWORD="huff-staging"
-  DEFAULT_APP_MEMORY="320m"
-  DEFAULT_APP_MEMORY_SWAP="448m"
+  DEFAULT_APP_MEMORY="768m"
+  DEFAULT_APP_MEMORY_SWAP="1024m"
   DEFAULT_VAPID_SUBJECT="mailto:notifications@staging.hexaquot.it"
 else
   DEFAULT_ENV_FILE="${PROJECT_ROOT}/.env"
@@ -84,8 +84,8 @@ else
   DEFAULT_POSTGRES_DB="huff_hexaquot"
   DEFAULT_POSTGRES_USER="huff"
   DEFAULT_POSTGRES_PASSWORD="huff"
-  DEFAULT_APP_MEMORY="384m"
-  DEFAULT_APP_MEMORY_SWAP="512m"
+  DEFAULT_APP_MEMORY="1024m"
+  DEFAULT_APP_MEMORY_SWAP="1536m"
   DEFAULT_VAPID_SUBJECT="mailto:notifications@hexaquot.it"
 fi
 
@@ -120,16 +120,25 @@ POSTGRES_MEMORY_SWAP="${POSTGRES_MEMORY_SWAP:-224m}"
 COOKIE_SECURE="${COOKIE_SECURE:-true}"
 AUTH_ENABLED="${AUTH_ENABLED:-true}"
 VAPID_SUBJECT="${VAPID_SUBJECT:-${DEFAULT_VAPID_SUBJECT}}"
+POSTGRES_MCP_USER="${POSTGRES_MCP_USER:-huff_stats_agent}"
+POSTGRES_MCP_DATABASE="${POSTGRES_DB}"
+POSTGRES_MCP_HOST="${POSTGRES_CONTAINER_NAME}"
+POSTGRES_MCP_PORT="5432"
+GAME_STATS_AGENT_HOST="127.0.0.1"
+GAME_STATS_AGENT_PORT="${GAME_STATS_AGENT_PORT:-4111}"
 DIAGNOSTICS_DIR="${DIAGNOSTICS_DIR:-${PROJECT_ROOT}/deployment-diagnostics/${ENVIRONMENT}}"
 
 [[ "${AUTH_ENABLED}" == "true" ]] || { echo "${ENVIRONMENT} deployment refused: AUTH_ENABLED must be true." >&2; exit 1; }
 [[ -n "${GOOGLE_CLIENT_ID:-}" ]] || { echo "${ENVIRONMENT} deployment refused: GOOGLE_CLIENT_ID is required." >&2; exit 1; }
+[[ -n "${OPENAI_API_KEY:-}" ]] || { echo "${ENVIRONMENT} deployment refused: OPENAI_API_KEY is required." >&2; exit 1; }
+[[ -n "${GAME_STATS_AGENT_TOKEN:-}" && "${GAME_STATS_AGENT_TOKEN}" != "unset" && "${GAME_STATS_AGENT_TOKEN}" != "replace-with-a-long-random-secret" ]] || { echo "${ENVIRONMENT} deployment refused: GAME_STATS_AGENT_TOKEN must be configured." >&2; exit 1; }
+[[ -n "${POSTGRES_MCP_PASSWORD:-}" && "${POSTGRES_MCP_PASSWORD}" != SET_A_READ_ONLY_DATABASE_PASSWORD && "${POSTGRES_MCP_PASSWORD}" != "replace-with-a-separate-read-only-database-password" ]] || { echo "${ENVIRONMENT} deployment refused: POSTGRES_MCP_PASSWORD must be configured." >&2; exit 1; }
 
 command -v docker >/dev/null 2>&1 || { echo "Docker is required but was not found in PATH." >&2; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo "curl is required but was not found in PATH." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "Docker is not running." >&2; exit 1; }
 
-mkdir -p "${DATA_DIR}" "${POSTGRES_DATA_DIR}" "${DIAGNOSTICS_DIR}"
+mkdir -p "${DATA_DIR}" "${DATA_DIR}/agents" "${POSTGRES_DATA_DIR}" "${DIAGNOSTICS_DIR}"
 for diagnostic_file in inspect.json container.log health-response.json health-curl.log; do
   : > "${DIAGNOSTICS_DIR}/${diagnostic_file}"
 done
@@ -241,6 +250,16 @@ docker run -d \
   -e "POSTGRES_DB=${POSTGRES_DB}" \
   -e "POSTGRES_USER=${POSTGRES_USER}" \
   -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
+  -e "POSTGRES_MCP_USER=${POSTGRES_MCP_USER}" \
+  -e "POSTGRES_MCP_PASSWORD=${POSTGRES_MCP_PASSWORD}" \
+  -e "POSTGRES_MCP_DATABASE=${POSTGRES_MCP_DATABASE}" \
+  -e "POSTGRES_MCP_HOST=${POSTGRES_MCP_HOST}" \
+  -e "POSTGRES_MCP_PORT=${POSTGRES_MCP_PORT}" \
+  -e "GAME_STATS_AGENT_HOST=${GAME_STATS_AGENT_HOST}" \
+  -e "GAME_STATS_AGENT_PORT=${GAME_STATS_AGENT_PORT}" \
+  -e "GAME_STATS_AGENT_URL=http://127.0.0.1:${GAME_STATS_AGENT_PORT}" \
+  -e "GAME_STATS_AGENT_DB_URL=file:./data/mastra.db" \
+  -v "${DATA_DIR}/agents:/app/agents/data" \
   -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" \
   "${IMAGE_REF}" >/dev/null
 
@@ -271,6 +290,15 @@ for attempt in $(seq 1 60); do
   fi
   sleep 2
 done
+
+echo "Provisioning the PostgreSQL read-only statistics role"
+POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME}" \
+POSTGRES_DB="${POSTGRES_DB}" \
+POSTGRES_USER="${POSTGRES_USER}" \
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+POSTGRES_MCP_USER="${POSTGRES_MCP_USER}" \
+POSTGRES_MCP_PASSWORD="${POSTGRES_MCP_PASSWORD}" \
+  "${SCRIPT_DIR}/provision-game-stats-role.sh"
 
 running_image="$(docker inspect --format '{{.Config.Image}}' "${CONTAINER_NAME}")"
 [[ "${running_image}" == "${IMAGE_REF}" ]] || { echo "Running image mismatch: ${running_image}" >&2; exit 1; }

@@ -7,3 +7,5 @@ data/
 .env.jenkins
 deployment-diagnostics/
 *.log
+agents/.agents/
+agents/skills-lock.json

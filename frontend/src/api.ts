@@ -18,7 +18,9 @@ import type {
   LeaderboardsDto,
   ProfileUpdateDto,
   PushSubscriptionDto,
-  ScheduledAlertRequestDto
+  ScheduledAlertRequestDto,
+  AdminGameStatsChatRequestDto,
+  AdminGameStatsUsersDto
 } from "./types";
 
 type ApiPath = keyof ApiEndpointMap;
@@ -139,6 +141,11 @@ export type ApiClient = {
     [userId: string, player: AdminPlayerUpdateDto]
   >;
   readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
+  readonly adminGameStatsUsers: (query?: string) => Promise<AdminGameStatsUsersDto>;
+  readonly adminGameStatsThreads: () => Promise<import("./types").AdminGameStatsThreadsDto>;
+  readonly adminGameStatsThread: (threadId: string) => Promise<import("./types").AdminGameStatsThreadDto>;
+  readonly deleteAdminGameStatsThread: (threadId: string) => Promise<{ deleted: boolean }>;
+  readonly streamAdminGameStats: (body: AdminGameStatsChatRequestDto, onToken: (text: string) => void, signal?: AbortSignal) => Promise<void>;
   readonly adminHexaflowPuzzles: (month: string) => Promise<import("./types").HexaflowPuzzleMonthDto>;
   readonly adminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
   readonly generateAdminHexaflowBoard: (date: string, request: HexaflowBoardGenerationRequestDto) => Promise<import("./types").HexaflowGeneratedBoardDto>;
@@ -182,6 +189,50 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
     return undefined as ApiResponse<Path, Method>;
   }
   return response.json() as Promise<ApiResponse<Path, Method>>;
+}
+
+async function streamAdminGameStats(body: AdminGameStatsChatRequestDto, onToken: (text: string) => void, signal?: AbortSignal) {
+  const token = accessToken();
+  const response = await fetch("/api/admin/game-stats/stream", {
+    method: "POST",
+    credentials: "same-origin",
+    signal,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+      "X-Huff-Request": "1",
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const errorBody = (await response.json().catch(() => null)) as ApiErrorDto | null;
+    if (response.status === 401) clearAccessToken();
+    throw new ApiError(errorBody?.message ?? "Richiesta non riuscita", response.status, errorBody?.code);
+  }
+  if (!response.body) throw new ApiError("Streaming non disponibile.", response.status);
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer = (buffer + decoder.decode(value, { stream: !done })).replace(/\r\n/g, "\n");
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary >= 0) {
+      const frame = buffer.slice(0, boundary).replace(/\r/g, "");
+      buffer = buffer.slice(boundary + 2);
+      const event = frame.match(/^event:\s*(.+)$/m)?.[1];
+      const data = frame.match(/^data:\s*(.*)$/m)?.[1];
+      if (event === "token" && data) {
+        try { onToken((JSON.parse(data) as { text?: string }).text ?? ""); } catch { /* ignore malformed frame */ }
+      } else if (event === "error" && data) {
+        const error = JSON.parse(data) as { message?: string };
+        throw new ApiError(error.message ?? "Errore dell'agente statistiche.", response.status);
+      }
+      boundary = buffer.indexOf("\n\n");
+    }
+    if (done) break;
+  }
 }
 
 export const api = {
@@ -286,6 +337,16 @@ export const api = {
     request(`/api/admin/players/${encodeURIComponent(userId)}` as "/api/admin/players/:userId", {
       method: "DELETE"
     }),
+  adminGameStatsUsers: (query?: string) => {
+    const params = new URLSearchParams();
+    if (query?.trim()) params.set("q", query.trim());
+    const suffix = params.size ? `?${params.toString()}` : "";
+    return request(`/api/admin/game-stats/users${suffix}` as "/api/admin/game-stats/users", { method: "GET" });
+  },
+  adminGameStatsThreads: () => request("/api/admin/game-stats/threads", { method: "GET" }),
+  adminGameStatsThread: (threadId: string) => request(`/api/admin/game-stats/threads/${encodeURIComponent(threadId)}` as "/api/admin/game-stats/threads/:threadId", { method: "GET" }),
+  deleteAdminGameStatsThread: (threadId: string) => request(`/api/admin/game-stats/threads/${encodeURIComponent(threadId)}` as "/api/admin/game-stats/threads/:threadId", { method: "DELETE" }),
+  streamAdminGameStats,
   adminHexaflowPuzzles: (month: string) => request(`/api/admin/hexaflow/puzzles?month=${encodeURIComponent(month)}` as "/api/admin/hexaflow/puzzles", { method: "GET" }),
   adminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "GET" }),
   generateAdminHexaflowBoard: (date: string, generationRequest: HexaflowBoardGenerationRequestDto) => request(`/api/admin/hexaflow/puzzles/${date}/generate` as "/api/admin/hexaflow/puzzles/:date/generate", { method: "POST", body: generationRequest }),

@@ -18,6 +18,7 @@ import type {
 } from "../../types";
 import { HexaflowPuzzleAdmin } from "./HexaflowPuzzleAdmin";
 import { AlertAdmin } from "./AlertAdmin";
+import { GameStatsAdmin } from "./GameStatsAdmin";
 
 type ConfirmAction = { readonly kind: "save" } | { readonly kind: "delete"; readonly typedValue: string };
 
@@ -29,6 +30,7 @@ const adminPlayerSortOptions: readonly { readonly value: AdminPlayerSortDto; rea
 const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
+  adminId,
   canViewPlayers,
   canManagePlayers,
   canManageHexaflowPuzzles,
@@ -36,6 +38,7 @@ export function AdminView({
   onSuccess,
   onError
 }: {
+  adminId: string;
   canViewPlayers: boolean;
   canManagePlayers: boolean;
   canManageHexaflowPuzzles: boolean;
@@ -44,7 +47,7 @@ export function AdminView({
   onError: (message: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow" | "alerts">(canViewPlayers ? "players" : canManageHexaflowPuzzles ? "hexaflow" : "alerts");
+  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow" | "alerts" | "stats-ai">(canViewPlayers ? "players" : canManageHexaflowPuzzles ? "hexaflow" : "stats-ai");
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [playerSort, setPlayerSort] = React.useState<AdminPlayerSortDto>("alphabetical");
@@ -156,9 +159,11 @@ export function AdminView({
   const sections = <nav className="admin-sections" aria-label="Sezioni admin">
     {canViewPlayers ? <button className={adminSection === "players" ? "selected" : ""} type="button" onClick={() => setAdminSection("players")}>Giocatori</button> : null}
     {canManageHexaflowPuzzles ? <button className={adminSection === "hexaflow" ? "selected" : ""} type="button" onClick={() => setAdminSection("hexaflow")}>Puzzle Hexaflow</button> : null}
+    <button className={adminSection === "stats-ai" ? "selected" : ""} type="button" onClick={() => setAdminSection("stats-ai")}>Statistiche AI</button>
     <button className={adminSection === "alerts" ? "selected" : ""} type="button" onClick={() => setAdminSection("alerts")}>Alert</button>
   </nav>;
 
+  if (adminSection === "stats-ai") return <>{sections}<GameStatsAdmin adminId={adminId} onAuthRequired={onAuthRequired} onError={onError} /></>;
   if (adminSection === "alerts") return <>{sections}<AlertAdmin onSuccess={onSuccess} onError={onError} /></>;
   if (adminSection === "hexaflow") return <>
     {sections}
