@@ -241,7 +241,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
       <button type="button" className="game-stats-history-toggle" onClick={() => setHistoryExpanded((expanded) => !expanded)} aria-expanded={historyExpanded} aria-controls="game-stats-history-panel" aria-label={historyExpanded ? "Chiudi lo storico" : "Apri lo storico"} title="Conversazioni">
         <History size={17} />
       </button>
-      {historyExpanded ? <div className="game-stats-history-panel" id="game-stats-history-panel">
+      <div className={`game-stats-history-panel ${historyExpanded ? "open" : ""}`} id="game-stats-history-panel" aria-hidden={!historyExpanded}>
         <div className="game-stats-history-heading"><strong>Conversazioni</strong><button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button></div>
         {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
         {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
@@ -253,7 +253,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
             <button type="button" className="game-stats-history-delete" onClick={() => void deleteThread(thread.id)} disabled={streaming || loadingThread} aria-label={`Elimina conversazione ${thread.title}`} title="Elimina conversazione"><Trash2 size={14} /></button>
           </div>)}
         </div>
-      </div> : null}
+      </div>
     </aside>
     <div className="game-stats-main">
       <header className="game-stats-header">
