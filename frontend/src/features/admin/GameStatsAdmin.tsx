@@ -1,5 +1,5 @@
 import React from "react";
-import { Bot, CalendarDays, ChevronDown, CornerDownLeft, History, LoaderCircle, MessageSquare, Plus, Send, Trash2, UserRound, X } from "lucide-react";
+import { Bot, CalendarDays, CornerDownLeft, History, LoaderCircle, MessageSquare, Plus, Send, Trash2, UserRound, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -236,13 +236,11 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
 
   return <section className="game-stats-layout" aria-label="Statistiche AI">
     <aside className="game-stats-history" aria-label="Storico conversazioni">
-      <div className="game-stats-history-heading">
-        <button type="button" className="game-stats-history-toggle" onClick={() => setHistoryExpanded((expanded) => !expanded)} aria-expanded={historyExpanded}>
-          <span><History size={17} /> Conversazioni</span><ChevronDown className={historyExpanded ? "expanded" : ""} size={16} />
-        </button>
-        <button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button>
-      </div>
-      {historyExpanded ? <div className="game-stats-history-panel">
+      <button type="button" className="game-stats-history-toggle" onClick={() => setHistoryExpanded((expanded) => !expanded)} aria-expanded={historyExpanded} aria-controls="game-stats-history-panel" aria-label={historyExpanded ? "Chiudi lo storico" : "Apri lo storico"} title="Conversazioni">
+        <History size={17} />
+      </button>
+      {historyExpanded ? <div className="game-stats-history-panel" id="game-stats-history-panel">
+        <div className="game-stats-history-heading"><strong>Conversazioni</strong><button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button></div>
         {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
         {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
         <div className="game-stats-history-list">
