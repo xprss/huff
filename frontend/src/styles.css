@@ -4043,6 +4043,50 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
 .alert-row { overflow-wrap: anywhere; }
 .alert-row p, .scheduled-alert-body { white-space: pre-wrap; }
 
+.game-stats-admin { width:min(100%,72rem); min-height:min(72vh,56rem); margin:0 auto; display:grid; grid-template-rows:auto 1fr auto; gap:1rem; color:var(--color-text); }
+.game-stats-header { display:flex; align-items:center; gap:.9rem; padding:1.1rem 1.25rem; border:1px solid color-mix(in srgb,var(--color-correct) 30%,transparent); border-radius:1.2rem; background:linear-gradient(130deg,color-mix(in srgb,var(--color-correct) 13%,transparent),color-mix(in srgb,var(--color-surface,#fff) 70%,transparent)); }
+.game-stats-header h2 { margin:0; font-size:1.5rem; }
+.game-stats-header p:last-child { margin:.3rem 0 0; color:var(--color-muted); line-height:1.45; }
+.game-stats-icon,.game-stats-avatar,.game-stats-suggestion-avatar { display:grid; place-items:center; flex:none; border-radius:50%; }
+.game-stats-icon { width:2.8rem; height:2.8rem; color:var(--color-correct); background:color-mix(in srgb,var(--color-correct) 18%,transparent); }
+.game-stats-transcript { min-height:18rem; max-height:calc(100vh - 26rem); overflow:auto; display:flex; flex-direction:column; align-items:stretch; gap:.9rem; padding:1rem .4rem; }
+.game-stats-empty { margin:auto; display:grid; justify-items:center; gap:.55rem; color:var(--color-muted); text-align:center; }
+.game-stats-empty svg { color:var(--color-correct); }
+.game-stats-empty strong { color:var(--color-text); font-size:1.1rem; }
+.game-stats-message { display:flex; align-items:flex-start; gap:.6rem; max-width:90%; }
+.game-stats-message.user { align-self:flex-end; flex-direction:row-reverse; }
+.game-stats-avatar { width:2rem; height:2rem; color:var(--color-correct); background:color-mix(in srgb,var(--color-correct) 15%,transparent); }
+.game-stats-message.user .game-stats-avatar { color:var(--color-text); background:color-mix(in srgb,var(--color-text) 10%,transparent); }
+.game-stats-bubble { min-width:4rem; padding:.78rem .95rem; border:1px solid color-mix(in srgb,var(--color-text) 10%,transparent); border-radius:.3rem 1rem 1rem 1rem; background:color-mix(in srgb,var(--color-text) 5%,transparent); }
+.game-stats-message.user .game-stats-bubble { border-radius:1rem .3rem 1rem 1rem; background:color-mix(in srgb,var(--color-correct) 13%,transparent); }
+.game-stats-bubble p { margin:0; white-space:pre-wrap; line-height:1.55; overflow-wrap:anywhere; }
+.game-stats-inline-tags,.game-stats-tags { display:flex; flex-wrap:wrap; gap:.35rem; }
+.game-stats-inline-tags { margin-bottom:.5rem; }
+.game-stats-inline-tags span,.game-stats-tag { padding:.19rem .45rem; border-radius:999px; color:var(--color-correct); background:color-mix(in srgb,var(--color-correct) 15%,transparent); font-size:.76rem; font-weight:750; }
+.game-stats-cursor { display:inline-block; width:.5rem; height:1em; vertical-align:-.12em; background:var(--color-correct); animation:game-stats-blink 1s steps(2,start) infinite; }
+@keyframes game-stats-blink { to { visibility:hidden; } }
+.game-stats-composer { position:relative; padding:.65rem; border:1px solid color-mix(in srgb,var(--color-text) 18%,transparent); border-radius:1.2rem; background:var(--color-surface,#fff); box-shadow:0 .5rem 1.8rem #0002; }
+.game-stats-tags { padding:0 .3rem .55rem; }
+.game-stats-tag { display:inline-flex; align-items:center; gap:.18rem; }
+.game-stats-tag button { display:grid; place-items:center; padding:.1rem; border:0; border-radius:50%; color:inherit; background:transparent; cursor:pointer; }
+.game-stats-input-row { display:flex; align-items:flex-end; gap:.55rem; }
+.game-stats-input-row textarea { flex:1; min-height:3.2rem; max-height:10rem; resize:vertical; padding:.7rem .75rem; border:0; outline:0; color:var(--color-text); background:transparent; font:inherit; line-height:1.45; }
+.game-stats-input-row textarea::placeholder { color:var(--color-muted); }
+.game-stats-send { display:grid; width:2.6rem; height:2.6rem; flex:none; place-items:center; border:0; border-radius:.8rem; color:#08221f; background:var(--color-correct); cursor:pointer; }
+.game-stats-send:disabled { opacity:.45; cursor:default; }
+.game-stats-suggestions { position:absolute; z-index:20; left:.65rem; right:.65rem; bottom:calc(100% + .55rem); max-height:19rem; overflow:auto; padding:.35rem; border:1px solid color-mix(in srgb,var(--color-text) 13%,transparent); border-radius:1rem; background:var(--color-surface,#fff); box-shadow:0 .7rem 2rem #0003; }
+.game-stats-suggestions button { width:100%; display:flex; align-items:center; gap:.65rem; padding:.55rem; border:0; border-radius:.7rem; color:var(--color-text); background:transparent; text-align:left; cursor:pointer; }
+.game-stats-suggestions button.active,.game-stats-suggestions button:hover { background:color-mix(in srgb,var(--color-correct) 13%,transparent); }
+.game-stats-suggestions button>span:nth-child(2) { display:grid; flex:1; }
+.game-stats-suggestions small,.game-stats-suggestion-hint { color:var(--color-muted); }
+.game-stats-suggestion-avatar { width:2rem; height:2rem; color:var(--color-correct); background:color-mix(in srgb,var(--color-correct) 15%,transparent); font-weight:800; }
+.game-stats-suggestion-hint { padding:.7rem; }
+.game-stats-composer-foot { display:flex; justify-content:space-between; gap:.5rem; padding:.4rem .7rem 0; color:var(--color-muted); font-size:.72rem; }
+.game-stats-composer-foot span:last-child { text-align:right; }
+.spin { animation:game-stats-spin 1s linear infinite; }
+@keyframes game-stats-spin { to { transform:rotate(360deg); } }
+@media (max-width:600px) { .game-stats-admin { min-height:70vh; }.game-stats-header { align-items:flex-start; padding:.9rem; }.game-stats-header h2 { font-size:1.25rem; }.game-stats-transcript { max-height:calc(100vh - 23rem); }.game-stats-message { max-width:98%; }.game-stats-composer-foot { font-size:.65rem; } }
+
 /* Hexaflow CMS: a task-focused workspace rather than a long form. */
 .hexaflow-cms { width:min(100%,76rem); margin:0 auto; padding:0 0 1rem; display:grid; gap:1rem; color:var(--color-text); }
 .cms-kicker { margin:0 0 .3rem; color:var(--color-correct); font-size:.72rem; font-weight:850; letter-spacing:.12em; text-transform:uppercase; }

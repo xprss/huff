@@ -46,6 +46,17 @@ export interface ApiErrorDto {
   readonly message?: string;
 }
 
+export interface AdminGameStatsUserDto {
+  readonly nickname: string;
+  readonly displayName: string | null;
+}
+export interface AdminGameStatsUsersDto { readonly users: readonly AdminGameStatsUserDto[]; }
+export interface AdminGameStatsChatRequestDto {
+  readonly message: string;
+  readonly threadId: string;
+  readonly users: readonly string[];
+}
+
 export interface TileResult {
   readonly letter: string;
   readonly state: TileState;
@@ -529,6 +540,8 @@ export interface AdminDeleteResultDto {
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type ApiEndpointMap = {
+  "/api/admin/game-stats/users": { GET: { response: AdminGameStatsUsersDto } };
+  "/api/admin/game-stats/stream": { POST: { body: AdminGameStatsChatRequestDto; response: void } };
   "/api/hexatrap/today": { GET: { response: HexatrapTodayDto } };
   "/api/hexatrap/today/questions": { POST: { body: HexatrapQuestionRequestDto; response: HexatrapActionDto } };
   "/api/hexatrap/today/submissions": { POST: { body: HexatrapSubmissionRequestDto; response: HexatrapActionDto } };
