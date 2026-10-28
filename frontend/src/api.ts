@@ -142,6 +142,9 @@ export type ApiClient = {
   >;
   readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
   readonly adminGameStatsUsers: (query?: string) => Promise<AdminGameStatsUsersDto>;
+  readonly adminGameStatsThreads: () => Promise<import("./types").AdminGameStatsThreadsDto>;
+  readonly adminGameStatsThread: (threadId: string) => Promise<import("./types").AdminGameStatsThreadDto>;
+  readonly deleteAdminGameStatsThread: (threadId: string) => Promise<{ deleted: boolean }>;
   readonly streamAdminGameStats: (body: AdminGameStatsChatRequestDto, onToken: (text: string) => void, signal?: AbortSignal) => Promise<void>;
   readonly adminHexaflowPuzzles: (month: string) => Promise<import("./types").HexaflowPuzzleMonthDto>;
   readonly adminHexaflowPuzzle: (date: string) => Promise<import("./types").HexaflowPuzzleAdminDto>;
@@ -340,6 +343,9 @@ export const api = {
     const suffix = params.size ? `?${params.toString()}` : "";
     return request(`/api/admin/game-stats/users${suffix}` as "/api/admin/game-stats/users", { method: "GET" });
   },
+  adminGameStatsThreads: () => request("/api/admin/game-stats/threads", { method: "GET" }),
+  adminGameStatsThread: (threadId: string) => request(`/api/admin/game-stats/threads/${encodeURIComponent(threadId)}` as "/api/admin/game-stats/threads/:threadId", { method: "GET" }),
+  deleteAdminGameStatsThread: (threadId: string) => request(`/api/admin/game-stats/threads/${encodeURIComponent(threadId)}` as "/api/admin/game-stats/threads/:threadId", { method: "DELETE" }),
   streamAdminGameStats,
   adminHexaflowPuzzles: (month: string) => request(`/api/admin/hexaflow/puzzles?month=${encodeURIComponent(month)}` as "/api/admin/hexaflow/puzzles", { method: "GET" }),
   adminHexaflowPuzzle: (date: string) => request(`/api/admin/hexaflow/puzzles/${date}` as "/api/admin/hexaflow/puzzles/:date", { method: "GET" }),

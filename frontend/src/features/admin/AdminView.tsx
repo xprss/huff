@@ -30,6 +30,7 @@ const adminPlayerSortOptions: readonly { readonly value: AdminPlayerSortDto; rea
 const ADMIN_SEARCH_DEBOUNCE_MS = 350;
 
 export function AdminView({
+  adminId,
   canViewPlayers,
   canManagePlayers,
   canManageHexaflowPuzzles,
@@ -37,6 +38,7 @@ export function AdminView({
   onSuccess,
   onError
 }: {
+  adminId: string;
   canViewPlayers: boolean;
   canManagePlayers: boolean;
   canManageHexaflowPuzzles: boolean;
@@ -161,7 +163,7 @@ export function AdminView({
     <button className={adminSection === "alerts" ? "selected" : ""} type="button" onClick={() => setAdminSection("alerts")}>Alert</button>
   </nav>;
 
-  if (adminSection === "stats-ai") return <>{sections}<GameStatsAdmin onAuthRequired={onAuthRequired} onError={onError} /></>;
+  if (adminSection === "stats-ai") return <>{sections}<GameStatsAdmin adminId={adminId} onAuthRequired={onAuthRequired} onError={onError} /></>;
   if (adminSection === "alerts") return <>{sections}<AlertAdmin onSuccess={onSuccess} onError={onError} /></>;
   if (adminSection === "hexaflow") return <>
     {sections}

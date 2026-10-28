@@ -1020,6 +1020,7 @@ export function App() {
             />
           ) : activeRoute === "admin" && canViewAdmin ? (
             <AdminView
+              adminId={me?.user?.id ?? ""}
               canViewPlayers={canViewPlayers}
               canManagePlayers={canManagePlayers}
               canManageHexaflowPuzzles={canManageHexaflowPuzzles}

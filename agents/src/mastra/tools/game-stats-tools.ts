@@ -1,11 +1,14 @@
 import path from 'node:path';
 import { MCPClient } from '@mastra/mcp';
 import { createTool } from '@mastra/core/tools';
+import type { RequestContext } from '@mastra/core/request-context';
 import { z } from 'zod';
 
 const games = ['all', 'hexaword', 'hexahack', 'hexasky', 'hexaflow', 'hexastar', 'hexaeco', 'hexatrap'] as const;
 const singleGames = games.slice(1);
 type Game = typeof games[number];
+type StatsFilters = { users: string[]; games: string[]; from: string | null; to: string | null };
+type ToolContext = { abortSignal?: AbortSignal; requestContext: RequestContext };
 
 function postgresConnectionString() {
   const url = new URL('postgresql://localhost');
@@ -70,15 +73,33 @@ const gameRows: Record<Exclude<Game, 'all'>, string> = {
     FROM hexatrap_games g JOIN users u ON u.id = g.user_id`,
 };
 
-function unionRows(game: Game) {
-  const selected = game === 'all' ? singleGames : [game];
+function filtersFrom(context: ToolContext): StatsFilters | undefined {
+  const value = context.requestContext.getRaw('gameStatsFilters');
+  if (!value || typeof value !== 'object') return undefined;
+  const filters = value as Partial<StatsFilters>;
+  return {
+    users: Array.isArray(filters.users) ? filters.users : [],
+    games: Array.isArray(filters.games) ? filters.games : [],
+    from: typeof filters.from === 'string' ? filters.from : null,
+    to: typeof filters.to === 'string' ? filters.to : null,
+  };
+}
+
+function unionRows(game: Game, filters?: StatsFilters) {
+  const selected = filters?.games.length
+    ? singleGames.filter((name) => filters.games.includes(name))
+    : game === 'all' ? singleGames : [game];
   return selected.map((name) => gameRows[name as Exclude<Game, 'all'>]).join('\nUNION ALL\n');
 }
 
-function dateRange(from?: string, to?: string) {
+function dateRange(from?: string, to?: string, filters?: StatsFilters) {
   const clauses = [];
-  if (from) clauses.push(`played_on >= '${from}'`);
-  if (to) clauses.push(`played_on <= '${to}'`);
+  const hasSelectedDates = filters?.from !== null && filters?.from !== undefined || filters?.to !== null && filters?.to !== undefined;
+  const selectedFrom = hasSelectedDates ? filters?.from ?? undefined : from;
+  const selectedTo = hasSelectedDates ? filters?.to ?? undefined : to;
+  if (selectedFrom) clauses.push(`played_on >= '${selectedFrom}'`);
+  if (selectedTo) clauses.push(`played_on <= '${selectedTo}'`);
+  if (filters?.users.length) clauses.push(`nickname IN (${filters.users.map(sqlLiteral).join(', ')})`);
   return clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
 }
 
@@ -144,14 +165,15 @@ export const gameOverviewTool = createTool({
   description: 'Conteggi di partite iniziate, completate, vinte e perse per gioco e periodo.',
   inputSchema: z.object({ game: gameSchema, ...dateSchema }),
   outputSchema,
-  execute: async ({ game, from, to }, { abortSignal }) => {
-    return runQuery(`WITH games AS (${unionRows(game)})
+  execute: async ({ game, from, to }, context) => {
+    const filters = filtersFrom(context);
+    return runQuery(`WITH games AS (${unionRows(game, filters)})
       SELECT game, COUNT(*) AS started,
         COUNT(*) FILTER (WHERE completed) AS completed,
         COUNT(*) FILTER (WHERE won) AS won,
         COUNT(*) FILTER (WHERE lost) AS lost,
         ROUND(100.0 * COUNT(*) FILTER (WHERE won) / NULLIF(COUNT(*) FILTER (WHERE completed), 0), 1) AS win_percentage
-      FROM games ${dateRange(from, to)} GROUP BY game ORDER BY game`, abortSignal);
+      FROM games ${dateRange(from, to, filters)} GROUP BY game ORDER BY game`, context.abortSignal);
   },
 });
 
@@ -160,16 +182,18 @@ export const gameLeaderboardTool = createTool({
   description: 'Classifica dei giocatori per vittorie nel gioco e periodo selezionati.',
   inputSchema: z.object({ game: gameSchema, limit: z.number().int().min(1).max(50).default(10), ...dateSchema }),
   outputSchema,
-  execute: async ({ game, limit, from, to }, { abortSignal }) => {
-    const groupBy = game === 'all' ? 'nickname' : 'game, nickname';
-    const selectedGame = game === 'all' ? "'all'" : 'game';
-    return runQuery(`WITH games AS (${unionRows(game)})
+  execute: async ({ game, limit, from, to }, context) => {
+    const filters = filtersFrom(context);
+    const scopeIsSelected = Boolean(filters?.games.length);
+    const groupBy = scopeIsSelected ? 'game, nickname' : game === 'all' ? 'nickname' : 'game, nickname';
+    const selectedGame = scopeIsSelected ? 'game' : game === 'all' ? "'all'" : 'game';
+    return runQuery(`WITH games AS (${unionRows(game, filters)})
       SELECT ${selectedGame} AS game, nickname,
         COUNT(*) FILTER (WHERE won) AS wins,
         COUNT(*) FILTER (WHERE completed) AS completed,
         ROUND(100.0 * COUNT(*) FILTER (WHERE won) / NULLIF(COUNT(*) FILTER (WHERE completed), 0), 1) AS win_percentage
-      FROM games ${dateRange(from, to)}
-      GROUP BY ${groupBy} ORDER BY wins DESC, completed DESC, nickname ASC LIMIT ${limit}`, abortSignal);
+      FROM games ${dateRange(from, to, filters)}
+      GROUP BY ${groupBy} ORDER BY wins DESC, completed DESC, nickname ASC LIMIT ${limit}`, context.abortSignal);
   },
 });
 
@@ -178,17 +202,18 @@ export const playerGameStatsTool = createTool({
   description: 'Statistiche aggregate di un nickname, per gioco e periodo selezionati.',
   inputSchema: z.object({ nickname: z.string().regex(/^@[a-z0-9._-]{1,30}$/), game: gameSchema, ...dateSchema }),
   outputSchema,
-  execute: async ({ nickname, game, from, to }, { abortSignal }) => {
-    const clauses = [`nickname = ${sqlLiteral(nickname)}`];
-    if (from) clauses.push(`played_on >= '${from}'`);
-    if (to) clauses.push(`played_on <= '${to}'`);
-    return runQuery(`WITH games AS (${unionRows(game)})
+  execute: async ({ nickname, game, from, to }, context) => {
+    const filters = filtersFrom(context);
+    const selectedUsers = filters?.users.length ? filters.users : [nickname];
+    const dateAndSelectedUsers = dateRange(from, to, filters ? { ...filters, users: [] } : undefined);
+    return runQuery(`WITH games AS (${unionRows(game, filters)})
       SELECT game, nickname, COUNT(*) AS started,
         COUNT(*) FILTER (WHERE completed) AS completed,
         COUNT(*) FILTER (WHERE won) AS won,
         COUNT(*) FILTER (WHERE lost) AS lost,
         ROUND(100.0 * COUNT(*) FILTER (WHERE won) / NULLIF(COUNT(*) FILTER (WHERE completed), 0), 1) AS win_percentage
-      FROM games WHERE ${clauses.join(' AND ')} GROUP BY game, nickname ORDER BY game`, abortSignal);
+      FROM games ${dateAndSelectedUsers}${dateAndSelectedUsers ? ' AND' : ' WHERE'} nickname IN (${selectedUsers.map(sqlLiteral).join(', ')})
+      GROUP BY game, nickname ORDER BY game`, context.abortSignal);
   },
 });
 
@@ -197,14 +222,15 @@ export const gameTrendTool = createTool({
   description: 'Serie temporale di partite iniziate, completate e vinte per giorno, settimana o mese.',
   inputSchema: z.object({ game: gameSchema, bucket: z.enum(['day', 'week', 'month']).default('month'), ...dateSchema }),
   outputSchema,
-  execute: async ({ game, bucket, from, to }, { abortSignal }) => {
-    return runQuery(`WITH games AS (${unionRows(game)})
+  execute: async ({ game, bucket, from, to }, context) => {
+    const filters = filtersFrom(context);
+    return runQuery(`WITH games AS (${unionRows(game, filters)})
       SELECT game, date_trunc(${sqlLiteral(bucket)}, to_date(played_on, 'YYYY-MM-DD'))::date AS period,
         COUNT(*) AS started,
         COUNT(*) FILTER (WHERE completed) AS completed,
         COUNT(*) FILTER (WHERE won) AS won,
         COUNT(*) FILTER (WHERE lost) AS lost
-      FROM games ${dateRange(from, to)}
-      GROUP BY game, period ORDER BY period, game`, abortSignal);
+      FROM games ${dateRange(from, to, filters)}
+      GROUP BY game, period ORDER BY period, game`, context.abortSignal);
   },
 });
