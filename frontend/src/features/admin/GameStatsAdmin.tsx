@@ -1,5 +1,5 @@
 import React from "react";
-import { Bot, CalendarDays, CornerDownLeft, History, LoaderCircle, MessageSquare, Plus, Send, Trash2, UserRound, X } from "lucide-react";
+import { Bot, CalendarDays, ChevronDown, CornerDownLeft, History, LoaderCircle, MessageSquare, Plus, Send, Trash2, UserRound, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -61,6 +61,8 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   const [activeSuggestion, setActiveSuggestion] = React.useState(0);
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [promptSuggestionIndex, setPromptSuggestionIndex] = React.useState(0);
+  const [promptSuggestionPhase, setPromptSuggestionPhase] = React.useState<"enter" | "exit">("enter");
+  const [historyExpanded, setHistoryExpanded] = React.useState(false);
   const [selectedGames, setSelectedGames] = React.useState<AdminGameStatsGame[]>([]);
   const [from, setFrom] = React.useState("");
   const [to, setTo] = React.useState("");
@@ -103,10 +105,23 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
 
   React.useEffect(() => {
     if (messages.length > 0) return;
-    const interval = window.setInterval(() => {
-      setPromptSuggestionIndex((index) => (index + 1) % PROMPT_SUGGESTIONS.length);
-    }, 4_800);
-    return () => window.clearInterval(interval);
+    let holdTimeout = 0;
+    let transitionTimeout = 0;
+    const scheduleNext = () => {
+      holdTimeout = window.setTimeout(() => {
+        setPromptSuggestionPhase("exit");
+        transitionTimeout = window.setTimeout(() => {
+          setPromptSuggestionIndex((index) => (index + 1) % PROMPT_SUGGESTIONS.length);
+          setPromptSuggestionPhase("enter");
+          scheduleNext();
+        }, 220);
+      }, 5_260);
+    };
+    scheduleNext();
+    return () => {
+      window.clearTimeout(holdTimeout);
+      window.clearTimeout(transitionTimeout);
+    };
   }, [messages.length]);
 
   function updateMention(value: string, caret: number) {
@@ -221,17 +236,24 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
 
   return <section className="game-stats-layout" aria-label="Statistiche AI">
     <aside className="game-stats-history" aria-label="Storico conversazioni">
-      <div className="game-stats-history-heading"><span><History size={17} /> Conversazioni</span><button type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button></div>
-      {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
-      {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
-      <div className="game-stats-history-list">
-        {threads.data?.map((thread) => <div className={`game-stats-history-item ${thread.id === threadId ? "selected" : ""}`} key={thread.id}>
-          <button type="button" className="game-stats-history-open" onClick={() => void openThread(thread.id)} disabled={streaming || loadingThread}>
-            <MessageSquare size={15} /><span><strong>{thread.title || "Conversazione"}</strong><small>{thread.preview || "Nessun messaggio"}</small></span>
-          </button>
-          <button type="button" className="game-stats-history-delete" onClick={() => void deleteThread(thread.id)} disabled={streaming || loadingThread} aria-label={`Elimina conversazione ${thread.title}`} title="Elimina conversazione"><Trash2 size={14} /></button>
-        </div>)}
+      <div className="game-stats-history-heading">
+        <button type="button" className="game-stats-history-toggle" onClick={() => setHistoryExpanded((expanded) => !expanded)} aria-expanded={historyExpanded}>
+          <span><History size={17} /> Conversazioni</span><ChevronDown className={historyExpanded ? "expanded" : ""} size={16} />
+        </button>
+        <button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button>
       </div>
+      {historyExpanded ? <>
+        {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
+        {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
+        <div className="game-stats-history-list">
+          {threads.data?.map((thread) => <div className={`game-stats-history-item ${thread.id === threadId ? "selected" : ""}`} key={thread.id}>
+            <button type="button" className="game-stats-history-open" onClick={() => void openThread(thread.id)} disabled={streaming || loadingThread}>
+              <MessageSquare size={15} /><span><strong>{thread.title || "Conversazione"}</strong><small>{thread.preview || "Nessun messaggio"}</small></span>
+            </button>
+            <button type="button" className="game-stats-history-delete" onClick={() => void deleteThread(thread.id)} disabled={streaming || loadingThread} aria-label={`Elimina conversazione ${thread.title}`} title="Elimina conversazione"><Trash2 size={14} /></button>
+          </div>)}
+        </div>
+      </> : null}
     </aside>
     <div className="game-stats-main">
       <header className="game-stats-header">
@@ -241,15 +263,13 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
       <div className="game-stats-transcript" aria-live="polite" aria-busy={loadingThread}>
         {loadingThread ? <div className="game-stats-empty"><LoaderCircle className="spin" size={22} /><span>Ripristino conversazione…</span></div> : null}
         {!loadingThread && messages.length === 0 ? <div className="game-stats-empty"><Bot size={25} /><strong>Da dove vuoi iniziare?</strong>
-          <span className="game-stats-prompt-hint">Prova una di queste domande o selezionala per modificarla:</span>
           <div className="game-stats-prompt-carousel" aria-label="Esempi di domande">
-            <button key={promptSuggestionIndex} className="game-stats-prompt-suggestion" type="button" onClick={() => {
+            <button key={promptSuggestionIndex} className={`game-stats-prompt-suggestion ${promptSuggestionPhase}`} type="button" aria-label={`Inserisci: ${PROMPT_SUGGESTIONS[promptSuggestionIndex]}`} onClick={() => {
               setMessage(PROMPT_SUGGESTIONS[promptSuggestionIndex]);
               setMention(null);
               requestAnimationFrame(() => textarea.current?.focus());
             }}>
-              <small>ESEMPIO {promptSuggestionIndex + 1} / {PROMPT_SUGGESTIONS.length}</small>
-              <span>“{PROMPT_SUGGESTIONS[promptSuggestionIndex]}”</span>
+              <span>{PROMPT_SUGGESTIONS[promptSuggestionIndex]}</span>
             </button>
           </div>
         </div> : null}
