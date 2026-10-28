@@ -25,13 +25,25 @@ COPY backend ./
 COPY --from=frontend-build /workspace/frontend/dist ./src/main/resources/META-INF/resources
 RUN --mount=type=cache,target=/root/.m2,sharing=locked mvn -B package -Dmaven.test.skip=true
 
-FROM eclipse-temurin:17-jre-alpine AS runtime
+FROM node:24-bookworm-slim AS agents-build
+WORKDIR /workspace/agents
+
+COPY agents/package.json agents/package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm,sharing=locked npm ci
+
+COPY agents .
+RUN npm run build
+
+FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 
 ARG APP_VERSION
 ARG GIT_COMMIT
 
-RUN test -n "${APP_VERSION}" && test -n "${GIT_COMMIT}"
+RUN test -n "${APP_VERSION}" && test -n "${GIT_COMMIT}" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-17-jre-headless tini \
+    && rm -rf /var/lib/apt/lists/*
 
 LABEL org.opencontainers.image.version="${APP_VERSION}" \
       org.opencontainers.image.revision="${GIT_COMMIT}"
@@ -44,8 +56,15 @@ ENV POSTGRES_DB=huff_hexaquot
 ENV POSTGRES_USER=huff
 ENV POSTGRES_PASSWORD=huff
 ENV GAME_TIMEZONE=Europe/Rome
+ENV GAME_STATS_AGENT_HOST=127.0.0.1
+ENV GAME_STATS_AGENT_PORT=4111
+ENV GAME_STATS_AGENT_DB_URL=file:./data/mastra.db
 
 COPY --from=backend-build /workspace/backend/target/quarkus-app /app
+COPY --from=agents-build /workspace/agents/.mastra/output /app/agents/.mastra/output
+COPY --from=agents-build /workspace/agents/node_modules/@microsoft /app/agents/node_modules/@microsoft
+COPY scripts/start-huff-app.sh /app/start-huff-app.sh
+RUN chmod +x /app/start-huff-app.sh && mkdir -p /app/agents/data
 
 EXPOSE 8080
-CMD ["java", "-jar", "/app/quarkus-run.jar"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/app/start-huff-app.sh"]

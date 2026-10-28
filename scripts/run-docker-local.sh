@@ -27,6 +27,11 @@ POSTGRES_DATA_VOLUME="${LOCAL_POSTGRES_DATA_VOLUME:-huff-postgres-local-data}"
 # LOCAL_AUTH_ENABLED remains available for deliberately disabling it.
 LOCAL_AUTH_ENABLED="${LOCAL_AUTH_ENABLED:-${AUTH_ENABLED:-true}}"
 LOCAL_COOKIE_SECURE="${LOCAL_COOKIE_SECURE:-false}"
+LOCAL_AGENT_DATA_DIR="${LOCAL_AGENT_DATA_DIR:-${PROJECT_ROOT}/data/local-agents}"
+POSTGRES_MCP_USER="${POSTGRES_MCP_USER:-huff_stats_agent}"
+POSTGRES_MCP_DATABASE="${POSTGRES_DB}"
+POSTGRES_MCP_HOST="${POSTGRES_CONTAINER_NAME}"
+POSTGRES_MCP_PORT="5432"
 
 usage() {
   cat <<EOF
@@ -46,6 +51,8 @@ Local overrides:
   LOCAL_POSTGRES_CONTAINER_NAME, LOCAL_POSTGRES_IMAGE,
   LOCAL_POSTGRES_DB, LOCAL_POSTGRES_USER, LOCAL_POSTGRES_PASSWORD,
   LOCAL_POSTGRES_DATA_VOLUME, LOCAL_AUTH_ENABLED, LOCAL_COOKIE_SECURE, ENV_FILE
+  POSTGRES_MCP_USER, POSTGRES_MCP_PASSWORD, OPENAI_API_KEY, GAME_STATS_AGENT_TOKEN,
+  LOCAL_AGENT_DATA_DIR
 EOF
 }
 
@@ -77,6 +84,11 @@ if ! command -v docker >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! command -v curl >/dev/null 2>&1; then
+  echo "curl is required to check application readiness." >&2
+  exit 1
+fi
+
 if ! docker info >/dev/null 2>&1; then
   echo "Docker is not running." >&2
   exit 1
@@ -91,6 +103,15 @@ if [[ "${LOCAL_AUTH_ENABLED}" == "true" && -z "${GOOGLE_CLIENT_ID:-}" ]]; then
   echo "Local Docker run refused: GOOGLE_CLIENT_ID is required when authentication is enabled." >&2
   exit 1
 fi
+
+if [[ -z "${OPENAI_API_KEY:-}" || -z "${GAME_STATS_AGENT_TOKEN:-}" || "${GAME_STATS_AGENT_TOKEN:-}" == replace-with-a-long-random-secret \
+  || -z "${POSTGRES_MCP_PASSWORD:-}" || "${POSTGRES_MCP_PASSWORD:-}" == replace-with-a-separate-read-only-database-password \
+  || "${POSTGRES_MCP_PASSWORD:-}" == SET_A_READ_ONLY_DATABASE_PASSWORD ]]; then
+  echo "Local Docker run requires OPENAI_API_KEY, GAME_STATS_AGENT_TOKEN, and POSTGRES_MCP_PASSWORD in ENV_FILE." >&2
+  exit 1
+fi
+
+mkdir -p "${LOCAL_AGENT_DATA_DIR}"
 
 if [[ "${FRESH_DB}" == "true" ]]; then
   echo "Recreating disposable local database volume: ${POSTGRES_DATA_VOLUME}"
@@ -162,7 +183,7 @@ if [[ -f "${ENV_FILE}" ]]; then
 fi
 
 echo "Running ${IMAGE_NAME}:latest at http://localhost:${HOST_PORT} (Ctrl-C to stop)"
-exec docker run -d --rm \
+docker run -d --rm \
   --name "${CONTAINER_NAME}" \
   --network "${DOCKER_NETWORK}" \
   "${ENV_ARGS[@]}" \
@@ -174,5 +195,54 @@ exec docker run -d --rm \
   -e "POSTGRES_DB=${POSTGRES_DB}" \
   -e "POSTGRES_USER=${POSTGRES_USER}" \
   -e "POSTGRES_PASSWORD=${POSTGRES_PASSWORD}" \
+  -e "POSTGRES_MCP_USER=${POSTGRES_MCP_USER}" \
+  -e "POSTGRES_MCP_PASSWORD=${POSTGRES_MCP_PASSWORD}" \
+  -e "POSTGRES_MCP_DATABASE=${POSTGRES_MCP_DATABASE}" \
+  -e "POSTGRES_MCP_HOST=${POSTGRES_MCP_HOST}" \
+  -e "POSTGRES_MCP_PORT=${POSTGRES_MCP_PORT}" \
+  -e "GAME_STATS_AGENT_HOST=127.0.0.1" \
+  -e "GAME_STATS_AGENT_PORT=4111" \
+  -e "GAME_STATS_AGENT_URL=http://127.0.0.1:4111" \
+  -e "GAME_STATS_AGENT_DB_URL=file:./data/mastra.db" \
+  -v "${LOCAL_AGENT_DATA_DIR}:/app/agents/data" \
   -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" \
   "${IMAGE_NAME}:latest"
+trap 'docker stop "${CONTAINER_NAME}" >/dev/null 2>&1 || true' EXIT INT TERM
+
+echo "Waiting for database migrations"
+for attempt in $(seq 1 45); do
+  if docker exec -i -e "PGPASSWORD=${POSTGRES_PASSWORD}" "${POSTGRES_CONTAINER_NAME}" \
+    psql -X -q -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" -v ON_ERROR_STOP=1 -Atc \
+      "SELECT to_regclass('public.users') IS NOT NULL;" 2>/dev/null | grep -Fxq "t"; then
+    break
+  fi
+  if [[ "${attempt}" -eq 45 ]]; then
+    echo "Flyway did not create the database schema in time." >&2
+    docker rm -f "${CONTAINER_NAME}" >/dev/null 2>&1 || true
+    exit 1
+  fi
+  sleep 1
+done
+
+echo "Waiting for application readiness"
+for attempt in $(seq 1 60); do
+  if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:${HOST_PORT}/q/health/ready" >/dev/null 2>&1; then
+    break
+  fi
+  if [[ "${attempt}" -eq 60 ]]; then
+    echo "Application did not become ready in time." >&2
+    exit 1
+  fi
+  sleep 2
+done
+
+POSTGRES_CONTAINER_NAME="${POSTGRES_CONTAINER_NAME}" \
+POSTGRES_DB="${POSTGRES_DB}" \
+POSTGRES_USER="${POSTGRES_USER}" \
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+POSTGRES_MCP_USER="${POSTGRES_MCP_USER}" \
+POSTGRES_MCP_PASSWORD="${POSTGRES_MCP_PASSWORD}" \
+  "${SCRIPT_DIR}/provision-game-stats-role.sh"
+
+echo "Local app ready at http://localhost:${HOST_PORT} (Ctrl-C to stop)"
+docker logs -f "${CONTAINER_NAME}"

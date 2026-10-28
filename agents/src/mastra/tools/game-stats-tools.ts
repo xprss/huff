@@ -7,6 +7,16 @@ const games = ['all', 'hexaword', 'hexahack', 'hexasky', 'hexaflow', 'hexastar',
 const singleGames = games.slice(1);
 type Game = typeof games[number];
 
+function postgresConnectionString() {
+  const url = new URL('postgresql://localhost');
+  url.username = process.env.POSTGRES_MCP_USER || 'huff_stats_agent';
+  url.password = process.env.POSTGRES_MCP_PASSWORD || '';
+  url.hostname = process.env.POSTGRES_MCP_HOST || process.env.POSTGRES_HOST || 'localhost';
+  url.port = process.env.POSTGRES_MCP_PORT || process.env.POSTGRES_PORT || '5432';
+  url.pathname = `/${process.env.POSTGRES_MCP_DATABASE || process.env.POSTGRES_DB || 'huff_hexaquot'}`;
+  return url.toString();
+}
+
 const mcpClient = new MCPClient({
   id: 'hexaquot-game-statistics-postgres',
   servers: {
@@ -14,7 +24,7 @@ const mcpClient = new MCPClient({
       command: process.execPath,
       args: [path.resolve('node_modules/@microsoft/postgres-mcp/bin/postgres-mcp.js'), 'run'],
       env: {
-        POSTGRES_MCP_CONNECTION_STRING: process.env.POSTGRES_MCP_CONNECTION_STRING || '',
+        POSTGRES_MCP_CONNECTION_STRING: postgresConnectionString(),
         POSTGRES_MCP_DISABLE_CWD_ACCESS: '1',
         POSTGRES_MCP_QUERY_TIMEOUT_MS: '30000',
       },
@@ -77,8 +87,8 @@ function sqlLiteral(value: string) {
 }
 
 async function getToolsets(): Promise<Toolsets> {
-  if (!process.env.POSTGRES_MCP_CONNECTION_STRING) {
-    throw new Error('POSTGRES_MCP_CONNECTION_STRING non configurata.');
+  if (!process.env.POSTGRES_MCP_PASSWORD) {
+    throw new Error('POSTGRES_MCP_PASSWORD non configurata.');
   }
   toolsetsPromise ??= mcpClient.listToolsets() as Promise<Toolsets>;
   return toolsetsPromise;

@@ -201,6 +201,14 @@ is used only to correlate the two container-log entries.
 
 The backend uses Hibernate ORM/Panache with PostgreSQL. The live database runs in the `POSTGRES_CONTAINER_NAME` container and persists data in `POSTGRES_DATA_DIR`.
 
+### Statistiche AI admin
+
+L'area admin include **Statistiche AI**, una chat Mastra privata che risponde su conteggi, andamenti e classifiche dei giochi. Gli amministratori possono taggare fino a 10 utenti digitando `@`; la ricerca mostra solo nickname e nome visualizzato. Le API verificano la sessione e il ruolo admin.
+
+Mastra gira nello stesso container applicativo, ascolta solo su `127.0.0.1` e non pubblica una porta Docker. Il backend lo raggiunge con `GAME_STATS_AGENT_TOKEN`. PostgreSQL è interrogato tramite `@microsoft/postgres-mcp` usando un ruolo dedicato con `SELECT` limitato alle colonne statistiche e ai nickname. Il container applicativo riceve `OPENAI_API_KEY`, `GAME_STATS_AGENT_TOKEN` e `POSTGRES_MCP_PASSWORD` dal file ambiente runtime; usare valori separati e segreti. Gli esempi `.env.example` e `.env.staging.example` indicano la configurazione richiesta.
+
+`scripts/deploy-image.sh` e `scripts/run-docker-local.sh` creano il ruolo PostgreSQL read-only dopo le migrazioni. Le chat admin sono persistite in `${DATA_DIR}/agents` nei deploy Docker.
+
 Useful commands:
 
 ```bash
