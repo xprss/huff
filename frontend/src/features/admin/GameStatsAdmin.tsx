@@ -163,6 +163,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   }
 
   async function openThread(id: string) {
+    setHistoryExpanded(false);
     if (streaming || loadingThread || id === threadId) return;
     setLoadingThread(true);
     try {
@@ -184,6 +185,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   }
 
   function newThread() {
+    setHistoryExpanded(false);
     if (streaming || loadingThread) return;
     setThreadId(crypto.randomUUID());
     setMessages([]);
