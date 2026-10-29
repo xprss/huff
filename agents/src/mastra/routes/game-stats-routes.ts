@@ -9,8 +9,11 @@ const streamRequest = z.object({
   resourceId: z.string().regex(/^[a-f0-9]{64}$/),
   users: z.array(z.string().regex(/^@[a-z0-9._-]{1,30}$/)).max(10).default([]),
   games: z.array(z.enum(['hexaword', 'hexahack', 'hexasky', 'hexaflow', 'hexastar', 'hexaeco', 'hexatrap'])).max(7).default([]),
-  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // The Java backend serializes absent optional dates as JSON null. Treat that
+  // exactly like an omitted date, rather than rejecting an otherwise-valid
+  // request before the agent can start streaming.
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
 });
 
 const encoder = new TextEncoder();
@@ -27,7 +30,9 @@ export const gameStatsRoutes = [
       const parsed = streamRequest.safeParse(await c.req.json().catch(() => null));
       if (!parsed.success) return c.json({ message: 'Richiesta non valida.' }, 400);
 
-      const { message, threadId, resourceId, users, games, from, to } = parsed.data;
+      const { message, threadId, resourceId, users, games, from: rawFrom, to: rawTo } = parsed.data;
+      const from = rawFrom ?? undefined;
+      const to = rawTo ?? undefined;
       const filters = { users, games, from: from ?? null, to: to ?? null };
       const hasFilters = users.length > 0 || games.length > 0 || from !== undefined || to !== undefined;
       const filterContext = hasFilters
