@@ -159,7 +159,7 @@ export function AdminView({
   const sections = <nav className="admin-sections" aria-label="Sezioni admin">
     {canViewPlayers ? <button className={adminSection === "players" ? "selected" : ""} type="button" onClick={() => setAdminSection("players")}>Giocatori</button> : null}
     {canManageHexaflowPuzzles ? <button className={adminSection === "hexaflow" ? "selected" : ""} type="button" onClick={() => setAdminSection("hexaflow")}>Puzzle Hexaflow</button> : null}
-    <button className={adminSection === "stats-ai" ? "selected" : ""} type="button" onClick={() => setAdminSection("stats-ai")}>Statistiche AI</button>
+    <button className={adminSection === "stats-ai" ? "selected" : ""} type="button" onClick={() => setAdminSection("stats-ai")}>hexAI</button>
     <button className={adminSection === "alerts" ? "selected" : ""} type="button" onClick={() => setAdminSection("alerts")}>Alert</button>
   </nav>;
 
