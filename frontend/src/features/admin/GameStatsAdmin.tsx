@@ -8,6 +8,7 @@ import type { AdminGameStatsFiltersDto, AdminGameStatsGame, AdminGameStatsUserDt
 
 type ChatMessage = { role: "user" | "assistant"; content: string; users?: readonly string[]; filters?: AdminGameStatsFiltersDto };
 type Mention = { type: "user" | "game"; start: number; end: number; query: string };
+type DateCommand = "startdate" | "enddate";
 const MAX_USERS = 10;
 const GAME_OPTIONS: readonly { id: AdminGameStatsGame; label: string }[] = [
   { id: "hexaword", label: "HexaWord" }, { id: "hexahack", label: "HexaHack" },
@@ -66,10 +67,13 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   const [selectedGames, setSelectedGames] = React.useState<AdminGameStatsGame[]>([]);
   const [from, setFrom] = React.useState("");
   const [to, setTo] = React.useState("");
+  const [dateCommand, setDateCommand] = React.useState<DateCommand | null>(null);
   const [streaming, setStreaming] = React.useState(false);
   const [threadId, setThreadId] = React.useState<string>(() => crypto.randomUUID());
   const [loadingThread, setLoadingThread] = React.useState(false);
   const textarea = React.useRef<HTMLTextAreaElement>(null);
+  const transcript = React.useRef<HTMLDivElement>(null);
+  const followLatestMessage = React.useRef(true);
   const abort = React.useRef<AbortController | null>(null);
   const callbacks = React.useRef({ onAuthRequired, onError });
   callbacks.current = { onAuthRequired, onError };
@@ -103,6 +107,23 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
 
   React.useEffect(() => () => abort.current?.abort(), []);
 
+  React.useLayoutEffect(() => {
+    const panel = transcript.current;
+    if (panel && followLatestMessage.current) panel.scrollTop = panel.scrollHeight;
+  }, [messages]);
+
+  React.useLayoutEffect(() => {
+    const input = textarea.current;
+    if (!input) return;
+    input.style.height = "auto";
+    const styles = getComputedStyle(input);
+    const lineHeight = Number.parseFloat(styles.lineHeight) || 22;
+    const verticalPadding = (Number.parseFloat(styles.paddingTop) || 0) + (Number.parseFloat(styles.paddingBottom) || 0);
+    const maxHeight = lineHeight * 3 + verticalPadding;
+    input.style.height = `${Math.min(input.scrollHeight, maxHeight)}px`;
+    input.style.overflowY = input.scrollHeight > maxHeight ? "auto" : "hidden";
+  }, [message]);
+
   React.useEffect(() => {
     if (messages.length > 0) return;
     let holdTimeout = 0;
@@ -129,6 +150,30 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
     setActiveSuggestion(0);
   }
 
+  function updateDateCommand(value: string, caret: number) {
+    const command = value.slice(0, caret).match(/(?:^|\s)\/(startdate|enddate)$/i)?.[1]?.toLowerCase() as DateCommand | undefined;
+    setDateCommand(command ?? null);
+    if (command) setMention(null);
+    else updateMention(value, caret);
+  }
+
+  function chooseDate(value: string) {
+    if (!dateCommand || !value) return;
+    const field = dateCommand;
+    if (field === "startdate") {
+      setFrom(value);
+      if (to && value > to) setTo(value);
+    } else {
+      setTo(value);
+      if (from && value < from) setFrom(value);
+    }
+    const commandPattern = new RegExp(`(^|\\s)\\/${field}(?=\\s|$)`, "i");
+    const next = message.replace(commandPattern, " ").replace(/\s{2,}/g, " ");
+    setMessage(next);
+    setDateCommand(null);
+    requestAnimationFrame(() => textarea.current?.focus());
+  }
+
   function choose(option: AdminGameStatsUserDto | (typeof GAME_OPTIONS)[number]) {
     if (!mention) return;
     const next = `${message.slice(0, mention.start)}${message.slice(mention.end)}`;
@@ -147,6 +192,7 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (dateCommand && event.key === "Enter") { event.preventDefault(); return; }
     const choicesCount = mention?.type === "user" ? options.length : gameOptions.length;
     if (mention && choicesCount > 0) {
       if (event.key === "ArrowDown") { event.preventDefault(); setActiveSuggestion((index) => (index + 1) % choicesCount); return; }
@@ -236,31 +282,33 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
     }
   }
 
-  return <section className="game-stats-layout" aria-label="Statistiche AI">
-    <aside className="game-stats-history" aria-label="Storico conversazioni">
-      <button type="button" className="game-stats-history-toggle" onClick={() => setHistoryExpanded((expanded) => !expanded)} aria-expanded={historyExpanded} aria-controls="game-stats-history-panel" aria-label={historyExpanded ? "Chiudi lo storico" : "Apri lo storico"} title="Conversazioni">
-        <History size={17} />
-      </button>
-      <div className={`game-stats-history-panel ${historyExpanded ? "open" : ""}`} id="game-stats-history-panel" aria-hidden={!historyExpanded}>
-        <div className="game-stats-history-heading"><strong>Conversazioni</strong><button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button></div>
-        {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
-        {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
-        <div className="game-stats-history-list">
-          {threads.data?.map((thread) => <div className={`game-stats-history-item ${thread.id === threadId ? "selected" : ""}`} key={thread.id}>
-            <button type="button" className="game-stats-history-open" onClick={() => void openThread(thread.id)} disabled={streaming || loadingThread}>
-              <MessageSquare size={15} /><span><strong>{thread.title || "Conversazione"}</strong><small>{thread.preview || "Nessun messaggio"}</small></span>
-            </button>
-            <button type="button" className="game-stats-history-delete" onClick={() => void deleteThread(thread.id)} disabled={streaming || loadingThread} aria-label={`Elimina conversazione ${thread.title}`} title="Elimina conversazione"><Trash2 size={14} /></button>
-          </div>)}
-        </div>
-      </div>
-    </aside>
+  return <section className="game-stats-layout" aria-label="hexAI">
     <div className="game-stats-main">
       <header className="game-stats-header">
-        <div className="game-stats-icon"><Bot size={22} /></div>
-        <div><p className="cms-kicker">Analisi dei giochi</p><h2>Statistiche AI</h2><p>Filtra per giocatore con @, per gioco con # e scegli il periodo.</p></div>
+        <aside className="game-stats-history" aria-label="Storico conversazioni">
+          <button type="button" className="game-stats-history-toggle" onClick={() => setHistoryExpanded((expanded) => !expanded)} aria-expanded={historyExpanded} aria-controls="game-stats-history-panel" aria-label={historyExpanded ? "Chiudi lo storico" : "Apri lo storico"} title="Conversazioni">
+            <History size={17} />
+          </button>
+          <div className={`game-stats-history-panel ${historyExpanded ? "open" : ""}`} id="game-stats-history-panel" aria-hidden={!historyExpanded}>
+            <div className="game-stats-history-heading"><strong>Conversazioni</strong><button className="game-stats-history-new" type="button" onClick={newThread} disabled={streaming || loadingThread} aria-label="Nuova conversazione" title="Nuova conversazione"><Plus size={17} /></button></div>
+            {threads.isFetching && !threads.data ? <div className="game-stats-history-empty">Carico lo storico…</div> : null}
+            {!threads.isFetching && (threads.data?.length ?? 0) === 0 ? <div className="game-stats-history-empty">Le chat salvate appariranno qui.</div> : null}
+            <div className="game-stats-history-list">
+              {threads.data?.map((thread) => <div className={`game-stats-history-item ${thread.id === threadId ? "selected" : ""}`} key={thread.id}>
+                <button type="button" className="game-stats-history-open" onClick={() => void openThread(thread.id)} disabled={streaming || loadingThread}>
+                  <MessageSquare size={15} /><span><strong>{thread.title || "Conversazione"}</strong><small>{thread.preview || "Nessun messaggio"}</small></span>
+                </button>
+                <button type="button" className="game-stats-history-delete" onClick={() => void deleteThread(thread.id)} disabled={streaming || loadingThread} aria-label={`Elimina conversazione ${thread.title}`} title="Elimina conversazione"><Trash2 size={14} /></button>
+              </div>)}
+            </div>
+          </div>
+        </aside>
+        <h2>hexAI</h2>
       </header>
-      <div className="game-stats-transcript" aria-live="polite" aria-busy={loadingThread}>
+      <div ref={transcript} className="game-stats-transcript" aria-live="polite" aria-busy={loadingThread} onScroll={(event) => {
+        const panel = event.currentTarget;
+        followLatestMessage.current = panel.scrollHeight - panel.scrollTop - panel.clientHeight < 80;
+      }}>
         {loadingThread ? <div className="game-stats-empty"><LoaderCircle className="spin" size={22} /><span>Ripristino conversazione…</span></div> : null}
         {!loadingThread && messages.length === 0 ? <div className="game-stats-empty"><Bot size={25} /><strong>Da dove vuoi iniziare?</strong>
           <div className="game-stats-prompt-carousel" aria-label="Esempi di domande">
@@ -293,16 +341,12 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
           {selected.map((user) => <span className="game-stats-tag" key={user.nickname}><span>@{user.nickname.replace(/^@/, "")}</span><button type="button" aria-label={`Rimuovi ${user.nickname}`} onClick={() => setSelected((current) => current.filter((item) => item.nickname !== user.nickname))}><X size={13} /></button></span>)}
           {selectedGames.map((game) => <span className="game-stats-tag" key={game}><span>#{game}</span><button type="button" aria-label={`Rimuovi ${game}`} onClick={() => setSelectedGames((current) => current.filter((item) => item !== game))}><X size={13} /></button></span>)}
         </div> : null}
-        <div className="game-stats-period" aria-label="Periodo della ricerca">
-          <span><CalendarDays size={15} /> Periodo</span>
-          <label>Da <input type="date" value={from} max={to || undefined} onChange={(event) => { const value = event.target.value; setFrom(value); if (to && value > to) setTo(value); }} /></label>
-          <label>A <input type="date" value={to} min={from || undefined} onChange={(event) => { const value = event.target.value; setTo(value); if (from && value < from) setFrom(value); }} /></label>
-          <small>Stessa data in entrambi i campi per un solo giorno</small>
-        </div>
+        {from || to ? <div className="game-stats-date-tags" aria-label="Periodo selezionato"><CalendarDays size={14} /><span>{from || "…"} → {to || "…"}</span><button type="button" aria-label="Rimuovi il periodo" onClick={() => { setFrom(""); setTo(""); }}><X size={13} /></button></div> : null}
         <div className="game-stats-input-row">
-        <textarea ref={textarea} value={message} onChange={(event) => { setMessage(event.target.value); updateMention(event.target.value, event.target.selectionStart); }} onClick={(event) => updateMention(event.currentTarget.value, event.currentTarget.selectionStart)} onKeyDown={onKeyDown} placeholder="Chiedi qualcosa… digita @ per gli utenti o # per i giochi" rows={2} maxLength={4000} disabled={streaming || loadingThread} />
-          <button className="game-stats-send" type="submit" disabled={streaming || loadingThread || !message.trim()} aria-label="Invia domanda">{streaming ? <LoaderCircle className="spin" size={18} /> : <Send size={18} />}</button>
+        <textarea ref={textarea} value={message} onChange={(event) => { setMessage(event.target.value); updateDateCommand(event.target.value, event.target.selectionStart); }} onClick={(event) => updateDateCommand(event.currentTarget.value, event.currentTarget.selectionStart)} onKeyDown={onKeyDown} placeholder="Chiedi a hexAI" rows={1} maxLength={4000} disabled={streaming || loadingThread} />
+          <button className="game-stats-send" type="submit" disabled={streaming || loadingThread || !message.trim() || Boolean(dateCommand)} aria-label="Invia domanda">{streaming ? <LoaderCircle className="spin" size={18} /> : <Send size={18} />}</button>
         </div>
+        {dateCommand ? <div className="game-stats-date-picker" aria-label={`Seleziona ${dateCommand === "startdate" ? "la data iniziale" : "la data finale"}`}><CalendarDays size={15} /><span>{dateCommand === "startdate" ? "Data iniziale" : "Data finale"}</span><input autoFocus type="date" value={dateCommand === "startdate" ? from : to} min={dateCommand === "enddate" ? from || undefined : undefined} max={dateCommand === "startdate" ? to || undefined : undefined} onChange={(event) => chooseDate(event.target.value)} /></div> : null}
         {mention && ((mention.type === "user" && selected.length < MAX_USERS) || (mention.type === "game" && selectedGames.length < GAME_OPTIONS.length)) ? <div className="game-stats-suggestions" role="listbox" aria-label={mention.type === "user" ? "Utenti" : "Giochi"}>
           {mention.type === "user" && suggestions.isFetching && !suggestions.data ? <div className="game-stats-suggestion-hint">Cerco utenti…</div> : null}
           {mention.type === "user" && !suggestions.isFetching && options.length === 0 ? <div className="game-stats-suggestion-hint">Nessun utente trovato.</div> : null}
@@ -313,7 +357,6 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
             <span className="game-stats-suggestion-avatar">#</span><span><strong>{game.label}</strong><small>#{game.id}</small></span><CornerDownLeft size={15} />
           </button>)}
         </div> : null}
-        <div className="game-stats-composer-foot"><span>{selected.length}/{MAX_USERS} utenti · {selectedGames.length}/{GAME_OPTIONS.length} giochi</span><span>Invio per inviare · Shift+Invio per andare a capo</span></div>
       </form>
     </div>
   </section>;
