@@ -5,7 +5,7 @@
   --compact-radius: 10px;
   --viewport-padding: 16px;
   --surface-gap: 12px;
-  --nav-height: 60px;
+  --nav-height: 52px;
   --font-title: var(--font-body);
   --motion-base: 200ms;
 }
@@ -74,8 +74,8 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   background: color-mix(in srgb, var(--color-page) 94%, transparent);
   backdrop-filter: blur(16px);
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 5px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--color-muted); font-size: .65rem; font-weight: 600; cursor: pointer; transition: background var(--motion-base), color var(--motion-base); }
-.nav-item.active { color: var(--color-primary); background: var(--color-surface-strong); }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-height: 42px; padding: 3px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--color-muted); font-size: .65rem; font-weight: 600; cursor: pointer; transition: background var(--motion-base), color var(--motion-base); }
+.nav-item.active { color: var(--color-primary); background: var(--color-surface-strong); font-size: .6rem; }
 .nav-item.active svg { stroke-width: 2.4; }
 .nav-item:not(.active) span { display: none; }
 .nav-item:active { transform: scale(.97); }
@@ -343,7 +343,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
   .puzzle-card--featured .puzzle-card-footer { grid-column: 1; align-self: end; }
   .modal-backdrop { align-items: center; padding: 24px; }
   .modal { padding: 28px; max-height: min(calc(var(--app-height) - 48px), 760px); }
-  .app-navigation { left: 50%; right: auto; width: min(100% - 48px, 560px); transform: translateX(-50%); bottom: max(12px, env(safe-area-inset-bottom, 0px)); min-height: var(--nav-height); padding: 7px; border: 1px solid var(--color-surface-border); border-radius: 22px; box-shadow: 0 6px 24px var(--color-board-shadow); }
+  .app-navigation { left: 50%; right: auto; width: min(100% - 48px, 560px); transform: translateX(-50%); bottom: max(12px, env(safe-area-inset-bottom, 0px)); min-height: var(--nav-height); padding: 5px; border: 1px solid var(--color-surface-border); border-radius: 22px; box-shadow: 0 6px 24px var(--color-board-shadow); }
   .app-shell.has-navigation { padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 28px); }
 }
 
@@ -393,8 +393,8 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 }
 
 @media (max-height: 700px) and (max-width: 899px) {
-  .app-shell { --nav-height: 56px; --surface-gap: 8px; padding-top: max(8px, env(safe-area-inset-top, 0px)); }
-  .nav-item { min-height: 46px; gap: 3px; }
+  .app-shell { --nav-height: 50px; --surface-gap: 8px; padding-top: max(8px, env(safe-area-inset-top, 0px)); }
+  .nav-item { min-height: 42px; gap: 2px; }
   .topbar { padding-bottom: 6px; }
   .daily-game-intro { padding: 3px 0; }
   .daily-game-intro h2 { font-size: 1.5rem; }
@@ -459,8 +459,8 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 #root .brand-home { min-height: 38px; }
 #root .actions { gap: 4px; }
 #root .menu-trigger { width: 36px; height: 36px; min-width: 36px; padding: 0; border: 0; border-radius: 10px; }
-#root .app-navigation { gap: 3px; padding: 5px max(10px, env(safe-area-inset-right, 0px)) calc(5px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
-#root .nav-item { min-height: 46px; gap: 3px; padding: 4px 3px; }
+#root .app-navigation { gap: 3px; padding: 4px max(10px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
+#root .nav-item { min-height: 42px; gap: 2px; padding: 3px; }
 
 #root .game-selector { gap: 14px; padding: 12px 1px 18px; }
 #root .daily-welcome { gap: 16px; }
