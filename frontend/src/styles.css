@@ -155,8 +155,8 @@
   color: var(--color-text);
   background: var(--color-page);
   font-family: var(--font-body);
-  --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-title: var(--font-body);
+  --font-body: "Creato Display", "Avenir Next", Avenir, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-title: "Midstar", "Recoleta", "Canela", "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --font-keyboard: "Creato Display", "Avenir Next", Avenir, "SF Pro Text", "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-synthesis: none;
