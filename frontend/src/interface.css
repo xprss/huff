@@ -451,7 +451,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 }
 
 #root .app-shell.has-navigation {
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 28px);
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
 }
 
 #root .game-surface { gap: 8px; }
@@ -470,6 +470,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 #root .puzzle-card--featured { gap: 12px; padding: 16px; }
 #root .puzzle-card-footer { gap: 8px; padding-top: 8px; }
 #root .daily-note { gap: 7px; }
+#root .app-navigation { display: none; }
 
 #root :is(.account-panel, .profile-summary, .leaderboard-head, .trap-panel, .hack-console, .hack-log, .hack-mastery, .admin-stats-panel, .admin-edit-panel, .admin-confirm-panel, .admin-games-panel, .login-showcase, .cms-library-panel, .cms-grid-panel, .cms-answers-panel, .cms-generator, .cms-create-card, .cms-puzzle-card) {
   padding: 14px;
