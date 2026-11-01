@@ -410,3 +410,35 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   .puzzle-card:hover:not(:disabled), .puzzle-card:active:not(:disabled), .nav-item:active { transform: none; }
 }
+
+/* Compact, low elevation controls across the app. Keep game boards, cards, and
+   virtual keyboards on their own sizing systems. */
+#root button:not(.key):not(.menu-item):not(.sky-keyboard button):not(.terminal-cell):not(.sky-cell):not(.hexaflow-cell):not(.cms-grid button):not(.puzzle-card):not(.cms-puzzle-card) {
+  min-height: 32px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  box-shadow: none;
+  font-size: .82rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.35;
+}
+
+.action-menu {
+  width: min(248px, calc(100vw - 32px));
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px var(--color-modal-shadow);
+}
+
+.menu-item {
+  min-height: 32px;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  font-size: .82rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.menu-divider { margin: 4px 6px; }
