@@ -5,7 +5,7 @@
   --compact-radius: 10px;
   --viewport-padding: 16px;
   --surface-gap: 12px;
-  --nav-height: 70px;
+  --nav-height: 60px;
   --font-title: var(--font-body);
   --motion-base: 200ms;
 }
@@ -41,7 +41,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .topbar .brand-symbol { grid-template-columns: repeat(3, 7px); }
 .topbar .brand-symbol i { width: 7px; height: 11px; }
 .brand-date { margin-top: 4px; color: var(--color-muted); font-size: .6rem; font-weight: 400; line-height: 1.25; text-transform: capitalize; }
-.brand-home { padding: 2px 0; min-height: 44px; border: 0; background: transparent; color: var(--color-text); text-align: left; cursor: pointer; }
+.brand-home { padding: 2px 0; min-height: 40px; border: 0; background: transparent; color: var(--color-text); text-align: left; cursor: pointer; }
 .brand-symbol { display: grid; flex: 0 0 auto; grid-template-columns: repeat(3, 8px); gap: 3px; transform: rotate(-10deg); }
 .brand-symbol i { width: 8px; height: 13px; border-radius: 3px; background: var(--color-primary); }
 .brand-symbol i:nth-child(2), .brand-symbol i:nth-child(6) { opacity: .45; }
@@ -74,7 +74,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   background: color-mix(in srgb, var(--color-page) 94%, transparent);
   backdrop-filter: blur(16px);
 }
-.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 54px; padding: 7px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--color-muted); font-size: .65rem; font-weight: 600; cursor: pointer; transition: background var(--motion-base), color var(--motion-base); }
+.nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 5px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--color-muted); font-size: .65rem; font-weight: 600; cursor: pointer; transition: background var(--motion-base), color var(--motion-base); }
 .nav-item.active { color: var(--color-primary); background: var(--color-surface-strong); }
 .nav-item.active svg { stroke-width: 2.4; }
 .nav-item:active { transform: scale(.97); }
@@ -392,7 +392,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 }
 
 @media (max-height: 700px) and (max-width: 899px) {
-  .app-shell { --nav-height: 62px; --surface-gap: 8px; padding-top: max(8px, env(safe-area-inset-top, 0px)); }
+  .app-shell { --nav-height: 56px; --surface-gap: 8px; padding-top: max(8px, env(safe-area-inset-top, 0px)); }
   .nav-item { min-height: 46px; gap: 3px; }
   .topbar { padding-bottom: 6px; }
   .daily-game-intro { padding: 3px 0; }
@@ -455,9 +455,11 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 
 #root .game-surface { gap: 8px; }
 #root .topbar { padding-bottom: 4px; }
+#root .brand-home { min-height: 38px; }
 #root .actions { gap: 4px; }
+#root .menu-trigger { width: 36px; height: 36px; min-width: 36px; padding: 0; border: 0; border-radius: 10px; }
 #root .app-navigation { gap: 3px; padding: 5px max(10px, env(safe-area-inset-right, 0px)) calc(5px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
-#root .nav-item { gap: 4px; padding: 5px 3px; }
+#root .nav-item { min-height: 46px; gap: 3px; padding: 4px 3px; }
 
 #root .game-selector { gap: 14px; padding: 12px 1px 18px; }
 #root .daily-welcome { gap: 16px; }
