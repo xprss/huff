@@ -451,7 +451,7 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 }
 
 #root .app-shell.has-navigation {
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 8px);
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 28px);
 }
 
 #root .game-surface { gap: 8px; }
@@ -461,8 +461,6 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 #root .menu-trigger { width: 36px; height: 36px; min-width: 36px; padding: 0; border: 0; border-radius: 10px; }
 #root .app-navigation { gap: 3px; padding: 4px max(10px, env(safe-area-inset-right, 0px)) calc(4px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
 #root .nav-item { min-height: 42px; gap: 2px; padding: 3px; }
-#root .keyboard-zone { transform: translateY(-8px); }
-
 #root .game-selector { gap: 14px; padding: 12px 1px 18px; }
 #root .daily-welcome { gap: 16px; }
 #root .daily-progress { column-gap: 9px; row-gap: 8px; padding: 12px; }
