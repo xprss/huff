@@ -442,3 +442,105 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 }
 
 .menu-divider { margin: 4px 6px; }
+
+/* Carry the compact control density through page layout and content surfaces. */
+#root .app-shell {
+  --surface-gap: 8px;
+  padding: max(8px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 8px max(12px, env(safe-area-inset-left, 0px));
+}
+
+#root .app-shell.has-navigation {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 8px);
+}
+
+#root .game-surface { gap: 8px; }
+#root .topbar { padding-bottom: 4px; }
+#root .actions { gap: 4px; }
+#root .app-navigation { gap: 3px; padding: 5px max(10px, env(safe-area-inset-right, 0px)) calc(5px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
+#root .nav-item { gap: 4px; padding: 5px 3px; }
+
+#root .game-selector { gap: 14px; padding: 12px 1px 18px; }
+#root .daily-welcome { gap: 16px; }
+#root .daily-progress { column-gap: 9px; row-gap: 8px; padding: 12px; }
+#root .collection-heading { gap: 4px 8px; }
+#root .game-selector-grid { gap: 10px; }
+#root .puzzle-card { gap: 9px; padding: 14px; }
+#root .puzzle-card--featured { gap: 12px; padding: 16px; }
+#root .puzzle-card-footer { gap: 8px; padding-top: 8px; }
+#root .daily-note { gap: 7px; }
+
+#root :is(.account-panel, .profile-summary, .leaderboard-head, .trap-panel, .hack-console, .hack-log, .hack-mastery, .admin-stats-panel, .admin-edit-panel, .admin-confirm-panel, .admin-games-panel, .login-showcase, .cms-library-panel, .cms-grid-panel, .cms-answers-panel, .cms-generator, .cms-create-card, .cms-puzzle-card) {
+  padding: 14px;
+}
+
+#root .modal { padding: 16px 14px max(16px, env(safe-area-inset-bottom, 0px)); }
+#root .modal-head { gap: 8px; }
+#root .modal-backdrop { padding: 10px; }
+#root .profile-sections, #root .stats-view, #root .personal-profile { gap: 14px; }
+#root .profile-editor .profile-form { gap: 14px; }
+#root .profile-hero-body { gap: 12px; padding: 0 16px 16px; }
+#root .profile-cover { gap: 12px; padding: 16px 18px 26px; }
+#root .profile-metrics { gap: 8px; }
+#root .profile-metrics .metric, #root .metric { padding: 12px 8px; }
+#root .profile-medals .medal-count { padding: 10px 4px; }
+#root .profile-game-row { gap: 9px; padding: 10px 0; }
+#root .profile-text-link { margin-top: 8px; }
+
+#root .route-game .game-board-wrap { gap: 6px; }
+#root .route-game .board { padding: 8px; gap: 8px; }
+#root .hexastar-shell { gap: 9px; }
+#root .hexastar-board { gap: 8px; }
+#root .hack-shell { gap: 9px; padding: 0 2px 14px; }
+#root .hack-status-grid { gap: 5px; }
+#root .hack-status-grid > div, #root .hack-metrics > div { gap: 2px; padding: 6px; }
+#root .sky-shell { gap: 10px; padding: 0 2px 12px; }
+#root .sky-puzzle { gap: 4px; }
+#root .sky-clues { gap: 4px; }
+#root .mode-options { gap: 3px; padding: 3px; }
+#root .mode-option { gap: 4px; padding: 5px; }
+#root .hack-console, #root .hack-log, #root .hack-mastery { padding: 12px; }
+#root .hexaflow { gap: 10px; padding: 6px 1px 16px; }
+#root .hexaflow-current { gap: 6px; min-height: 52px; padding: 9px; }
+#root .hexaflow > .hexaflow-grid { gap: 5px; padding: 6px; }
+#root .leaderboard-games, #root .game-stats-tabs { gap: 3px; padding: 4px; }
+#root .leaderboard-view { gap: 8px; }
+#root .leaderboard-list { gap: 6px; }
+#root .leaderboard-list li > button { min-height: 64px; }
+#root .modal h3 { margin: 12px 0 6px; }
+#root .admin-modal-content { gap: 10px; }
+#root .admin-detail-head { gap: 8px; }
+#root .admin-edit-panel { gap: 8px; }
+#root .admin-card-grid { gap: 7px; padding: 2px 2px 10px; }
+#root .admin-player-card { gap: 6px 8px; min-height: 76px; padding: 9px; }
+
+#root .trap-view { gap: 12px; padding: 0 12px 20px; }
+#root .trap-panel { padding: 12px; }
+#root .trap-advisors { gap: 8px; }
+#root .trap-advisors button { gap: 6px; padding: 12px 8px; }
+#root .trap-seals { gap: 6px; }
+#root .trap-seals button { gap: 4px; }
+#root .trap-notes { gap: 8px; margin-bottom: 8px; }
+#root .trap-event { gap: 4px; padding: 10px 0; }
+
+#root .eco-shell { padding: 12px 4px 18px; }
+#root .eco-queue { gap: 6px; margin: 12px auto 8px; }
+#root .eco-queued { padding: 6px 4px; }
+#root .eco-tools { gap: 10px; }
+#root .eco-result { margin-top: 14px; }
+#root .eco-result h3 { margin: 8px 0 4px; }
+#root .eco-save-error { padding: 10px; }
+
+#root .cms-editor-layout { gap: 12px; }
+#root .cms-grid-panel, #root .cms-answers-panel, #root .cms-library-panel, #root .cms-generator { gap: 10px; }
+#root .cms-answer-list { gap: 8px; }
+#root .cms-answer-select { gap: 7px; padding: 9px 10px; }
+#root .cms-answer-fields { gap: 7px; padding: 9px 10px; }
+#root .cms-actions { gap: 6px; padding: 8px; }
+#root :is(.profile-form input, .profile-form textarea, .profile-nickname-field, .admin-edit-panel input, .admin-edit-panel textarea, .admin-edit-panel select, .admin-confirm-panel input, .cms-create-card input, .cms-theme input, .cms-answer-fields input, .cms-answer-fields select, .cms-answer-word, .cms-generator-fields input, .cms-generator-fields textarea, .trap-submit input, .trap-notes select) { padding: 8px 10px; }
+#root .admin-controls { gap: 6px; }
+#root .cms-generator-fields { gap: 8px; }
+
+#root .login-screen { gap: 20px; padding: 4px 2px 18px; }
+#root .login-showcase { gap: 16px; padding: 16px; }
+#root .login-box { gap: 12px; }
+#root .login-button { min-height: 40px; }
