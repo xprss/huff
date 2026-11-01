@@ -544,3 +544,59 @@ html[data-theme="dark"] .puzzle-card--star { --card-paper: #473239; --card-ink: 
 #root .login-showcase { gap: 16px; padding: 16px; }
 #root .login-box { gap: 12px; }
 #root .login-button { min-height: 40px; }
+
+/* A restrained typographic scale: compact hierarchy, regular weights, and
+   natural tracking. The childhood theme keeps its own Comic Neue family. */
+:root {
+  --type-display: clamp(1.75rem, 6vw, 2.25rem);
+  --type-title: clamp(1.2rem, 4vw, 1.5rem);
+  --type-heading: 1rem;
+  --type-body: .8125rem;
+  --type-label: .75rem;
+  --type-meta: .6875rem;
+}
+
+#root :is(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-title);
+  font-weight: 600;
+  letter-spacing: -.015em;
+  line-height: 1.2;
+  text-shadow: none;
+}
+
+#root h1 { font-size: var(--type-display); }
+#root h2 { font-size: var(--type-title); }
+#root :is(h3, h4, h5, h6) { font-size: var(--type-heading); }
+#root .login-copy h1 { font-size: var(--type-display); }
+#root .brand-name { font-size: 1.25rem; font-weight: 600; letter-spacing: -.025em; }
+
+#root p {
+  font-size: var(--type-body);
+  font-weight: 400;
+  letter-spacing: normal;
+  line-height: 1.48;
+}
+
+#root :is(label, li, summary, blockquote, dt, dd) {
+  font-size: var(--type-label);
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.4;
+}
+
+#root :is(strong, b) { font-weight: 600; }
+#root small { font-weight: 500; letter-spacing: normal; line-height: 1.35; }
+#root :is(.eyebrow, .daily-welcome .eyebrow, .login-copy .eyebrow, .daily-game-intro .eyebrow, .route-game .daily-game-intro .eyebrow, .hack-kicker, .sky-heading .eyebrow, .account-page-heading .eyebrow, .hexaflow-head .eyebrow) {
+  font-size: var(--type-meta);
+  font-weight: 500;
+  letter-spacing: .02em;
+  text-transform: none;
+}
+
+/* Preserve the existing keyboard face and rendering in every theme. */
+#root :is(.keyboard, .keyboard button, .sky-keyboard, .sky-keyboard button) {
+  font-family: var(--font-keyboard);
+}
+
+#root :is(.hexastar-letter-slot, .hexastar-terminal) strong { font-weight: 900; }
+#root .hexastar-letter-slot small, #root .hexaflow-cell small { font-weight: 900; letter-spacing: .04em; line-height: 1; }
