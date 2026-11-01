@@ -107,6 +107,26 @@ function sqlLiteral(value: string) {
   return `'${value.replaceAll("'", "''")}'`;
 }
 
+function hexawordFilters(filters: StatsFilters | undefined, options: {
+  nickname?: string;
+  from?: string;
+  to?: string;
+} = {}) {
+  if (filters?.games.length && !filters.games.includes('hexaword')) return null;
+
+  const clauses: string[] = [];
+  const selectedFrom = filters?.from ?? options.from;
+  const selectedTo = filters?.to ?? options.to;
+  if (selectedFrom) clauses.push(`g.puzzle_date >= ${sqlLiteral(selectedFrom)}`);
+  if (selectedTo) clauses.push(`g.puzzle_date <= ${sqlLiteral(selectedTo)}`);
+  if (filters?.users.length) {
+    clauses.push(`u.nickname IN (${filters.users.map(sqlLiteral).join(', ')})`);
+  }
+  if (options.nickname) clauses.push(`u.nickname = ${sqlLiteral(options.nickname)}`);
+
+  return clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+}
+
 async function getToolsets(): Promise<Toolsets> {
   if (!process.env.POSTGRES_MCP_PASSWORD) {
     throw new Error('POSTGRES_MCP_PASSWORD non configurata.');
@@ -232,5 +252,71 @@ export const gameTrendTool = createTool({
         COUNT(*) FILTER (WHERE lost) AS lost
       FROM games ${dateRange(from, to, filters)}
       GROUP BY game, period ORDER BY period, game`, context.abortSignal);
+  },
+});
+
+export const hexawordAttemptOverviewTool = createTool({
+  id: 'hexaword_attempt_overview',
+  description: 'Confronta le partite Hexaword per numero di tentativo: quante arrivano a ciascun tentativo e quante terminano con vittoria o sconfitta proprio lì.',
+  inputSchema: z.object({
+    nickname: z.string().regex(/^@[a-z0-9._-]{1,30}$/).optional(),
+    ...dateSchema,
+  }),
+  outputSchema,
+  execute: async ({ nickname, from, to }, context) => {
+    const filters = filtersFrom(context);
+    const where = hexawordFilters(filters, { nickname, from, to });
+    if (where === null) return [];
+    return runQuery(`SELECT attempt.ordinality AS attempt_number,
+        COUNT(*) AS games_with_attempt,
+        COUNT(*) FILTER (
+          WHERE g.status = 'WON'
+            AND attempt.ordinality = jsonb_array_length(g.guesses_json::jsonb)
+        ) AS games_won_on_attempt,
+        COUNT(*) FILTER (
+          WHERE g.status = 'LOST'
+            AND attempt.ordinality = jsonb_array_length(g.guesses_json::jsonb)
+        ) AS games_lost_on_attempt
+      FROM hexaword_games g
+      JOIN users u ON u.id = g.user_id
+      CROSS JOIN LATERAL jsonb_array_elements(g.guesses_json::jsonb) WITH ORDINALITY AS attempt(guess, ordinality)
+      ${where}
+      GROUP BY attempt.ordinality
+      ORDER BY attempt.ordinality`, context.abortSignal);
+  },
+});
+
+export const hexawordAttemptSearchTool = createTool({
+  id: 'hexaword_attempt_search',
+  description: 'Cerca i singoli tentativi Hexaword mostrando nickname, data, numero del tentativo, parola e feedback delle lettere. Può filtrare per nickname, periodo, numero del tentativo e parola; non restituisce la soluzione della partita.',
+  inputSchema: z.object({
+    nickname: z.string().regex(/^@[a-z0-9._-]{1,30}$/).optional(),
+    attemptNumber: z.number().int().positive().optional(),
+    word: z.string().trim().min(1).max(30).optional(),
+    limit: z.number().int().min(1).max(100).default(25),
+    ...dateSchema,
+  }),
+  outputSchema,
+  execute: async ({ nickname, attemptNumber, word, limit, from, to }, context) => {
+    const filters = filtersFrom(context);
+    const where = hexawordFilters(filters, { nickname, from, to });
+    if (where === null) return [];
+
+    const clauses = where ? [where.slice('WHERE '.length)] : [];
+    if (attemptNumber !== undefined) clauses.push(`attempt.ordinality = ${attemptNumber}`);
+    if (word) clauses.push(`LOWER(attempt.guess->>'word') = LOWER(${sqlLiteral(word)})`);
+    const attemptWhere = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+
+    return runQuery(`SELECT u.nickname, g.puzzle_date AS played_on,
+        attempt.ordinality AS attempt_number,
+        attempt.guess->>'word' AS word,
+        attempt.guess->'tiles' AS feedback,
+        g.status
+      FROM hexaword_games g
+      JOIN users u ON u.id = g.user_id
+      CROSS JOIN LATERAL jsonb_array_elements(g.guesses_json::jsonb) WITH ORDINALITY AS attempt(guess, ordinality)
+      ${attemptWhere}
+      ORDER BY g.puzzle_date DESC, u.nickname, attempt.ordinality
+      LIMIT ${limit}`, context.abortSignal);
   },
 });

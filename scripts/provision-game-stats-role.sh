@@ -31,6 +31,7 @@ GRANT SELECT (id, nickname, display_name) ON TABLE users TO :"stats_role";
 GRANT SELECT (user_id, puzzle_date, status) ON TABLE
   hexaword_games, hexahack_games, hexasky_games, hexaflow_games,
   hexastar_games, hexaeco_games, hexatrap_games TO :"stats_role";
+GRANT SELECT (guesses_json) ON TABLE hexaword_games TO :"stats_role";
 SQL
 
 echo "PostgreSQL read-only statistics role ${POSTGRES_MCP_USER} is ready for ${POSTGRES_DB}."

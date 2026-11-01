@@ -20,6 +20,6 @@ npm run dev
 
 Il server ascolta su `127.0.0.1:4111` in sviluppo. Le API Mastra e la rotta di chat richiedono il bearer token interno; la sola rotta health non restituisce dati.
 
-Per creare il ruolo locale, configurare `POSTGRES_MCP_PASSWORD` nell'ambiente del repository e lanciare `scripts/provision-game-stats-role.sh`. Lo script usa l'utente proprietario del database e concede `SELECT` soltanto alle colonne di stato delle partite e a nickname/ID necessari per le join. Non concedere l'utente proprietario al processo MCP.
+Per creare il ruolo locale, configurare `POSTGRES_MCP_PASSWORD` nell'ambiente del repository e lanciare `scripts/provision-game-stats-role.sh`. Lo script usa l'utente proprietario del database e concede `SELECT` soltanto alle colonne di stato delle partite, a `guesses_json` di Hexaword e a nickname/ID necessari per le join. L'agente usa `guesses_json` per analizzare i tentativi; non riceve accesso alla soluzione. Non concedere l'utente proprietario al processo MCP.
 
 La route `POST /internal/game-stats/stream` è destinata esclusivamente al backend; non esporre la porta Mastra all'esterno.
