@@ -14,6 +14,6 @@ export function AppNavigation({ activeRoute, onNavigate, onOpenStats }: {
     { label: "Profilo", Icon: UserRound, active: activeRoute === "profile", onClick: () => onNavigate("profile") }
   ];
   return <nav className="app-navigation" aria-label="Navigazione principale">{items.map(({ label, Icon, active, onClick }) =>
-    <button key={label} type="button" className={`nav-item${active ? " active" : ""}`} aria-current={active ? "page" : undefined} onClick={onClick}><Icon size={21} aria-hidden="true" /><span>{label}</span></button>
+    <button key={label} type="button" className={`nav-item${active ? " active" : ""}`} aria-label={label} aria-current={active ? "page" : undefined} onClick={onClick}><Icon size={21} aria-hidden="true" /><span>{label}</span></button>
   )}</nav>;
 }

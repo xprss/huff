@@ -77,6 +77,7 @@ button:focus-visible, a:focus-visible, [tabindex]:focus-visible {
 .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 48px; padding: 5px 4px; border: 0; border-radius: 14px; background: transparent; color: var(--color-muted); font-size: .65rem; font-weight: 600; cursor: pointer; transition: background var(--motion-base), color var(--motion-base); }
 .nav-item.active { color: var(--color-primary); background: var(--color-surface-strong); }
 .nav-item.active svg { stroke-width: 2.4; }
+.nav-item:not(.active) span { display: none; }
 .nav-item:active { transform: scale(.97); }
 
 /* Daily collection */
