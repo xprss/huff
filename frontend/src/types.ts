@@ -51,6 +51,14 @@ export interface AdminGameStatsUserDto {
   readonly displayName: string | null;
 }
 export interface AdminGameStatsUsersDto { readonly users: readonly AdminGameStatsUserDto[]; }
+export interface AdminGameStatsDailySummaryDto {
+  readonly date: IsoDateString;
+  readonly summary: string;
+  readonly generatedAt: string;
+}
+export interface AdminGameStatsDailySummariesDto {
+  readonly summaries: readonly AdminGameStatsDailySummaryDto[];
+}
 export interface AdminGameStatsChatRequestDto {
   readonly message: string;
   readonly threadId: string;
@@ -569,6 +577,8 @@ export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type ApiEndpointMap = {
   "/api/admin/game-stats/users": { GET: { response: AdminGameStatsUsersDto } };
+  "/api/admin/game-stats/daily-summaries": { GET: { response: AdminGameStatsDailySummariesDto } };
+  "/api/admin/game-stats/daily-summaries/generate": { POST: { response: AdminGameStatsDailySummaryDto } };
   "/api/admin/game-stats/stream": { POST: { body: AdminGameStatsChatRequestDto; response: void } };
   "/api/admin/game-stats/threads": { GET: { response: AdminGameStatsThreadsDto } };
   "/api/admin/game-stats/threads/:threadId": {

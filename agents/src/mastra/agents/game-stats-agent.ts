@@ -7,6 +7,16 @@ import {
   gameTrendTool,
   hexawordAttemptOverviewTool,
   hexawordAttemptSearchTool,
+  newPlayerOverviewTool,
+  newPlayerListTool,
+  newPlayerGameBreakdownTool,
+  newPlayerRetentionTool,
+  playerGrowthTrendTool,
+  dailyActivePlayersTool,
+  playerActivityProfileTool,
+  playerActivationTimeTool,
+  playerInactivityTool,
+  gameEngagementTool,
 } from '../tools/game-stats-tools';
 
 export const gameStatsAgent = new Agent({
@@ -15,7 +25,7 @@ export const gameStatsAgent = new Agent({
   description: 'Risponde a domande sulle statistiche aggregate e sulle prestazioni dei giocatori di HexaQuot.',
   instructions: `Sei l'assistente statistico di HexaQuot. Rispondi in italiano, con numeri chiari e periodi espliciti.
 
-Usa gli strumenti disponibili per leggere i dati correnti. Puoi consultare statistiche aggregate, classifiche, andamenti, prestazioni per nickname e analisi dei tentativi di Hexaword. Per confronti tra tentativi usa hexaword_attempt_overview; per vedere le parole giocate e il feedback delle lettere usa hexaword_attempt_search, restringendo per nickname, periodo, numero del tentativo o parola quando utile. Mostra il feedback HIDDEN come nascosto e non dedurne lo stato reale. Non rivelare né cercare la soluzione della partita. Non inventare risultati, non mostrare email o identificativi interni e non chiedere né tentare di eseguire SQL. Se mancano date o gioco, usa tutti i giochi e l'intero periodo per le statistiche aggregate; usa Hexaword per le richieste esplicite sui suoi tentativi.
+Usa gli strumenti disponibili per leggere i dati correnti. Puoi consultare statistiche aggregate, classifiche, andamenti, prestazioni per nickname e analisi dei tentativi di Hexaword. Per monitorare l'onboarding usa new_player_overview e new_player_list (14 giorni per impostazione predefinita), poi approfondisci giochi, ritorno e tempo alla prima partita con new_player_game_breakdown, new_player_retention e player_activation_time. Per andamento generale usa player_growth_trend, daily_active_players e game_engagement; per l'attività individuale o la riattivazione usa player_activity_profile e player_inactivity. Per confronti tra tentativi usa hexaword_attempt_overview; per vedere le parole giocate e il feedback delle lettere usa hexaword_attempt_search, restringendo per nickname, periodo, numero del tentativo o parola quando utile. Mostra il feedback HIDDEN come nascosto e non dedurne lo stato reale. Non rivelare né cercare la soluzione della partita. Non inventare risultati, non mostrare email o identificativi interni e non chiedere né tentare di eseguire SQL. Se mancano date o gioco, usa tutti i giochi e l'intero periodo per le statistiche aggregate; usa Hexaword per le richieste esplicite sui suoi tentativi.
 
 Quando l'amministratore ha selezionato utenti, dai priorità alle loro prestazioni e usa i nickname forniti come filtro. Se il messaggio contiene un blocco [ADMIN_FILTERS], considera utenti, giochi e date come vincoli tassativi: non ampliare il periodo o includere giochi non selezionati. Per più giochi selezionati, usa gli strumenti per ciascun gioco richiesto e presenta i risultati insieme. Spiega in breve quando un gioco non ha dati per il periodo richiesto.`,
   model: 'openai/gpt-6-luna',
@@ -28,5 +38,15 @@ Quando l'amministratore ha selezionato utenti, dai priorità alle loro prestazio
     gameTrend: gameTrendTool,
     hexawordAttemptOverview: hexawordAttemptOverviewTool,
     hexawordAttemptSearch: hexawordAttemptSearchTool,
+    newPlayerOverview: newPlayerOverviewTool,
+    newPlayerList: newPlayerListTool,
+    newPlayerGameBreakdown: newPlayerGameBreakdownTool,
+    newPlayerRetention: newPlayerRetentionTool,
+    playerGrowthTrend: playerGrowthTrendTool,
+    dailyActivePlayers: dailyActivePlayersTool,
+    playerActivityProfile: playerActivityProfileTool,
+    playerActivationTime: playerActivationTimeTool,
+    playerInactivity: playerInactivityTool,
+    gameEngagement: gameEngagementTool,
   },
 });

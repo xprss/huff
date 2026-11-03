@@ -2,6 +2,7 @@ import { registerApiRoute } from '@mastra/core/server';
 import { RequestContext } from '@mastra/core/request-context';
 import { z } from 'zod';
 import { gameStatsAgent } from '../agents/game-stats-agent';
+import { dailyGameSummaryAgent } from '../agents/daily-game-summary-agent';
 
 const streamRequest = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -15,6 +16,7 @@ const streamRequest = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
 });
+const dailySummaryRequest = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
 
 const encoder = new TextEncoder();
 
@@ -71,6 +73,28 @@ export const gameStatsRoutes = [
         });
       } catch {
         return c.json({ message: 'Agente statistiche non disponibile.' }, 503);
+      }
+    },
+  }),
+  registerApiRoute('/internal/game-stats/daily-summary', {
+    method: 'POST',
+    handler: async (c) => {
+      const parsed = dailySummaryRequest.safeParse(await c.req.json().catch(() => null));
+      if (!parsed.success) return c.json({ message: 'Data non valida.' }, 400);
+
+      const { date } = parsed.data;
+      const requestContext = new RequestContext();
+      requestContext.setRaw('gameStatsFilters', { users: [], games: [], from: date, to: date });
+      try {
+        const result = await dailyGameSummaryAgent.generate(
+          `Riepilogo dei dati del ${date}.`,
+          { requestContext },
+        );
+        const summary = result.text.trim();
+        if (!summary) return c.json({ message: 'Il riepilogo generato è vuoto.' }, 502);
+        return c.json({ date, summary });
+      } catch {
+        return c.json({ message: 'Generazione del riepilogo non riuscita.' }, 503);
       }
     },
   }),

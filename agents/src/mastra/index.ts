@@ -2,11 +2,12 @@ import { Mastra } from '@mastra/core/mastra';
 import { LibSQLStore } from '@mastra/libsql';
 import { MastraCompositeStore } from '@mastra/core/storage';
 import { gameStatsAgent } from './agents/game-stats-agent';
+import { dailyGameSummaryAgent } from './agents/daily-game-summary-agent';
 import { internalAuth } from './auth/internal-auth';
 import { gameStatsRoutes } from './routes/game-stats-routes';
 
 export const mastra = new Mastra({
-  agents: { gameStatsAgent },
+  agents: { gameStatsAgent, dailyGameSummaryAgent },
   storage: new MastraCompositeStore({
     id: 'composite-storage',
     default: new LibSQLStore({

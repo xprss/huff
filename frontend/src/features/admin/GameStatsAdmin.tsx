@@ -1,6 +1,6 @@
 import React from "react";
-import { Bot, CalendarDays, CornerDownLeft, History, LoaderCircle, MessageSquare, Plus, Send, Trash2, UserRound, X } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Bot, CalendarDays, CornerDownLeft, History, LoaderCircle, MessageSquare, Plus, RefreshCw, Send, Trash2, UserRound, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ApiError, api } from "../../api";
@@ -51,6 +51,10 @@ function activeMention(value: string, caret: number): Mention | null {
   return { type: match[2] === "@" ? "user" : "game", start, end: caret, query: match[3] };
 }
 
+function summaryDateLabel(date: string) {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString("it-IT", { dateStyle: "long", timeZone: "UTC" });
+}
+
 export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
   adminId: string;
   onAuthRequired: (error: unknown) => boolean;
@@ -89,6 +93,19 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
     queryKey: threadQueryKey,
     queryFn: () => api.adminGameStatsThreads().then((result) => result.threads)
   });
+  const dailySummaries = useQuery({
+    queryKey: ["admin", "game-stats", "daily-summaries", adminId],
+    queryFn: () => api.adminGameStatsDailySummaries().then((result) => result.summaries),
+    staleTime: 60_000,
+    refetchInterval: 60_000
+  });
+  const generateDailySummary = useMutation({
+    mutationFn: api.generateAdminGameStatsDailySummary,
+    onSuccess: async () => queryClient.invalidateQueries({ queryKey: ["admin", "game-stats", "daily-summaries", adminId] }),
+    onError: (error) => {
+      if (!callbacks.current.onAuthRequired(error)) callbacks.current.onError(error instanceof Error ? error.message : "Generazione del riepilogo non riuscita.");
+    }
+  });
   const options = (suggestions.data ?? []).filter((user) => !selected.some((item) => item.nickname === user.nickname));
   const gameOptions = GAME_OPTIONS.filter((game) => !selectedGames.includes(game.id)
     && `${game.id} ${game.label}`.toLowerCase().includes(mention?.query.toLowerCase() ?? ""));
@@ -104,6 +121,12 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
       if (!callbacks.current.onAuthRequired(threads.error)) callbacks.current.onError(threads.error instanceof Error ? threads.error.message : "Storico conversazioni non disponibile.");
     }
   }, [threads.error]);
+
+  React.useEffect(() => {
+    if (dailySummaries.error) {
+      if (!callbacks.current.onAuthRequired(dailySummaries.error)) callbacks.current.onError(dailySummaries.error instanceof Error ? dailySummaries.error.message : "Riepiloghi giornalieri non disponibili.");
+    }
+  }, [dailySummaries.error]);
 
   React.useEffect(() => () => abort.current?.abort(), []);
 
@@ -305,6 +328,22 @@ export function GameStatsAdmin({ adminId, onAuthRequired, onError }: {
         </aside>
         <h2>hexAI</h2>
       </header>
+      <section className="game-stats-daily-summaries" aria-label="Riepiloghi giornalieri">
+        <header><Bot size={18} /><div><strong>Riepilogo giornaliero</strong><small>Partite giocate e nuovi giocatori · generato ogni giorno a mezzanotte</small></div>
+          <button type="button" className="game-stats-summary-generate" onClick={() => generateDailySummary.mutate()} disabled={generateDailySummary.isPending} aria-label="Genera o aggiorna il riepilogo del giorno precedente">
+            {generateDailySummary.isPending ? <LoaderCircle className="spin" size={14} /> : <RefreshCw size={14} />}
+            {generateDailySummary.isPending ? "Genero…" : "Genera ora"}
+          </button>
+        </header>
+        {dailySummaries.isLoading ? <div className="game-stats-summary-empty"><LoaderCircle className="spin" size={16} />Carico i riepiloghi…</div> : null}
+        {!dailySummaries.isLoading && (dailySummaries.data?.length ?? 0) === 0 ? <p className="game-stats-summary-empty">I riepiloghi compariranno qui dopo la prima esecuzione programmata.</p> : null}
+        <div className="game-stats-summary-list">
+          {dailySummaries.data?.slice(0, 7).map((item) => <article className="game-stats-summary-item" key={item.date}>
+            <time dateTime={item.date}>{summaryDateLabel(item.date)}</time>
+            <div className="game-stats-markdown"><ReactMarkdown remarkPlugins={[remarkGfm]}>{item.summary}</ReactMarkdown></div>
+          </article>)}
+        </div>
+      </section>
       <div ref={transcript} className="game-stats-transcript" aria-live="polite" aria-busy={loadingThread} onScroll={(event) => {
         const panel = event.currentTarget;
         followLatestMessage.current = panel.scrollHeight - panel.scrollTop - panel.clientHeight < 80;

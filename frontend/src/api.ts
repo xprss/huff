@@ -142,6 +142,8 @@ export type ApiClient = {
   >;
   readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
   readonly adminGameStatsUsers: (query?: string) => Promise<AdminGameStatsUsersDto>;
+  readonly adminGameStatsDailySummaries: () => Promise<import("./types").AdminGameStatsDailySummariesDto>;
+  readonly generateAdminGameStatsDailySummary: () => Promise<import("./types").AdminGameStatsDailySummaryDto>;
   readonly adminGameStatsThreads: () => Promise<import("./types").AdminGameStatsThreadsDto>;
   readonly adminGameStatsThread: (threadId: string) => Promise<import("./types").AdminGameStatsThreadDto>;
   readonly deleteAdminGameStatsThread: (threadId: string) => Promise<{ deleted: boolean }>;
@@ -343,6 +345,8 @@ export const api = {
     const suffix = params.size ? `?${params.toString()}` : "";
     return request(`/api/admin/game-stats/users${suffix}` as "/api/admin/game-stats/users", { method: "GET" });
   },
+  adminGameStatsDailySummaries: () => request("/api/admin/game-stats/daily-summaries", { method: "GET" }),
+  generateAdminGameStatsDailySummary: () => request("/api/admin/game-stats/daily-summaries/generate", { method: "POST" }),
   adminGameStatsThreads: () => request("/api/admin/game-stats/threads", { method: "GET" }),
   adminGameStatsThread: (threadId: string) => request(`/api/admin/game-stats/threads/${encodeURIComponent(threadId)}` as "/api/admin/game-stats/threads/:threadId", { method: "GET" }),
   deleteAdminGameStatsThread: (threadId: string) => request(`/api/admin/game-stats/threads/${encodeURIComponent(threadId)}` as "/api/admin/game-stats/threads/:threadId", { method: "DELETE" }),

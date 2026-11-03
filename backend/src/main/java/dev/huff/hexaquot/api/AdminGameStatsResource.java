@@ -1,8 +1,10 @@
 package dev.huff.hexaquot.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.huff.hexaquot.admin.DailyGameSummaryScheduler;
 import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
+import dev.huff.hexaquot.persistence.DailyGameSummaryEntity;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -53,6 +55,7 @@ public class AdminGameStatsResource {
     @Inject UserService userService;
     @Inject EntityManager entityManager;
     @Inject ObjectMapper objectMapper;
+    @Inject DailyGameSummaryScheduler dailyGameSummaryScheduler;
 
     @ConfigProperty(name = "app.game-stats.agent.url", defaultValue = "http://127.0.0.1:4111")
     String agentUrl;
@@ -86,6 +89,34 @@ public class AdminGameStatsResource {
             .toList();
 
         Response.ResponseBuilder response = Response.ok(new PlayerSuggestions(players));
+        setCookie(response, resolved);
+        return response.build();
+    }
+
+    @GET
+    @Path("/daily-summaries")
+    @Produces("application/json")
+    public Response dailySummaries(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolved = requireAdmin(sessionId);
+        List<DailySummaryDto> summaries = DailyGameSummaryEntity.<DailyGameSummaryEntity>find("order by summaryDate desc")
+            .page(0, 30)
+            .list()
+            .stream()
+            .map(row -> new DailySummaryDto(row.summaryDate, row.summary, row.generatedAt))
+            .toList();
+        Response.ResponseBuilder response = Response.ok(new DailySummaries(summaries));
+        setCookie(response, resolved);
+        return response.build();
+    }
+
+    @POST
+    @Path("/daily-summaries/generate")
+    @Produces("application/json")
+    public Response generateDailySummary(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolved = requireAdmin(sessionId);
+        DailyGameSummaryEntity summary = dailyGameSummaryScheduler.generatePreviousDaySummaryNow();
+        if (summary == null) return unavailable(resolved, "Generazione del riepilogo giornaliero non riuscita.");
+        Response.ResponseBuilder response = Response.ok(new DailySummaryDto(summary.summaryDate, summary.summary, summary.generatedAt));
         setCookie(response, resolved);
         return response.build();
     }
@@ -298,5 +329,7 @@ public class AdminGameStatsResource {
     public record InternalChatRequest(String message, String threadId, String resourceId, List<String> users, List<String> games, String from, String to) { }
     public record PlayerSuggestion(String nickname, String displayName) { }
     public record PlayerSuggestions(List<PlayerSuggestion> users) { }
+  public record DailySummaryDto(String date, String summary, String generatedAt) { }
+  public record DailySummaries(List<DailySummaryDto> summaries) { }
     public record ErrorDto(String code, String message) { }
 }
