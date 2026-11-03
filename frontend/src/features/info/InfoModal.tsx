@@ -18,7 +18,7 @@ export function InfoModal({ onClose }: { onClose: () => void }) {
         <div className="repo-panel">
           <Github size={26} aria-hidden="true" />
           <div>
-            <h3>Repository GitHub</h3>
+            <h3 style={{margin: "0"}}>Repository GitHub</h3>
             <a className="repo-link" href={REPOSITORY_URL} target="_blank" rel="noreferrer">
               <span>github.com/xprss/huff</span>
               <ExternalLink size={16} aria-hidden="true" />
