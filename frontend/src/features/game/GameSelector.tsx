@@ -41,18 +41,18 @@ export function GameSelector({
   return (
     <section ref={selectorRef} className="game-selector" aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
       <div className="daily-welcome">
-        <div className="daily-welcome-copy">
+        {false && <div className="daily-welcome-copy">
           <p className="eyebrow"><span className="live-dot" /> Un piccolo rituale, ogni giorno</p>
           <h2 id="game-selector-title">Fai spazio<br />a un bel <span>rompicapo.</span></h2>
           <p>Stacca un momento. Accendi la mente.</p>
-        </div>
+        </div>}
         <div className="daily-progress" aria-label={`${completed} sfide completate su ${availableGames.length} disponibili oggi`}>
           <span className="daily-progress-icon"><Sparkles size={20} aria-hidden="true" /></span>
           <div><strong>{completed === availableGames.length ? "Tutte fatte. Ben giocato!" : "Il tuo percorso di oggi"}</strong><span>{completed} di {availableGames.length} sfide completate</span></div>
           <div className="daily-progress-track" aria-hidden="true">{availableGames.map((game) => <i key={game.id} className={game.completed ? "filled" : ""} />)}</div>
         </div>
       </div>
-      <div className="collection-heading"><h3>La tua dose di sfida</h3><span>Ogni giorno, nuove soluzioni</span></div>
+      {false && <div className="collection-heading"><h3>La tua dose di sfida</h3><span>Ogni giorno, nuove soluzioni</span></div>}
       <div className="game-selector-grid">
         {games.map((game, index) => (
           <button key={game.id} className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}`} type="button" onClick={game.onPlay} disabled={!game.available} aria-label={`${game.name}: ${!game.available ? game.unavailableLabel ?? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}>
