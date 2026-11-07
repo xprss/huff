@@ -1792,7 +1792,6 @@ html[data-theme="dark"] .puzzle-card--star {
   }
 
   .daily-welcome {
-    grid-template-columns: 1fr 290px;
     align-items: end;
     gap: 36px;
   }
