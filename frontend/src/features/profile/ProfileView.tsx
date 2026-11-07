@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { Metric } from "../../shared/components/Metric";
-import { ArrowRight, Check, ChevronLeft, Edit3, Flame, Hand, Sparkles, Trophy, X } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, Edit3, Flame, Hand, Trophy, X } from "lucide-react";
 import { PROFILE_EMOJIS } from "../../app/constants";
 import { MedalCounts } from "../../shared/components/MedalCounts";
 import type { InputHandPreference, ProfileUpdateDto, StatsSetDto, UserDto } from "../../types";
@@ -107,7 +107,7 @@ export function ProfileView({
         <div><p className="eyebrow">Il tuo spazio</p><h2 id="profile-page-title">Profilo</h2></div>
       </header>
       <section className="profile-hero" aria-label="La tua identità">
-        <div className="profile-cover" aria-hidden="true"><Sparkles size={50} /><span>Ogni giorno, una nuova intuizione.</span></div>
+        <div className="profile-cover" aria-hidden="true"><span className="profile-cover-mesh" /></div>
         <div className="profile-hero-body">
           <button className="profile-emoji" type="button" onClick={() => setShowEmojiPicker(true)} disabled={saving || editing} aria-label="Modifica emoji profilo">
             <span className="profile-emoji-glyph">{user.profileEmoji}</span><span className="profile-emoji-edit"><Edit3 size={13} aria-hidden="true" /></span>

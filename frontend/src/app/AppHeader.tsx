@@ -4,6 +4,7 @@ import { APP_NAME } from "./constants";
 import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
 import type { AppTheme } from "../theme";
+import { BrandLogo } from "../shared/components/BrandLogo";
 
 export function AppHeader({
   puzzleDate,
@@ -96,7 +97,7 @@ export function AppHeader({
     <header className="topbar">
       <div className="title-row">
         <h1 className="brand-heading"><button className="brand-home" type="button" onClick={onOpenGames} aria-label={`${APP_NAME}, torna ai giochi`}>
-          <span className="brand-symbol" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</span>
+          <BrandLogo size={24} className="brand-symbol" />
           <span className="title-mark"><span className="brand-name">{APP_NAME}</span><span className="brand-date">{puzzleDate}</span></span>
         </button></h1>
         <div className="actions" ref={actionsMenuRef}>

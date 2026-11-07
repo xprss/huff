@@ -1,7 +1,6 @@
 import React from "react";
 import { APP_NAME } from "../../app/constants";
-import { ArrowUpRight, Sparkles } from "lucide-react";
-import { PuzzleArtwork } from "../game/components/PuzzleArtwork";
+import { BrandLogo } from "../../shared/components/BrandLogo";
 
 type GoogleTokenResponse = {
   access_token?: string;
@@ -32,6 +31,15 @@ declare global {
 }
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
+
+const GAMES_LIST = [
+  { name: "Hexaword", desc: "Parole" },
+  { name: "Hexahack", desc: "Codici" },
+  { name: "Hexasky", desc: "Griglie" },
+  { name: "Hexaflow", desc: "Connessioni" },
+  { name: "Hexastar", desc: "Sillabe" },
+  { name: "Hexaeco", desc: "Sincronia" }
+];
 
 export function GoogleLoginScreen({ onAccessToken }: { onAccessToken: (token: string) => void }) {
   const tokenClient = React.useRef<GoogleTokenClient | null>(null);
@@ -85,49 +93,46 @@ export function GoogleLoginScreen({ onAccessToken }: { onAccessToken: (token: st
 
   return (
     <section className="login-screen" aria-labelledby="login-title">
-      <div className="login-brand"><span className="brand-symbol" aria-hidden="true">{Array.from({ length: 6 }, (_, index) => <i key={index} />)}</span><span className="brand-name">{APP_NAME}</span></div>
-      <div className="login-copy">
-        <p className="eyebrow"><Sparkles size={15} aria-hidden="true" /> Il tuo appuntamento con la curiosità</p>
-        <h1 id="login-title">Una piccola pausa.<br /><span>Una bella sfida.</span></h1>
-        <p>Sei giochi di parole e logica per accendere la mente. Nuovi rompicapi, ogni giorno.</p>
-      </div>
-      <div className="login-showcase" aria-hidden="true">
-        <span className="login-showcase-label">Meno rumore. Più intuizione.<ArrowUpRight size={22} /></span>
-        <div className="login-art-main"><PuzzleArtwork kind="word" /></div>
-        <div className="login-art-mini"><PuzzleArtwork kind="hack" /><PuzzleArtwork kind="star" /></div>
-        <span className="login-showcase-caption">PAROLE · CODICI · LOGICA · CONNESSIONI</span>
-      </div>
-      <div className="login-box">
-        <div className="login-box-heading"><h2>La tua prossima idea inizia qui.</h2><p>Accedi per giocare e ritrovare i tuoi progressi.</p></div>
-        <button
-          className="login-button"
-          type="button"
-          disabled={!ready}
-          onClick={() => tokenClient.current?.requestAccessToken({ prompt: "select_account" })}
-        >
-          <svg className="google-logo" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
-            <path
-              fill="#EA4335"
-              d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.482h4.844a4.14 4.14 0 0 1-1.796 2.714v2.258h2.909c1.702-1.567 2.683-3.875 2.683-6.613Z"
-            />
-            <path
-              fill="#4285F4"
-              d="M9 18c2.43 0 4.47-.806 5.96-2.197l-2.909-2.258c-.806.54-1.837.86-3.051.86-2.345 0-4.332-1.585-5.041-3.713H.951v2.332A9 9 0 0 0 9 18Z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M3.959 10.692A5.41 5.41 0 0 1 3.677 9c0-.587.101-1.157.282-1.692V4.976H.951A9 9 0 0 0 0 9c0 1.453.348 2.829.951 4.024l3.008-2.332Z"
-            />
-            <path
-              fill="#34A853"
-              d="M9 3.595c1.321 0 2.507.455 3.441 1.348l2.583-2.583C13.466.91 11.427 0 9 0A9 9 0 0 0 .951 4.976l3.008 2.332C4.668 5.18 6.655 3.595 9 3.595Z"
-            />
-          </svg>
-          {ready ? "Continua con Google" : error ? "Accesso non disponibile" : "Caricamento login Google…"}
-        </button>
-        {error ? <p className="google-login-error" role="alert">{error}</p> : null}
-        <p className="login-footnote">Il tuo ritmo. Le tue sfide. Un nuovo inizio ogni giorno.</p>
-      </div>
+      <div className="login-card">
+        <div className="login-brand">
+          <BrandLogo size={42} className="login-brand-logo" />
+          <span className="brand-name">{APP_NAME}</span>
+        </div>
+
+        <div className="login-copy">
+          <h1 id="login-title">Rompicapi quotidiani<br /><span>di logica e parole.</span></h1>
+        </div>
+
+        {/* <div className="login-box"> */}
+          <button
+            className="login-button"
+            type="button"
+            disabled={!ready}
+            onClick={() => tokenClient.current?.requestAccessToken({ prompt: "select_account" })}
+          >
+            <svg className="google-logo" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
+              <path
+                fill="#EA4335"
+                d="M17.64 9.205c0-.638-.057-1.252-.164-1.841H9v3.482h4.844a4.14 4.14 0 0 1-1.796 2.714v2.258h2.909c1.702-1.567 2.683-3.875 2.683-6.613Z"
+              />
+              <path
+                fill="#4285F4"
+                d="M9 18c2.43 0 4.47-.806 5.96-2.197l-2.909-2.258c-.806.54-1.837.86-3.051.86-2.345 0-4.332-1.585-5.041-3.713H.951v2.332A9 9 0 0 0 9 18Z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M3.959 10.692A5.41 5.41 0 0 1 3.677 9c0-.587.101-1.157.282-1.692V4.976H.951A9 9 0 0 0 0 9c0 1.453.348 2.829.951 4.024l3.008-2.332Z"
+              />
+              <path
+                fill="#34A853"
+                d="M9 3.595c1.321 0 2.507.455 3.441 1.348l2.583-2.583C13.466.91 11.427 0 9 0A9 9 0 0 0 .951 4.976l3.008 2.332C4.668 5.18 6.655 3.595 9 3.595Z"
+              />
+            </svg>
+            {ready ? "Continua con Google" : error ? "Accesso non disponibile" : "Caricamento login Google…"}
+          </button>
+          {error ? <p className="google-login-error" role="alert">{error}</p> : null}
+        </div>
+      {/* </div> */}
     </section>
   );
 }

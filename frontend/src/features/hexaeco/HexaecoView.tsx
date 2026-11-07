@@ -111,11 +111,11 @@ function PlaySession({ today, userId, inputBlocked, onSubmit, onComplete, onErro
   return <>
     <p className="eco-intro">Guida la luce. La sua eco ti segue <strong>due turni dopo.</strong></p>
     <Puzzle board={today.board} moves={moves} onMoves={setMoves} disabled={inputBlocked || won || saved} won={won}/>
-    {won || saved ? <div className="eco-result" role="status">
+    {won || saved && <div className="eco-result" role="status">
       <span className="eco-result-symbol" aria-hidden="true"><Check size={24}/></span>
       <h3>In perfetta sincronia.</h3><p>Due luci, un solo arrivo. Ben giocato.</p>
       {saving ? <p>Salvo il tuo risultato…</p> : saved ? <><button className="eco-primary" type="button" onClick={() => void share()}><Share2 size={17}/> Condividi il risultato</button><p className="eco-next">Una nuova eco ti aspetta domani.</p></> : null}
-    </div> : <p className="eco-footnote">Prenditi il tuo tempo. Puoi annullare e ricominciare quando vuoi.</p>}
+    </div>}
     {saveError ? <div className="eco-save-error" role="alert"><p>{saveError}</p><button type="button" className="eco-primary" disabled={saving} onClick={expired ? () => window.location.reload() : retrySave}>{expired ? "Apri la sfida di oggi" : "Riprova a salvare"}</button></div> : null}
     {storageFailed && !saved ? <p className="eco-footnote" role="status">Il browser non permette di salvare la ripresa. Tieni aperta questa pagina per continuare.</p> : null}
     {shareMessage ? <p className="eco-share-message" role="status">{shareMessage}</p> : null}

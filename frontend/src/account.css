@@ -36,12 +36,19 @@ html.zoomed .app-navigation { position: static; width: 100%; max-width: 560px; t
 html.zoomed .app-shell.has-navigation { padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
 
 .puzzle-card.completed {
-  border-color: #639862;
-  box-shadow: 0 0 0 1px #68a36950, 0 0 14px 4px #6ebd7038, 0 0 32px 10px #6ebd701a;
+  border-color: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 8px 24px rgba(16, 185, 129, 0.12);
 }
-.puzzle-card.completed .puzzle-status { background: #e2f4dd; color: #28572a; }
+.puzzle-card.completed .puzzle-status {
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #10b981;
+}
 @media (hover: hover) and (pointer: fine) {
-  .puzzle-card.completed:hover { box-shadow: 0 0 0 1px #68a36970, 0 0 18px 5px #6ebd7048, 0 0 36px 12px #6ebd7020; }
+  .puzzle-card.completed:hover {
+    border-color: #10b981;
+    box-shadow: 0 0 0 1px #10b981, 0 12px 32px rgba(16, 185, 129, 0.22);
+  }
 }
 
 .account-page-heading { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; min-width: 0; }
@@ -64,9 +71,16 @@ html.zoomed .app-shell.has-navigation { padding-bottom: max(20px, env(safe-area-
 .personal-profile { display: flex; flex-direction: column; gap: 20px; padding-bottom: 24px; }
 .personal-profile > * { flex: 0 0 auto; }
 .profile-hero { border: 1px solid var(--color-surface-border); background: var(--color-surface); border-radius: 24px; overflow: hidden; }
-.profile-cover { position: relative; display: flex; align-items: center; justify-content: flex-end; gap: 16px; min-height: 108px; padding: 20px 24px 34px; background: var(--color-surface-strong); color: var(--color-primary); }
-.profile-cover svg { opacity: .6; flex-shrink: 0; }
-.profile-cover > span { max-width: 20ch; font-size: .75rem; line-height: 1.5; font-weight: 600; }
+.profile-cover {
+  position: relative;
+  min-height: 110px;
+  padding: 20px 24px 34px;
+  background:
+    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.35), transparent 70%),
+    radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, 0.25), transparent 60%),
+    var(--color-surface-strong);
+  overflow: hidden;
+}
 .profile-hero-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 0 20px 22px; }
 .personal-profile .profile-emoji { position: relative; width: 78px; height: 78px; flex: 0 0 78px; margin-top: -24px; border: 4px solid var(--color-surface); border-radius: 24px; background: var(--color-surface-soft); font-size: 2.6rem; }
 .personal-profile .profile-emoji:disabled { cursor: default; }
@@ -95,11 +109,24 @@ html.zoomed .app-shell.has-navigation { padding-bottom: max(20px, env(safe-area-
 .profile-game-row strong { font-size: .87rem; }
 .profile-game-row small { margin-top: 5px; font-size: .7rem; color: var(--color-muted); line-height: 1.4; }
 .profile-game-row > svg { color: var(--color-muted); flex-shrink: 0; }
-.profile-game-mark { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; background: var(--color-surface-strong); color: var(--color-primary); font-weight: 700; }
-.profile-game-row--hexaword .profile-game-mark { background: #e7def7; color: #493469; }
-.profile-game-row--hexasky .profile-game-mark { background: #f7e8cc; color: #715326; }
-.profile-game-row--hexaflow .profile-game-mark { background: #d9eee8; color: #265e52; }
-.profile-game-row--hexastar .profile-game-mark { background: #f4dfdf; color: #80484f; }
+.profile-game-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-surface-border);
+  color: var(--color-text);
+  font-weight: 700;
+}
+.profile-game-row--hexaword .profile-game-mark { border-color: rgba(99, 102, 241, 0.4); color: #818cf8; background: rgba(99, 102, 241, 0.1); }
+.profile-game-row--hexahack .profile-game-mark { border-color: rgba(6, 182, 212, 0.4); color: #06b6d4; background: rgba(6, 182, 212, 0.1); }
+.profile-game-row--hexasky .profile-game-mark { border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+.profile-game-row--hexaflow .profile-game-mark { border-color: rgba(20, 184, 166, 0.4); color: #14b8a6; background: rgba(20, 184, 166, 0.1); }
+.profile-game-row--hexastar .profile-game-mark { border-color: rgba(236, 72, 153, 0.4); color: #ec4899; background: rgba(236, 72, 153, 0.1); }
+.profile-game-row--hexaeco .profile-game-mark { border-color: rgba(245, 158, 11, 0.4); color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
 .profile-account { display: grid; gap: 6px; padding-top: 16px; margin-top: 8px; border-top: 1px solid var(--color-surface-border); }
 .profile-account span { font-size: .7rem; color: var(--color-muted); }
 .profile-account strong { font-size: .8rem; font-weight: 500; overflow-wrap: anywhere; }
