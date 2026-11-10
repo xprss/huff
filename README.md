@@ -1,7 +1,6 @@
 # HexaQuot
 
-[![Server coverage](https://img.shields.io/codecov/c/github/xprss/huff?flag=server&label=server%20coverage)](https://app.codecov.io/gh/xprss/huff?flags%5B0%5D=server)
-[![Client coverage](https://img.shields.io/codecov/c/github/xprss/huff?flag=client&label=client%20coverage)](https://app.codecov.io/gh/xprss/huff?flags%5B0%5D=client)
+[![HexaQuot](https://badge.uptimerobot.com/psp/81d412892708198da09e6dbba531e0b0.svg?style=logo&theme=dark)](https://stats.uptimerobot.com/j4fkFkoZ6h?utm_source=status_badge&utm_medium=referral)
 
 Daily Italian word puzzle built with React, TypeScript, and a Java Quarkus backend.
 
