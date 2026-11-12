@@ -1,27 +1,32 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { PROFILE_EMOJIS } from "../../app/constants";
+import { Camera, Trash2 } from "lucide-react";
+import { Avatar } from "../../shared/components/Avatar";
 import type { InputHandPreference, ProfileUpdateDto, UserDto } from "../../types";
+import { AvatarCropper } from "./AvatarCropper";
 
 const NAME_MAX = 80;
 const NICKNAME_MAX = 29;
 const BIO_MAX = 200;
+const PHOTO_MAX_BYTES = 2 * 1024 * 1024;
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export type ProfileEditFocus = "name" | "hand";
 
 type Draft = {
   displayName: string;
   nickname: string;
-  profileEmoji: string;
   bio: string;
   inputHandPreference: InputHandPreference;
 };
+
+/** Pending photo change, applied only when the sheet is saved. */
+type PhotoChange = { kind: "keep" } | { kind: "replace"; blob: Blob; previewUrl: string } | { kind: "remove" };
 
 function draftFrom(user: UserDto): Draft {
   return {
     displayName: user.displayName ?? "",
     nickname: toEditableNickname(user.nickname),
-    profileEmoji: user.profileEmoji,
     bio: user.bio ?? "",
     inputHandPreference: user.inputHandPreference
   };
@@ -32,15 +37,16 @@ export function toEditableNickname(nickname: string) {
 }
 
 /**
- * Full-height edit sheet for the personal profile. Every field, the emoji
- * included, is saved in a single request; closing with unsaved changes asks
- * for confirmation first.
+ * Full-height edit sheet for the personal profile. The photo (uploaded,
+ * framed in the cropper, or removed) and every field are applied together on
+ * "Salva"; closing with unsaved changes asks for confirmation first.
  */
 export function ProfileEditSheet({
   user,
   initialFocus = "name",
   onClose,
   onSave,
+  onSaveAvatar,
   onSuccess,
   onError
 }: {
@@ -48,22 +54,38 @@ export function ProfileEditSheet({
   initialFocus?: ProfileEditFocus;
   onClose: () => void;
   onSave: (profile: ProfileUpdateDto) => Promise<UserDto>;
+  onSaveAvatar: (photo: Blob | null) => Promise<UserDto>;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }) {
-  const initial = React.useMemo(() => draftFrom(user), [user]);
+  const [initial] = React.useState(() => draftFrom(user));
   const [draft, setDraft] = React.useState<Draft>(initial);
+  const [photo, setPhoto] = React.useState<PhotoChange>({ kind: "keep" });
+  const [cropSource, setCropSource] = React.useState<string | null>(null);
+  const [photoError, setPhotoError] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [confirmDiscard, setConfirmDiscard] = React.useState(false);
   const sheetRef = React.useRef<HTMLElement | null>(null);
   const nameRef = React.useRef<HTMLInputElement | null>(null);
   const handRef = React.useRef<HTMLDivElement | null>(null);
+  const fileRef = React.useRef<HTMLInputElement | null>(null);
 
-  const dirty = (Object.keys(initial) as (keyof Draft)[]).some((key) => draft[key] !== initial[key]);
+  const fieldsDirty = (Object.keys(initial) as (keyof Draft)[]).some((key) => draft[key] !== initial[key]);
+  const dirty = fieldsDirty || photo.kind !== "keep";
   const nameError = draft.displayName.trim() ? null : "Inserisci un nome.";
   const nicknameError = draft.nickname.trim() ? null : "Inserisci un nickname.";
   const canSave = dirty && !nameError && !nicknameError && !saving;
+  const previewUrl = photo.kind === "replace" ? photo.previewUrl : photo.kind === "remove" ? null : user.avatarUrl;
+  const previewName = draft.displayName.trim() || draft.nickname || user.nickname;
+
+  // Release object URLs created for previews and the cropper.
+  React.useEffect(() => () => {
+    if (photo.kind === "replace") URL.revokeObjectURL(photo.previewUrl);
+  }, [photo]);
+  React.useEffect(() => () => {
+    if (cropSource) URL.revokeObjectURL(cropSource);
+  }, [cropSource]);
 
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) => {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -73,12 +95,16 @@ export function ProfileEditSheet({
 
   const requestClose = React.useCallback(() => {
     if (saving) return;
+    if (cropSource) {
+      setCropSource(null);
+      return;
+    }
     if (dirty && !confirmDiscard) {
       setConfirmDiscard(true);
       return;
     }
     onClose();
-  }, [confirmDiscard, dirty, onClose, saving]);
+  }, [confirmDiscard, cropSource, dirty, onClose, saving]);
 
   // Lock page scroll, focus the requested field and restore focus on close.
   React.useEffect(() => {
@@ -96,7 +122,7 @@ export function ProfileEditSheet({
     };
   }, [initialFocus]);
 
-  // Escape closes; Tab stays inside the sheet.
+  // Escape closes (the cropper first); Tab stays inside the sheet.
   React.useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -105,8 +131,9 @@ export function ProfileEditSheet({
         return;
       }
       if (event.key !== "Tab" || !sheetRef.current) return;
-      const focusable = [...sheetRef.current.querySelectorAll<HTMLElement>(
-        "button:not(:disabled), input:not(:disabled), textarea:not(:disabled)"
+      const scope = sheetRef.current.querySelector<HTMLElement>(".avatar-cropper") ?? sheetRef.current;
+      const focusable = [...scope.querySelectorAll<HTMLElement>(
+        "button:not(:disabled), input:not(:disabled):not([type='file']), textarea:not(:disabled), [tabindex='0']"
       )];
       if (!focusable.length) return;
       const first = focusable[0];
@@ -123,19 +150,51 @@ export function ProfileEditSheet({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [requestClose]);
 
+  function choosePhoto(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!PHOTO_TYPES.includes(file.type)) {
+      setPhotoError("Usa una foto JPEG, PNG o WebP.");
+      return;
+    }
+    if (file.size > PHOTO_MAX_BYTES) {
+      setPhotoError("La foto può pesare al massimo 2 MB.");
+      return;
+    }
+    setPhotoError(null);
+    setCropSource(URL.createObjectURL(file));
+  }
+
+  function useCroppedPhoto(blob: Blob) {
+    setPhoto({ kind: "replace", blob, previewUrl: URL.createObjectURL(blob) });
+    setCropSource(null);
+    setConfirmDiscard(false);
+    setError(null);
+  }
+
+  function removePhoto() {
+    setPhoto(user.avatarUrl ? { kind: "remove" } : { kind: "keep" });
+    setPhotoError(null);
+    setConfirmDiscard(false);
+  }
+
   async function submit(event?: React.FormEvent) {
     event?.preventDefault();
     if (!canSave) return;
     try {
       setSaving(true);
       setError(null);
-      await onSave({
-        displayName: draft.displayName.trim(),
-        nickname: `@${draft.nickname}`,
-        profileEmoji: draft.profileEmoji,
-        bio: draft.bio.trim(),
-        inputHandPreference: draft.inputHandPreference
-      });
+      if (photo.kind === "replace") await onSaveAvatar(photo.blob);
+      if (photo.kind === "remove") await onSaveAvatar(null);
+      if (fieldsDirty) {
+        await onSave({
+          displayName: draft.displayName.trim(),
+          nickname: `@${draft.nickname}`,
+          bio: draft.bio.trim(),
+          inputHandPreference: draft.inputHandPreference
+        });
+      }
       onSuccess("Profilo aggiornato.");
       onClose();
     } catch (cause) {
@@ -146,6 +205,8 @@ export function ProfileEditSheet({
       setSaving(false);
     }
   }
+
+  const hasPhoto = Boolean(previewUrl);
 
   return createPortal(
     <div className="profile-sheet-backdrop" role="presentation">
@@ -182,25 +243,32 @@ export function ProfileEditSheet({
         ) : null}
 
         <form id="profile-sheet-form" className="profile-sheet-body" onSubmit={submit} noValidate>
-          <fieldset className="profile-sheet-avatar" disabled={saving}>
-            <legend className="sr-only">Emoji del profilo</legend>
-            <span className="profile-sheet-avatar-preview" aria-hidden="true">{draft.profileEmoji}</span>
-            <div className="profile-sheet-emoji-grid" role="radiogroup" aria-label="Emoji del profilo">
-              {PROFILE_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  role="radio"
-                  aria-checked={draft.profileEmoji === emoji}
-                  aria-label={`Emoji ${emoji}`}
-                  className={draft.profileEmoji === emoji ? "selected" : ""}
-                  onClick={() => update("profileEmoji", emoji)}
-                >
-                  {emoji}
+          <div className="profile-sheet-photo">
+            <Avatar name={previewName} avatarUrl={previewUrl} size={96} />
+            <div className="profile-sheet-photo-actions">
+              <button className="profile-sheet-chip" type="button" onClick={() => fileRef.current?.click()} disabled={saving}>
+                <Camera size={16} aria-hidden="true" />
+                {hasPhoto ? "Cambia foto" : "Carica foto"}
+              </button>
+              {hasPhoto ? (
+                <button className="profile-sheet-chip profile-sheet-chip--danger" type="button" onClick={removePhoto} disabled={saving}>
+                  <Trash2 size={16} aria-hidden="true" />
+                  Rimuovi
                 </button>
-              ))}
+              ) : null}
             </div>
-          </fieldset>
+            <small className="profile-sheet-photo-hint">JPEG, PNG o WebP, fino a 2 MB. Senza foto mostriamo le tue iniziali.</small>
+            {photoError ? <small className="profile-sheet-error" role="alert">{photoError}</small> : null}
+            <input
+              ref={fileRef}
+              className="sr-only"
+              type="file"
+              accept={PHOTO_TYPES.join(",")}
+              onChange={choosePhoto}
+              tabIndex={-1}
+              aria-hidden="true"
+            />
+          </div>
 
           <label className="profile-sheet-field">
             <span>Nome</span>
@@ -272,6 +340,10 @@ export function ProfileEditSheet({
 
           {error ? <p className="profile-sheet-error profile-sheet-error--block" role="alert">{error}</p> : null}
         </form>
+
+        {cropSource ? (
+          <AvatarCropper src={cropSource} onCancel={() => setCropSource(null)} onConfirm={useCroppedPhoto} />
+        ) : null}
       </section>
     </div>,
     document.body

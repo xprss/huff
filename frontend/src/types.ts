@@ -394,7 +394,7 @@ export interface UserDto {
   readonly email: string | null;
   readonly displayName: string | null;
   readonly nickname: string;
-  readonly profileEmoji: string;
+  readonly avatarUrl: string | null;
   readonly bio: string | null;
   readonly inputHandPreference: InputHandPreference;
   readonly authenticated: boolean;
@@ -414,7 +414,7 @@ export interface LeaderboardEntryDto {
   readonly rank: number;
   readonly displayName: string;
   readonly nickname: string;
-  readonly profileEmoji: string;
+  readonly avatarUrl: string | null;
   readonly wins: number;
   readonly points: number | null;
 }
@@ -437,7 +437,7 @@ export type LeaderboardGame = "overall" | "hexaword" | "hexahack" | "hexasky" | 
 export interface PublicPlayerProfileDto {
   readonly displayName: string;
   readonly nickname: string;
-  readonly profileEmoji: string;
+  readonly avatarUrl: string | null;
   readonly bio: string | null;
   readonly stats: StatsDto;
   readonly overallStats: StatsDto;
@@ -454,7 +454,6 @@ export interface PublicPlayerProfileDto {
 export interface ProfileUpdateDto {
   readonly displayName: string;
   readonly nickname: string;
-  readonly profileEmoji: string;
   readonly bio: string | null;
   readonly inputHandPreference: InputHandPreference;
 }
@@ -487,7 +486,7 @@ export interface AdminPlayerSummaryDto {
   readonly email: string | null;
   readonly displayName: string | null;
   readonly nickname: string;
-  readonly profileEmoji: string;
+  readonly avatarUrl: string | null;
   readonly bio: string | null;
   readonly authenticated: boolean;
   readonly admin: boolean;
@@ -559,7 +558,6 @@ export interface AdminHexahackGameDto {
 export interface AdminPlayerUpdateDto {
   readonly displayName: string;
   readonly nickname: string;
-  readonly profileEmoji: string;
   readonly bio: string | null;
   readonly starAvailable: boolean;
   readonly starAwardedAt: string | null;
@@ -679,6 +677,15 @@ export type ApiEndpointMap = {
       response: UserDto;
     };
   };
+  "/api/me/avatar": {
+    PUT: {
+      body: Blob;
+      response: UserDto;
+    };
+    DELETE: {
+      response: UserDto;
+    };
+  };
   "/api/stats/global": {
     GET: {
       response: GlobalStatsDto;
@@ -730,6 +737,11 @@ export type ApiEndpointMap = {
     };
     DELETE: {
       response: AdminDeleteResultDto;
+    };
+  };
+  "/api/admin/players/:userId/avatar": {
+    DELETE: {
+      response: AdminPlayerDetailDto;
     };
   };
   "/api/admin/hexaflow/puzzles": { GET: { response: HexaflowPuzzleMonthDto } };

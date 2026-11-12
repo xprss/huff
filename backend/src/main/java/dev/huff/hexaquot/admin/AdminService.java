@@ -3,6 +3,7 @@ package dev.huff.hexaquot.admin;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.huff.hexaquot.auth.AppUser;
+import dev.huff.hexaquot.auth.AvatarService;
 import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.game.GameMode;
 import dev.huff.hexaquot.game.GameStatus;
@@ -49,6 +50,9 @@ public class AdminService {
 
     @Inject
     UserService userService;
+
+    @Inject
+    AvatarService avatarService;
 
     @Inject
     EntityManager entityManager;
@@ -106,7 +110,6 @@ public class AdminService {
             userId,
             request.displayName(),
             request.nickname(),
-            request.profileEmoji(),
             request.bio(),
             user.inputHandPreference,
             user.googleSubject != null
@@ -116,6 +119,16 @@ public class AdminService {
         updated.starAvailable = Boolean.TRUE.equals(request.starAvailable());
         updated.starAwardedAt = blankToNull(request.starAwardedAt());
         updated.starUsedAt = blankToNull(request.starUsedAt());
+        return playerDetail(admin, userId);
+    }
+
+    /** Moderation: removes a player's profile photo; they fall back to initials. */
+    @Transactional
+    public AdminPlayerDetailDto removePlayerAvatar(AppUser admin, String userId) {
+        requireManagePlayers(admin);
+        UserEntity user = findUser(userId);
+        avatarService.deleteFiles(userId);
+        user.avatarVersion = null;
         return playerDetail(admin, userId);
     }
 
@@ -135,6 +148,7 @@ public class AdminService {
         long subscriptions = PushSubscriptionEntity.delete("userId = ?1", userId);
         long adminRows = AdminUserEntity.delete("userId = ?1", userId);
         long users = UserEntity.delete("id = ?1", userId);
+        avatarService.deleteFiles(userId);
         return new AdminDeleteResultDto(Math.toIntExact(users), Math.toIntExact(games), Math.toIntExact(subscriptions), Math.toIntExact(adminRows));
     }
 
@@ -202,7 +216,7 @@ public class AdminService {
             user.email,
             user.displayName,
             user.nickname,
-            user.profileEmoji,
+            AvatarService.url(user.id, user.avatarVersion),
             user.bio,
             user.googleSubject != null,
             AdminUserEntity.findById(user.id) != null,
@@ -283,7 +297,7 @@ public class AdminService {
                   u.email,
                   u.display_name,
                   u.nickname,
-                  u.profile_emoji,
+                  u.avatar_version,
                   u.bio,
                   (u.google_subject IS NOT NULL) AS authenticated,
                   (a.user_id IS NOT NULL) AS admin,
@@ -322,7 +336,7 @@ public class AdminService {
                   u.email,
                   u.display_name,
                   u.nickname,
-                  u.profile_emoji,
+                  u.avatar_version,
                   u.bio,
                   u.google_subject,
                   a.user_id,
@@ -364,7 +378,7 @@ public class AdminService {
             (String) row[1],
             (String) row[2],
             (String) row[3],
-            (String) row[4],
+            AvatarService.url((String) row[0], (String) row[4]),
             (String) row[5],
             booleanValue(row[6]),
             booleanValue(row[7]),
@@ -408,7 +422,7 @@ public class AdminService {
         String email,
         String displayName,
         String nickname,
-        String profileEmoji,
+        String avatarUrl,
         String bio,
         boolean authenticated,
         boolean admin,
@@ -482,7 +496,6 @@ public class AdminService {
     public record AdminPlayerUpdateRequest(
         String displayName,
         String nickname,
-        String profileEmoji,
         String bio,
         Boolean starAvailable,
         String starAwardedAt,

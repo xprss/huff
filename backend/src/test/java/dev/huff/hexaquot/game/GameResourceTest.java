@@ -22,7 +22,7 @@ class GameResourceTest {
             .body("authEnabled", equalTo(false))
             .body("user.displayName", equalTo("Giocatore"))
             .body("user.nickname", startsWith("@giocatore-"))
-            .body("user.profileEmoji", equalTo("😀"))
+            .body("user.avatarUrl", equalTo(null))
             .body("user.bio", equalTo(null))
             .body("authEnabled", equalTo(false));
     }
@@ -41,7 +41,6 @@ class GameResourceTest {
                 {
                   "displayName": "Nome Profilo",
                   "nickname": "Profilo.Test",
-                  "profileEmoji": "😎",
                   "bio": "Bio profilo breve"
                 }
                 """)
@@ -51,7 +50,6 @@ class GameResourceTest {
             .statusCode(200)
             .body("displayName", equalTo("Nome Profilo"))
             .body("nickname", equalTo("@profilo.test"))
-            .body("profileEmoji", equalTo("😎"))
             .body("bio", equalTo("Bio profilo breve"));
 
         given()
@@ -61,7 +59,6 @@ class GameResourceTest {
             .statusCode(200)
             .body("user.displayName", equalTo("Nome Profilo"))
             .body("user.nickname", equalTo("@profilo.test"))
-            .body("user.profileEmoji", equalTo("😎"))
             .body("user.bio", equalTo("Bio profilo breve"));
     }
 
@@ -80,7 +77,7 @@ class GameResourceTest {
 
         given()
             .header("Cookie", firstCookie)
-            .body("{\"displayName\":\"Primo\",\"nickname\":\"@duplicato\",\"profileEmoji\":\"😀\"}")
+            .body("{\"displayName\":\"Primo\",\"nickname\":\"@duplicato\"}")
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()
@@ -88,7 +85,7 @@ class GameResourceTest {
 
         given()
             .header("Cookie", secondCookie)
-            .body("{\"displayName\":\"Secondo\",\"nickname\":\"duplicato\",\"profileEmoji\":\"😄\"}")
+            .body("{\"displayName\":\"Secondo\",\"nickname\":\"duplicato\"}")
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()
@@ -106,7 +103,7 @@ class GameResourceTest {
 
         given()
             .header("Cookie", cookie)
-            .body("{\"displayName\":\"   \",\"nickname\":\"@valido\",\"profileEmoji\":\"😀\"}")
+            .body("{\"displayName\":\"   \",\"nickname\":\"@valido\"}")
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()
@@ -115,7 +112,7 @@ class GameResourceTest {
 
         given()
             .header("Cookie", cookie)
-            .body("{\"displayName\":\"Nome\",\"nickname\":\"@non valido\",\"profileEmoji\":\"😀\"}")
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@non valido\"}")
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()
@@ -124,7 +121,7 @@ class GameResourceTest {
 
         given()
             .header("Cookie", cookie)
-            .body("{\"displayName\":\"Nome\",\"nickname\":\"@abcdefghijklmnopqrstuvwxyz1234\",\"profileEmoji\":\"😀\"}")
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@abcdefghijklmnopqrstuvwxyz1234\"}")
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()
@@ -133,16 +130,7 @@ class GameResourceTest {
 
         given()
             .header("Cookie", cookie)
-            .body("{\"displayName\":\"Nome\",\"nickname\":\"@valido\",\"profileEmoji\":\"🔥\"}")
-            .contentType("application/json")
-            .when().put("/api/me/profile")
-            .then()
-            .statusCode(400)
-            .body("code", equalTo("bad_request"));
-
-        given()
-            .header("Cookie", cookie)
-            .body("{\"displayName\":\"Nome\",\"nickname\":\"@valido\",\"profileEmoji\":\"😀\",\"bio\":\"" + "a".repeat(201) + "\"}")
+            .body("{\"displayName\":\"Nome\",\"nickname\":\"@valido\",\"bio\":\"" + "a".repeat(201) + "\"}")
             .contentType("application/json")
             .when().put("/api/me/profile")
             .then()

@@ -113,7 +113,6 @@ class HexastarDailyGameServiceTest {
         entity.id = "hexastar-" + suffix;
         entity.displayName = "Hexastar";
         entity.nickname = "@hexastar-" + suffix.substring(0, 8);
-        entity.profileEmoji = "✨";
         entity.createdAt = Instant.now().toString();
         entity.starAvailable = false;
         entity.persist();

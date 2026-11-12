@@ -34,16 +34,15 @@ class UserIdShaMigrationTest {
 
         entityManager
             .createNativeQuery(
-                "INSERT INTO users (id, google_subject, email, display_name, nickname, profile_emoji, created_at) "
-                    + "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"
+                "INSERT INTO users (id, google_subject, email, display_name, nickname, created_at) "
+                    + "VALUES (?1, ?2, ?3, ?4, ?5, ?6)"
             )
             .setParameter(1, oldUserId)
             .setParameter(2, googleSubject)
             .setParameter(3, "legacy@example.com")
             .setParameter(4, "Legacy")
             .setParameter(5, "@legacy-" + UUID.randomUUID().toString().substring(0, 8))
-            .setParameter(6, "😀")
-            .setParameter(7, now)
+            .setParameter(6, now)
             .executeUpdate();
         entityManager
             .createNativeQuery(

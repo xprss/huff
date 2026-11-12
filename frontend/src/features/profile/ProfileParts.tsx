@@ -1,20 +1,21 @@
 import { ChevronRight, Pencil } from "lucide-react";
 import type { MedalCountsDto, StatsDto } from "../../types";
+import { Avatar } from "../../shared/components/Avatar";
 import "./profile.css";
 
 /**
- * Identity card: emoji avatar, name, nickname and bio. With `onEdit` the
- * avatar and the pencil open the editor and an empty bio becomes an
+ * Identity card: profile photo (or initials), name, nickname and bio. With
+ * `onEdit` the photo and the pencil open the editor and an empty bio becomes an
  * "add bio" link; without it the card is read-only.
  */
 export function ProfileIdentityCard({
-  emoji,
+  avatarUrl,
   name,
   nickname,
   bio,
   onEdit
 }: {
-  emoji: string;
+  avatarUrl: string | null;
   name: string;
   nickname: string;
   bio: string | null;
@@ -23,11 +24,11 @@ export function ProfileIdentityCard({
   return (
     <section className="my-profile-card my-profile-identity" aria-label={onEdit ? "La tua identità" : `Identità di ${name}`}>
       {onEdit ? (
-        <button className="my-profile-avatar" type="button" onClick={onEdit} aria-label="Cambia emoji del profilo">
-          <span aria-hidden="true">{emoji}</span>
+        <button className="my-profile-avatar" type="button" onClick={onEdit} aria-label="Cambia foto profilo">
+          <Avatar name={name} avatarUrl={avatarUrl} size={64} />
         </button>
       ) : (
-        <span className="my-profile-avatar" aria-hidden="true"><span>{emoji}</span></span>
+        <span className="my-profile-avatar"><Avatar name={name} avatarUrl={avatarUrl} size={64} /></span>
       )}
       <div className="my-profile-names">
         <strong>{name}</strong>

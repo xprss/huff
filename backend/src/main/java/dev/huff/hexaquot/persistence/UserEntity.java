@@ -2,6 +2,7 @@ package dev.huff.hexaquot.persistence;
 
 import dev.huff.hexaquot.auth.AppUser;
 import dev.huff.hexaquot.auth.AdminPrivileges;
+import dev.huff.hexaquot.auth.AvatarService;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,8 +27,8 @@ public class UserEntity extends PanacheEntityBase {
     @Column(name = "nickname", length = 30)
     public String nickname;
 
-    @Column(name = "profile_emoji", length = 16)
-    public String profileEmoji;
+    @Column(name = "avatar_version", length = 32)
+    public String avatarVersion;
 
     @Column(name = "bio", length = 200)
     public String bio;
@@ -52,6 +53,6 @@ public class UserEntity extends PanacheEntityBase {
     }
 
     public AppUser toAppUser(boolean authenticated, AdminPrivileges admin) {
-        return new AppUser(id, email, displayName, nickname, profileEmoji, bio, inputHandPreference, authenticated, admin);
+        return new AppUser(id, email, displayName, nickname, AvatarService.url(id, avatarVersion), bio, inputHandPreference, authenticated, admin);
     }
 }

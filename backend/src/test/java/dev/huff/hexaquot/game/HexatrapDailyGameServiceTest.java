@@ -208,6 +208,6 @@ class HexatrapDailyGameServiceTest {
     private void assertStatus(int status,Runnable action) { assertEquals(status,assertThrows(WebApplicationException.class,action::run).getResponse().getStatus()); }
     private AppUser user() {
         var u=new UserEntity();u.id="hexatrap-test-"+UUID.randomUUID();u.nickname="@trap-"+UUID.randomUUID().toString().substring(0,8);
-        u.displayName="Trap";u.profileEmoji="✨";u.createdAt=Instant.now().toString();u.starAvailable=false;u.persist();return u.toAppUser(false);
+        u.displayName="Trap";u.createdAt=Instant.now().toString();u.starAvailable=false;u.persist();return u.toAppUser(false);
     }
 }

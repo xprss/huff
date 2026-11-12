@@ -13,6 +13,7 @@
 }
 
 .profile-sheet {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: min(100%, 560px);
@@ -142,57 +143,133 @@
   padding: 20px 18px max(28px, env(safe-area-inset-bottom, 0px));
 }
 
-.profile-sheet-avatar {
+.profile-sheet-photo {
   display: grid;
   justify-items: center;
-  gap: 14px;
-  margin: 0;
-  padding: 0;
-  border: 0;
+  gap: 10px;
   min-width: 0;
 }
 
-.profile-sheet-avatar-preview {
-  display: grid;
-  place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent 70%),
-    var(--color-surface-strong);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 10px 30px color-mix(in srgb, var(--color-primary) 25%, transparent);
-  font-size: 2.6rem;
-  line-height: 1;
+.profile-sheet-photo .avatar {
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 4px color-mix(in srgb, var(--color-primary) 55%, transparent), 0 10px 30px color-mix(in srgb, var(--color-primary) 25%, transparent);
 }
 
-.profile-sheet-emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+.profile-sheet-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.profile-sheet-chip {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
-  width: 100%;
-}
-
-.profile-sheet-emoji-grid button {
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 14px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 9999px;
   background: var(--color-surface-raised);
-  font-size: 1.45rem;
-  line-height: 1;
+  color: var(--color-text);
+  font-size: .84rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform var(--motion-base, 170ms) var(--ease-out), border-color var(--motion-base, 170ms), background var(--motion-base, 170ms);
 }
 
-.profile-sheet-emoji-grid button.selected {
-  border-color: var(--color-primary);
-  background: color-mix(in srgb, var(--color-primary) 22%, var(--color-surface-raised));
+.profile-sheet-chip--danger {
+  color: var(--color-danger);
 }
 
-.profile-sheet-emoji-grid button:active {
-  transform: scale(.94);
+.profile-sheet-chip:disabled {
+  cursor: default;
+  opacity: .5;
+}
+
+.profile-sheet-photo-hint {
+  max-width: 34ch;
+  color: var(--color-muted);
+  font-size: .74rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* Cropper: covers the sheet while the user frames the photo. */
+.avatar-cropper {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  animation: profile-sheet-fade 160ms ease-out both;
+}
+
+.avatar-cropper-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 16px;
+  padding: 24px 18px;
+}
+
+.avatar-cropper-viewport {
+  position: relative;
+  width: min(100%, 320px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #000;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+
+.avatar-cropper-viewport:active {
+  cursor: grabbing;
+}
+
+.avatar-cropper-viewport:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-focus-ring, rgba(99, 102, 241, .35));
+}
+
+.avatar-cropper-viewport img {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+
+.avatar-cropper-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(3, 6, 12, .6);
+  outline: 2px solid rgba(255, 255, 255, .85);
+  outline-offset: -2px;
+  pointer-events: none;
+}
+
+.avatar-cropper-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 320px);
+  color: var(--color-muted);
+}
+
+.avatar-cropper-zoom input {
+  flex: 1;
+  accent-color: var(--color-primary);
+}
+
+.avatar-cropper-hint {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: .78rem;
+  text-align: center;
 }
 
 .profile-sheet-field {
@@ -400,17 +477,11 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent 70%),
-    var(--color-surface-strong);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 8px 24px color-mix(in srgb, var(--color-primary) 22%, transparent);
-  font-size: 2rem;
-  line-height: 1;
+  background: none;
+  box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 3px color-mix(in srgb, var(--color-primary) 55%, transparent), 0 8px 24px color-mix(in srgb, var(--color-primary) 22%, transparent);
   transition: transform var(--motion-base, 170ms) var(--ease-out);
 }
 
@@ -691,11 +762,6 @@
     padding: 20px;
   }
 
-  .my-profile-avatar {
-    width: 76px;
-    height: 76px;
-    font-size: 2.4rem;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

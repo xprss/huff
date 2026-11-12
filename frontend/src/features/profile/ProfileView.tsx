@@ -14,6 +14,7 @@ export function ProfileView({
   onEditingChange,
   onOpenStats,
   onSave,
+  onSaveAvatar,
   onSuccess,
   onError
 }: {
@@ -23,6 +24,7 @@ export function ProfileView({
   onEditingChange: (editing: boolean) => void;
   onOpenStats: (game: StatsGame) => void;
   onSave: (profile: ProfileUpdateDto) => Promise<UserDto>;
+  onSaveAvatar: (photo: Blob | null) => Promise<UserDto>;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }) {
@@ -45,7 +47,7 @@ export function ProfileView({
   return (
     <section className="profile-view my-profile" aria-label="Il tuo profilo">
       <ProfileIdentityCard
-        emoji={user.profileEmoji}
+        avatarUrl={user.avatarUrl}
         name={user.displayName || user.nickname}
         nickname={user.nickname}
         bio={user.bio}
@@ -95,6 +97,7 @@ export function ProfileView({
           initialFocus={editFocus}
           onClose={() => onEditingChange(false)}
           onSave={onSave}
+          onSaveAvatar={onSaveAvatar}
           onSuccess={onSuccess}
           onError={onError}
         />

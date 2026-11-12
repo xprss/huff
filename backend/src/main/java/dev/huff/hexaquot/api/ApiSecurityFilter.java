@@ -65,9 +65,14 @@ public class ApiSecurityFilter implements ContainerRequestFilter, ContainerRespo
         if (!normalizedPath(request).startsWith("api/")) {
             return;
         }
+        response.getHeaders().putSingle("X-Content-Type-Options", "nosniff");
+        // Profile photos have versioned URLs (?v=content-hash): keep them cacheable.
+        if (normalizedPath(request).startsWith("api/avatars/") && response.getStatus() == 200) {
+            response.getHeaders().putSingle("Cache-Control", AvatarResource.CACHE_CONTROL);
+            return;
+        }
         response.getHeaders().putSingle("Cache-Control", "no-store");
         response.getHeaders().putSingle("Pragma", "no-cache");
-        response.getHeaders().putSingle("X-Content-Type-Options", "nosniff");
     }
 
     private String normalizedPath(ContainerRequestContext request) {

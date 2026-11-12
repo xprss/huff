@@ -1,5 +1,6 @@
 package dev.huff.hexaquot.api;
 
+import dev.huff.hexaquot.auth.AvatarService;
 import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.auth.AdminPrivileges;
@@ -7,7 +8,9 @@ import dev.huff.hexaquot.leaderboard.LeaderboardService;
 import dev.huff.hexaquot.leaderboard.MedalCountsDto;
 import dev.huff.hexaquot.push.AnnouncementService;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.CookieParam;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -24,6 +27,9 @@ public class AuthResource {
 
     @Inject
     AnnouncementService announcementService;
+
+    @Inject
+    AvatarService avatarService;
 
     @GET
     public Response me(@CookieParam("huff_session") String sessionId) {
@@ -60,7 +66,6 @@ public class AuthResource {
             resolvedUser.user().id(),
             request == null ? null : request.displayName(),
             request == null ? null : request.nickname(),
-            request == null ? null : request.profileEmoji(),
             request == null ? null : request.bio(),
             request == null ? null : request.inputHandPreference(),
             resolvedUser.user().authenticated()
@@ -68,6 +73,43 @@ public class AuthResource {
         Response.ResponseBuilder response = Response.ok(
             UserDto.from(updatedUser, leaderboardService.medalCounts(updatedUser.id()))
         );
+        if (resolvedUser.setCookieHeader() != null) {
+            response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        }
+        return response.build();
+    }
+
+    /** Uploads the profile photo as the raw request body (JPEG, PNG or WebP, max 2 MB). */
+    @PUT
+    @Path("/avatar")
+    @Consumes({"image/jpeg", "image/png", "image/webp", "application/octet-stream"})
+    public Response uploadAvatar(@CookieParam("huff_session") String sessionId, byte[] body) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized();
+        }
+        var updatedUser = avatarService.store(resolvedUser.user().id(), body, resolvedUser.user().authenticated());
+        return withCookie(Response.ok(UserDto.from(updatedUser, leaderboardService.medalCounts(updatedUser.id()))), resolvedUser);
+    }
+
+    @DELETE
+    @Path("/avatar")
+    public Response deleteAvatar(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized();
+        }
+        var updatedUser = avatarService.delete(resolvedUser.user().id(), resolvedUser.user().authenticated());
+        return withCookie(Response.ok(UserDto.from(updatedUser, leaderboardService.medalCounts(updatedUser.id()))), resolvedUser);
+    }
+
+    private Response unauthorized() {
+        return Response.status(Response.Status.UNAUTHORIZED)
+            .entity(new ErrorDto("token_required", "Token Bearer valido richiesto."))
+            .build();
+    }
+
+    private Response withCookie(Response.ResponseBuilder response, ResolvedUser resolvedUser) {
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }
@@ -97,7 +139,7 @@ public class AuthResource {
         String email,
         String displayName,
         String nickname,
-        String profileEmoji,
+        String avatarUrl,
         String bio,
         String inputHandPreference,
         boolean authenticated,
@@ -110,7 +152,7 @@ public class AuthResource {
                 user.email(),
                 user.displayName(),
                 user.nickname(),
-                user.profileEmoji(),
+                user.avatarUrl(),
                 user.bio(),
                 user.inputHandPreference(),
                 user.authenticated(),
@@ -120,7 +162,7 @@ public class AuthResource {
         }
     }
 
-    public record ProfileRequest(String displayName, String nickname, String profileEmoji, String bio, String inputHandPreference) {
+    public record ProfileRequest(String displayName, String nickname, String bio, String inputHandPreference) {
     }
 
     public record ErrorDto(String code, String message) {

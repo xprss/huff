@@ -1,5 +1,6 @@
 import React from "react";
 import { Trophy } from "lucide-react";
+import { Avatar } from "../../shared/components/Avatar";
 import type { LeaderboardGame, LeaderboardPeriodDto, LeaderboardsDto } from "../../types";
 
 type LeaderboardTab = "allTime" | "yearly" | "monthly" | "weekly";
@@ -80,7 +81,7 @@ export function LeaderboardView({
             <li key={entry.nickname}>
               <button type="button" onClick={() => onOpenPlayer(entry.nickname)} aria-label={`Apri il profilo di ${entry.nickname}`}>
                 <span className={`leaderboard-rank rank-${entry.rank}`}>{entry.rank}</span>
-                <span className="leaderboard-emoji" aria-hidden="true">{entry.profileEmoji}</span>
+                <Avatar className="leaderboard-avatar" name={entry.displayName || entry.nickname} avatarUrl={entry.avatarUrl} size={36} />
                 <span className="leaderboard-player">
                   <strong>{entry.displayName}</strong>
                   <small>{entry.nickname}</small>

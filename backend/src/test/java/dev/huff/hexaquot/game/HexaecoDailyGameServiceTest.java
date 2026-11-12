@@ -80,7 +80,6 @@ class HexaecoDailyGameServiceTest {
         entity.id = "hexaeco-test-" + UUID.randomUUID();
         entity.displayName = "Eco";
         entity.nickname = "@eco-" + UUID.randomUUID().toString().substring(0, 8);
-        entity.profileEmoji = "✨";
         entity.createdAt = Instant.now().toString();
         entity.starAvailable = false;
         entity.persist();

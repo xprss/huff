@@ -53,5 +53,5 @@ class HexaskyDailyGameServiceTest {
         return first.equals(solution) ? List.of(4,3,2,1, 2,1,4,3, 3,4,1,2, 1,2,3,4) : first;
     }
     private List<Integer> mismatchedCells(List<Integer> proposal, List<Integer> solution) { List<Integer> mismatches=new ArrayList<>(); for(int index=0;index<solution.size();index++)if(!proposal.get(index).equals(solution.get(index)))mismatches.add(index); return mismatches; }
-    private AppUser user() { UserEntity entity = new UserEntity(); entity.id = "hexasky-test-" + UUID.randomUUID(); entity.displayName="Sky"; entity.nickname="@sky-"+UUID.randomUUID().toString().substring(0,8); entity.profileEmoji="🏙️"; entity.createdAt=Instant.now().toString(); entity.starAvailable=false; entity.persist(); return entity.toAppUser(false); }
+    private AppUser user() { UserEntity entity = new UserEntity(); entity.id = "hexasky-test-" + UUID.randomUUID(); entity.displayName="Sky"; entity.nickname="@sky-"+UUID.randomUUID().toString().substring(0,8);  entity.createdAt=Instant.now().toString(); entity.starAvailable=false; entity.persist(); return entity.toAppUser(false); }
 }

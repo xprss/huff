@@ -9,7 +9,7 @@ export function PublicProfileView({ profile }: { profile: PublicPlayerProfileDto
   return (
     <section className="profile-view my-profile public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
       <ProfileIdentityCard
-        emoji={profile.profileEmoji}
+        avatarUrl={profile.avatarUrl}
         name={profile.displayName || profile.nickname}
         nickname={profile.nickname}
         bio={profile.bio}

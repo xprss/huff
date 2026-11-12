@@ -63,7 +63,6 @@ class ApiSecurityFilterTest {
             user.email = "persisted@example.com";
             user.displayName = "Persistente";
             user.nickname = "@persistente";
-            user.profileEmoji = "😀";
             user.createdAt = Instant.now().toString();
             user.persist();
 

@@ -81,7 +81,6 @@ class AdminResourceTest {
                 {
                   "displayName": "Admin Updated",
                   "nickname": "@admin-updated",
-                  "profileEmoji": "😎",
                   "bio": "Bio aggiornata da admin",
                   "starAvailable": true,
                   "starAwardedAt": "2099-01-01T00:00:00Z",
@@ -93,7 +92,7 @@ class AdminResourceTest {
             .statusCode(200)
             .body("player.displayName", equalTo("Admin Updated"))
             .body("player.nickname", equalTo("@admin-updated"))
-            .body("player.profileEmoji", equalTo("😎"))
+            .body("player.avatarUrl", equalTo(null))
             .body("player.bio", equalTo("Bio aggiornata da admin"))
             .body("player.starAvailable", equalTo(true));
 
@@ -249,8 +248,8 @@ class AdminResourceTest {
         QuarkusTransaction.requiringNew().run(() -> entityManager
             .createNativeQuery(
                 "INSERT INTO users "
-                    + "(id, email, display_name, nickname, profile_emoji, created_at, star_available) "
-                    + "VALUES (?1, null, ?2, ?3, '🙂', ?4, false)"
+                    + "(id, email, display_name, nickname, created_at, star_available) "
+                    + "VALUES (?1, null, ?2, ?3, ?4, false)"
             )
             .setParameter(1, userId)
             .setParameter(2, displayName)

@@ -119,6 +119,8 @@ export type ApiClient = {
   readonly hexatrapStats: EndpointHandler<"/api/hexatrap/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
+  readonly uploadAvatar: EndpointHandler<"/api/me/avatar", "PUT", [photo: Blob]>;
+  readonly deleteAvatar: EndpointHandler<"/api/me/avatar", "DELETE">;
   readonly globalStats: EndpointHandler<"/api/stats/global", "GET">;
   readonly leaderboards: (game: LeaderboardGame) => Promise<LeaderboardsDto>;
   readonly publicPlayer: EndpointHandler<"/api/player/:nickname", "GET", [nickname: string]>;
@@ -141,6 +143,7 @@ export type ApiClient = {
     [userId: string, player: AdminPlayerUpdateDto]
   >;
   readonly deleteAdminPlayer: EndpointHandler<"/api/admin/players/:userId", "DELETE", [userId: string]>;
+  readonly removeAdminPlayerAvatar: EndpointHandler<"/api/admin/players/:userId/avatar", "DELETE", [userId: string]>;
   readonly adminGameStatsUsers: (query?: string) => Promise<AdminGameStatsUsersDto>;
   readonly adminGameStatsDailySummaries: () => Promise<import("./types").AdminGameStatsDailySummariesDto>;
   readonly generateAdminGameStatsDailySummary: () => Promise<import("./types").AdminGameStatsDailySummaryDto>;
@@ -163,17 +166,19 @@ async function request<Path extends ApiPath, Method extends ApiMethod<Path>>(
 ): Promise<ApiResponse<Path, Method>> {
   const { body, headers, ...requestInit } = init;
   const isMutation = init.method !== "GET";
+  // Binary bodies (profile photos) are sent as-is with their own content type.
+  const isBinary = body instanceof Blob;
   const token = accessToken();
   const response = await fetch(path, {
     credentials: "same-origin",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": isBinary ? (body.type || "application/octet-stream") : "application/json",
       ...(isMutation ? { "X-Huff-Request": "1" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers ?? {})
     },
     ...requestInit,
-    body: body === undefined ? undefined : JSON.stringify(body)
+    body: body === undefined ? undefined : isBinary ? body : JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -297,6 +302,8 @@ export const api = {
       method: "PUT",
       body: profile
     }),
+  uploadAvatar: (photo: Blob) => request("/api/me/avatar", { method: "PUT", body: photo }),
+  deleteAvatar: () => request("/api/me/avatar", { method: "DELETE" }),
   globalStats: () => request("/api/stats/global", { method: "GET" }),
   leaderboards: (game: LeaderboardGame) => {
     return request(`/api/leaderboards?game=${game}` as "/api/leaderboards", { method: "GET" });
@@ -337,6 +344,10 @@ export const api = {
     }),
   deleteAdminPlayer: (userId: string) =>
     request(`/api/admin/players/${encodeURIComponent(userId)}` as "/api/admin/players/:userId", {
+      method: "DELETE"
+    }),
+  removeAdminPlayerAvatar: (userId: string) =>
+    request(`/api/admin/players/${encodeURIComponent(userId)}/avatar` as "/api/admin/players/:userId/avatar", {
       method: "DELETE"
     }),
   adminGameStatsUsers: (query?: string) => {

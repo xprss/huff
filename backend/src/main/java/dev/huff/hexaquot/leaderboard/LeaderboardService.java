@@ -103,7 +103,7 @@ public class LeaderboardService {
         return new PublicPlayerProfileDto(
             user.displayName,
             user.nickname,
-            user.profileEmoji,
+            dev.huff.hexaquot.auth.AvatarService.url(user.id, user.avatarVersion),
             user.bio,
             stats.overall(),
             stats.overall(),
@@ -148,13 +148,13 @@ public class LeaderboardService {
             .winnerScores(board, startDate == null ? null : startDate.toString(), endDate == null ? null : endDate.toString())
             .stream()
             .sorted(comparator)
-            .map(score -> new LeaderboardEntryDto(0, score.user().displayName, score.user().nickname, score.user().profileEmoji,
+            .map(score -> new LeaderboardEntryDto(0, score.user().displayName, score.user().nickname, dev.huff.hexaquot.auth.AvatarService.url(score.user().id, score.user().avatarVersion),
                 score.wins(), score.points()))
             .toList();
         List<LeaderboardEntryDto> ranked = java.util.stream.IntStream.range(0, entries.size())
             .mapToObj(index -> {
                 LeaderboardEntryDto entry = entries.get(index);
-                return new LeaderboardEntryDto(index + 1, entry.displayName(), entry.nickname(), entry.profileEmoji(),
+                return new LeaderboardEntryDto(index + 1, entry.displayName(), entry.nickname(), entry.avatarUrl(),
                     entry.wins(), entry.points());
             })
             .toList();

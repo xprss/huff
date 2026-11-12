@@ -841,6 +841,24 @@ export function App() {
     }
   }
 
+  /** Uploads (Blob) or removes (null) the profile photo and refreshes every view that shows it. */
+  async function saveAvatar(photo: Blob | null) {
+    try {
+      const updatedUser = photo ? await api.uploadAvatar(photo) : await api.deleteAvatar();
+      queryClient.setQueryData<MeDto | undefined>(queryKeys.me, (current) =>
+        current?.user ? { ...current, user: updatedUser } : current
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.leaderboards() });
+      void queryClient.invalidateQueries({ queryKey: ["player"] });
+      return updatedUser;
+    } catch (error) {
+      if (handleAuthRequired(error)) {
+        throw new Error("Sessione scaduta. Accedi di nuovo.");
+      }
+      throw error;
+    }
+  }
+
   async function updateProfile(profile: ProfileUpdateDto) {
     try {
       return await updateProfileMutation.mutateAsync(profile);
@@ -1008,6 +1026,7 @@ export function App() {
               editing={profileEditing}
               onEditingChange={setProfileEditing}
               onSave={(profile) => updateProfile(profile)}
+              onSaveAvatar={saveAvatar}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}
             />
