@@ -523,17 +523,9 @@ a:focus-visible,
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 8px;
   grid-column: 1 / -1;
-}
-
-.puzzle-category {
-  font-size: .62rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  font-weight: 700;
-  color: var(--color-muted);
 }
 
 .puzzle-tag,
@@ -1565,10 +1557,6 @@ a:focus-visible,
 
   .puzzle-art {
     height: 100px;
-  }
-
-  .puzzle-category {
-    font-size: .62rem;
   }
 
   .puzzle-card-copy>strong {

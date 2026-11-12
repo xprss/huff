@@ -27,14 +27,14 @@ export function GameSelector({
   const selectorRef = React.useRef<HTMLElement | null>(null);
   React.useEffect(() => { selectorRef.current?.scrollTo(0, 0); }, []);
 
-  const games: { id: PuzzleKind; name: string; category: string; description: string; completed: boolean; available: boolean; unavailableLabel?: string; onPlay: () => void }[] = [
-    { id: "word", name: "Hexaword", category: "Parole · 6 tentativi", description: "Indovina la parola segreta di 6 lettere con gli indizi di colore.", completed: hexawordCompleted, available: true, onPlay: onHexaword },
-    { id: "hack", name: "Hexahack", category: "Deduzione e codici", description: "Decifra il codice a 4 cifre massimizzando il tuo stealth.", completed: hexahackCompleted, available: true, onPlay: onHexahack },
-    { id: "sky", name: "Hexasky", category: "Logica e griglie", description: "Costruisci lo skyline rispettando le visibilità prospettiche.", completed: hexaskyCompleted, available: true, onPlay: onHexasky },
-    { id: "flow", name: "Hexaflow", category: "Connessioni di parole", description: "Collega le lettere adiacenti per completare il flusso continuo.", completed: hexaflowCompleted, available: hexaflowAvailable, onPlay: onHexaflow },
-    { id: "star", name: "Hexastar", category: "Sillabe e parole", description: "Combina le tessere sillabiche per ricostruire la griglia.", completed: hexastarCompleted, available: true, onPlay: onHexastar },
-    { id: "eco", name: "Hexaeco", category: "Sincronia e logica", description: "Pianifica la traiettoria e sincronizza la luce con la sua eco.", completed: hexaecoCompleted, available: true, onPlay: onHexaeco },
-    { id: "trap", name: "Hexatrap", category: "Logica e deduzione", description: "Interroga i due consiglieri e smaschera l'inganno.", completed: hexatrapCompleted, available: HEXATRAP_AVAILABLE, unavailableLabel: "In sviluppo", onPlay: onHexatrap }
+  const games: { id: PuzzleKind; name: string; description: string; completed: boolean; available: boolean; unavailableLabel?: string; onPlay: () => void }[] = [
+    { id: "word", name: "Hexaword", description: "Indovina la parola segreta di 6 lettere con gli indizi di colore.", completed: hexawordCompleted, available: true, onPlay: onHexaword },
+    { id: "hack", name: "Hexahack", description: "Decifra il codice a 4 cifre massimizzando il tuo stealth.", completed: hexahackCompleted, available: true, onPlay: onHexahack },
+    { id: "sky", name: "Hexasky", description: "Costruisci lo skyline rispettando le visibilità prospettiche.", completed: hexaskyCompleted, available: true, onPlay: onHexasky },
+    { id: "flow", name: "Hexaflow", description: "Collega le lettere adiacenti per completare il flusso continuo.", completed: hexaflowCompleted, available: hexaflowAvailable, onPlay: onHexaflow },
+    { id: "star", name: "Hexastar", description: "Combina le tessere sillabiche per ricostruire la griglia.", completed: hexastarCompleted, available: true, onPlay: onHexastar },
+    { id: "eco", name: "Hexaeco", description: "Pianifica la traiettoria e sincronizza la luce con la sua eco.", completed: hexaecoCompleted, available: true, onPlay: onHexaeco },
+    { id: "trap", name: "Hexatrap", description: "Interroga i due consiglieri e smaschera l'inganno.", completed: hexatrapCompleted, available: HEXATRAP_AVAILABLE, unavailableLabel: "In sviluppo", onPlay: onHexatrap }
   ];
   const availableGames = games.filter((game) => game.available);
   const completed = availableGames.filter((game) => game.completed).length;
@@ -63,12 +63,11 @@ export function GameSelector({
             disabled={!game.available}
             aria-label={`${game.name}: ${!game.available ? game.unavailableLabel ?? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}
           >
-            <span className="puzzle-card-heading">
-              <span className="puzzle-category">{game.category}</span>
-              {game.completed ? (
+            {game.completed ? (
+              <span className="puzzle-card-heading">
                 <span className="puzzle-status"><Check size={13} aria-hidden="true" /> Fatto</span>
-              ) : null}
-            </span>
+              </span>
+            ) : null}
             <PuzzleArtwork kind={game.id} />
             <span className="puzzle-card-copy">
               <strong>{game.name}</strong>
