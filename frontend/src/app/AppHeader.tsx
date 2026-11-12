@@ -97,7 +97,7 @@ export function AppHeader({
     <header className="topbar">
       <div className="title-row">
         <h1 className="brand-heading"><button className="brand-home" type="button" onClick={onOpenGames} aria-label={`${APP_NAME}, torna ai giochi`}>
-          <BrandLogo size={24} className="brand-symbol" />
+          <BrandLogo size={30} className="brand-symbol" />
           <span className="title-mark"><span className="brand-name">{APP_NAME}</span><span className="brand-date">{puzzleDate}</span></span>
         </button></h1>
         <div className="actions" ref={actionsMenuRef}>
