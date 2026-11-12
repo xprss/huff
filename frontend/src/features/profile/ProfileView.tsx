@@ -1,9 +1,10 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { ProfileUpdateDto, StatsSetDto, UserDto } from "../../types";
 import { PuzzleArtwork, type PuzzleKind } from "../game/components/PuzzleArtwork";
 import type { StatsGame } from "../stats/StatsView";
 import { ProfileEditSheet, type ProfileEditFocus } from "./ProfileEditSheet";
+import { ProfileHeading, ProfileIdentityCard, ProfileSummaryCard } from "./ProfileParts";
 import "./profile.css";
 
 export function ProfileView({
@@ -42,53 +43,18 @@ export function ProfileView({
     { id: "hexaeco", kind: "eco", name: "Hexaeco", value: stats.hexaeco.completed, label: "completate" },
     { id: "hexatrap", kind: "trap", name: "Hexatrap", value: stats.hexatrap.won, label: "vinte" }
   ];
-  const overall = stats.overall;
-  const winRate = overall.played ? Math.round((overall.won / overall.played) * 100) : 0;
-  const name = user.displayName || user.nickname;
 
   return (
     <section className="profile-view my-profile" aria-labelledby="profile-page-title">
-      <header className="account-page-heading">
-        <button className="my-profile-back" type="button" onClick={onBack} aria-label="Torna ai giochi">
-          <ChevronLeft size={20} aria-hidden="true" />
-        </button>
-        <div><h2 id="profile-page-title">Profilo</h2></div>
-      </header>
-
-      <section className="my-profile-card my-profile-identity" aria-label="La tua identità">
-        <button className="my-profile-avatar" type="button" onClick={() => openEditor()} aria-label="Cambia emoji del profilo">
-          <span aria-hidden="true">{user.profileEmoji}</span>
-        </button>
-        <div className="my-profile-names">
-          <strong>{name}</strong>
-          <span>{user.nickname}</span>
-        </div>
-        <button className="my-profile-edit" type="button" onClick={() => openEditor()} aria-label="Modifica profilo">
-          <Pencil size={17} aria-hidden="true" />
-        </button>
-        {user.bio ? (
-          <p className="my-profile-bio">{user.bio}</p>
-        ) : (
-          <button className="my-profile-add-bio" type="button" onClick={() => openEditor()}>
-            + Aggiungi una bio
-          </button>
-        )}
-      </section>
-
-      <section className="my-profile-card my-profile-summary" aria-label="Riepilogo">
-        <button className="my-profile-numbers" type="button" onClick={() => onOpenStats("overall")} aria-label="Apri tutte le statistiche">
-          <span><strong>{overall.played}</strong><small>Giocate</small></span>
-          <span><strong>{winRate}%</strong><small>Vittorie</small></span>
-          <span><strong>{overall.maxStreak}</strong><small>Serie record</small></span>
-          <ChevronRight className="my-profile-numbers-chevron" size={18} aria-hidden="true" />
-        </button>
-        <div className="my-profile-medals" aria-label={`Medaglie: ${user.medals.gold} oro, ${user.medals.silver} argento, ${user.medals.bronze} bronzo`}>
-          <small>Medaglie</small>
-          <span aria-hidden="true">🥇 <strong>{user.medals.gold}</strong></span>
-          <span aria-hidden="true">🥈 <strong>{user.medals.silver}</strong></span>
-          <span aria-hidden="true">🥉 <strong>{user.medals.bronze}</strong></span>
-        </div>
-      </section>
+      <ProfileHeading id="profile-page-title" title="Profilo" backLabel="Torna ai giochi" onBack={onBack} />
+      <ProfileIdentityCard
+        emoji={user.profileEmoji}
+        name={user.displayName || user.nickname}
+        nickname={user.nickname}
+        bio={user.bio}
+        onEdit={() => openEditor()}
+      />
+      <ProfileSummaryCard stats={stats.overall} medals={user.medals} onOpenStats={() => onOpenStats("overall")} />
 
       <section className="my-profile-section" aria-labelledby="profile-games-title">
         <h3 id="profile-games-title">I tuoi giochi</h3>

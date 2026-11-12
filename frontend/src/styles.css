@@ -457,7 +457,6 @@ h1 {
 .login-button:focus-visible,
 .share-button:focus-visible,
 .close-button:focus-visible,
-.profile-emoji:focus-visible,
 .profile-action-button:focus-visible,
 .letter-joystick:focus-visible,
 .admin-player-card:focus-visible,
@@ -811,22 +810,6 @@ html[data-theme="chromatic"] .key.absent {
   overflow: hidden;
 }
 
-.profile-summary {
-  flex: 0 0 auto;
-  border: 1px solid var(--color-surface-border);
-  border-radius: var(--control-radius);
-  padding: 14px;
-  background: linear-gradient(180deg, var(--color-surface-raised), var(--color-surface-soft));
-  box-shadow: 0 14px 38px var(--color-board-shadow);
-}
-
-.profile-head {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .profile-back {
   width: 24px;
   height: 40px;
@@ -841,77 +824,6 @@ html[data-theme="chromatic"] .key.absent {
   border-color: var(--color-transparent);
   background: var(--color-surface-strong);
   color: var(--color-text);
-}
-
-.profile-emoji {
-  position: relative;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
-  border: 0;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--color-transparent);
-  color: var(--color-text);
-  box-shadow: none;
-  cursor: pointer;
-  font-size: 1.72rem;
-  line-height: 1;
-  overflow: visible;
-  transition:
-    transform var(--motion-fast) var(--ease-press),
-    opacity var(--motion-base) var(--ease-out);
-}
-
-.profile-emoji:hover {
-  opacity: 0.86;
-}
-
-.profile-emoji.readonly {
-  cursor: default;
-}
-
-.profile-emoji.readonly:hover {
-  opacity: 1;
-}
-
-.profile-emoji:active {
-  transform: translateY(1px) scale(0.98);
-}
-
-.profile-emoji-glyph {
-  display: block;
-  line-height: 1;
-}
-
-.profile-identity {
-  min-width: 0;
-  flex: 1 1 auto;
-  display: grid;
-  gap: 5px;
-}
-
-.profile-identity strong {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--color-text);
-  font-size: 1rem;
-  font-weight: 760;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-identity > span {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--color-muted);
-  font-size: 0.78rem;
-  font-weight: 650;
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .profile-nickname-field {
@@ -995,7 +907,6 @@ html[data-theme="chromatic"] .key.absent {
   opacity: 0.66;
 }
 
-.profile-bio,
 .admin-player-bio {
   margin: 2px 0 0;
   min-width: 0;
@@ -1509,34 +1420,6 @@ html[data-theme="chromatic"] .key.absent {
 .admin-tile.hidden {
   background: var(--color-terminal-background);
   color: var(--color-muted);
-}
-
-.profile-stats {
-  min-height: 0;
-  flex: 1 1 auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 2px 2px 12px;
-}
-
-.profile-stats .stat-grid + .stat-grid {
-  margin-top: 8px;
-}
-
-.medal-counts {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0 0 10px;
-}
-
-.medal-counts > h3 {
-  grid-column: 1 / -1;
-  margin: 0 0 2px;
-  color: var(--color-muted);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 .eyebrow {
@@ -2146,36 +2029,6 @@ html[data-theme="chromatic"] .key.absent {
 .launch-cta { width: 100%; margin-top: 8px; color: var(--color-on-solid); background: var(--color-correct); }
 
 .leaderboard-wins small { color: var(--color-muted); font-size: .58rem; white-space: nowrap; }
-
-.medal-count {
-  min-width: 0;
-  border: 1px solid var(--color-surface-border);
-  border-radius: var(--compact-radius);
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  column-gap: 5px;
-  padding: 7px 8px;
-  background: var(--color-surface-soft);
-}
-
-.medal-count > span {
-  grid-row: span 2;
-  font-size: 1.2rem;
-}
-
-.medal-count strong {
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.medal-count small {
-  overflow: hidden;
-  color: var(--color-muted);
-  font-size: 0.67rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .leaderboard-view {
   width: 100%;
@@ -3712,13 +3565,6 @@ html[data-theme="chromatic"] .key.absent {
     width: 24px;
     height: 38px;
     flex-basis: 24px;
-  }
-
-  .profile-emoji {
-    width: 42px;
-    height: 42px;
-    flex-basis: 42px;
-    font-size: 1.62rem;
   }
 
   .login-screen {

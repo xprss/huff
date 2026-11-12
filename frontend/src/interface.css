@@ -594,7 +594,6 @@ a:focus-visible,
 .hexastar-board,
 .game-selector,
 .profile-view,
-.profile-stats,
 .leaderboard-list {
   touch-action: pan-y pinch-zoom;
 }
@@ -841,27 +840,11 @@ a:focus-visible,
   overflow-y: auto;
 }
 
-.profile-view .profile-stats {
-  flex: 0 0 auto;
-  overflow: visible;
-}
-
-.profile-summary,
 .leaderboard-head {
   padding: 18px;
   border-radius: 20px;
   background: var(--color-surface);
   box-shadow: none;
-}
-
-.profile-emoji {
-  border-radius: 20px;
-  box-shadow: none;
-}
-
-.profile-identity strong {
-  font-size: 1.25rem;
-  letter-spacing: -.03em;
 }
 
 .profile-nickname-field,
@@ -1466,7 +1449,7 @@ a:focus-visible,
   display: none;
 }
 
-#root :is(.account-panel, .profile-summary, .leaderboard-head, .trap-panel, .hack-console, .hack-log, .hack-mastery, .admin-stats-panel, .admin-edit-panel, .admin-confirm-panel, .admin-games-panel, .cms-library-panel, .cms-grid-panel, .cms-answers-panel, .cms-generator, .cms-create-card, .cms-puzzle-card) {
+#root :is(.account-panel, .leaderboard-head, .trap-panel, .hack-console, .hack-log, .hack-mastery, .admin-stats-panel, .admin-edit-panel, .admin-confirm-panel, .admin-games-panel, .cms-library-panel, .cms-grid-panel, .cms-answers-panel, .cms-generator, .cms-create-card, .cms-puzzle-card) {
   padding: 14px;
 }
 

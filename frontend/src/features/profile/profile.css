@@ -717,3 +717,7 @@
     transform: none;
   }
 }
+
+.my-profile-numbers--static {
+  padding-right: 8px;
+}

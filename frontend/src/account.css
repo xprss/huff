@@ -2,10 +2,10 @@
 .app-shell { grid-template-columns: minmax(0, 1fr); }
 body { min-width: 0; }
 .game-surface > *, .profile-view, .leaderboard-view, .stats-view,
-.profile-stats, .profile-head, .profile-identity, .leaderboard-list,
+.leaderboard-list,
 .leaderboard-list li, .game-stats-tabs, .leaderboard-games { min-width: 0; max-width: 100%; }
 .game-stats-tabs, .leaderboard-games { width: 100%; }
-.profile-identity strong, .profile-identity > span, .profile-bio { overflow-wrap: anywhere; white-space: normal; }
+
 .leaderboard-player { min-width: 0; }
 .leaderboard-list button { width: 100%; min-width: 0; }
 .leaderboard-wins { flex-shrink: 0; }
@@ -24,8 +24,8 @@ html.page-scroll .app-shell, html.zoomed .app-shell {
   overflow: visible;
 }
 html.page-scroll .game-surface, html.zoomed .game-surface { height: auto; overflow: visible; }
-html.page-scroll :is(.game-selector, .profile-view, .profile-stats, .leaderboard-view, .leaderboard-list),
-html.zoomed :is(.game-selector, .profile-view, .profile-stats, .leaderboard-view, .leaderboard-list, .play-area, .sky-shell, .hexaflow, .hexastar-shell, .hexastar-board, .hack-shell) {
+html.page-scroll :is(.game-selector, .profile-view, .leaderboard-view, .leaderboard-list),
+html.zoomed :is(.game-selector, .profile-view, .leaderboard-view, .leaderboard-list, .play-area, .sky-shell, .hexaflow, .hexastar-shell, .hexastar-board, .hack-shell) {
   height: auto;
   max-height: none;
   overflow: visible;
