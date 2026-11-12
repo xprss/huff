@@ -108,11 +108,12 @@ a:focus-visible,
   align-items: flex-start;
 }
 
-/* Top-align the logo with the cap height of "HexaQuot": the Q glyph starts
-   ~0.128em below the name's line box (line-height 1, #root .brand-name is
-   1.25rem) and the logo stroke starts ~1px inside its 30px box. */
+/* The logo spans from the cap top of "HexaQuot" to the baseline of the date
+   (which has no descenders). The Q glyph starts ~0.128em below the name's
+   line box (line-height 1, #root .brand-name is 1.25rem); the logo stroke
+   covers 65/72 of its box (AppHeader size 33.4px), starting 2.5/72 inside. */
 .topbar .brand-symbol {
-  margin-top: calc(1.25rem * .128 - 1px);
+  margin-top: calc(1.25rem * .128 - 33.4px * 2.5 / 72);
 }
 
 .topbar .title-mark {
