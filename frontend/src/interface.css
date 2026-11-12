@@ -2235,8 +2235,9 @@ a:focus-visible,
   }
 }
 
-/* Card launch: the chosen card swells and dissolves, the rest of the selector
-   recedes, then the game view fades in (see .game-surface route-enter). */
+/* Card launch: the chosen card swells while the rest of the selector recedes;
+   the route switch is then a View Transition cross-fade (see GameSelector).
+   Only transform and opacity animate, so everything stays on the compositor. */
 .game-selector.is-launching {
   pointer-events: none;
 }
@@ -2245,57 +2246,76 @@ a:focus-visible,
 .game-selector.is-launching .puzzle-card:not(.is-launching) {
   opacity: 0;
   transform: scale(.97);
-  filter: blur(2px);
   transition:
-    opacity 220ms var(--ease-out),
-    transform 260ms var(--ease-out),
-    filter 260ms var(--ease-out);
+    opacity 180ms ease-out,
+    transform 220ms cubic-bezier(.2, .8, .2, 1);
 }
 
-.puzzle-card.is-launching {
+.game-selector .puzzle-card.is-launching {
   z-index: 2;
-  animation: puzzle-card-launch 380ms cubic-bezier(.2, .7, .2, 1) forwards;
+  transform: scale(1.03);
+  transition: transform 220ms cubic-bezier(.2, .8, .2, 1);
 }
 
-.puzzle-card.is-launching .puzzle-art {
-  opacity: .75;
-  transform: rotate(0deg) scale(1.25);
+.game-selector .puzzle-card.is-launching .puzzle-art {
+  opacity: .7;
+  transform: rotate(0deg) scale(1.15);
+  transition:
+    transform 260ms cubic-bezier(.2, .8, .2, 1),
+    opacity 260ms ease-out;
 }
 
-@keyframes puzzle-card-launch {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-  }
+/* Fallback without View Transitions: fade the card out before the switch. */
+.game-selector.is-launching--fade .puzzle-card.is-launching {
+  opacity: 0;
+  transform: scale(1.06);
+  transition:
+    transform 300ms cubic-bezier(.2, .8, .2, 1),
+    opacity 220ms ease-in 80ms;
+}
 
-  55% {
-    transform: scale(1.05);
-    opacity: 1;
-    box-shadow: 0 18px 48px color-mix(in srgb, var(--card-accent) 35%, transparent);
-  }
+html[data-transition="game-launch"] .topbar {
+  view-transition-name: app-topbar;
+}
 
-  100% {
-    transform: scale(1.12);
+html[data-transition="game-launch"] .game-surface > :not(.topbar) {
+  animation: none;
+}
+
+html[data-transition="game-launch"]::view-transition-old(root) {
+  animation: game-launch-out 260ms cubic-bezier(.4, 0, 1, 1) both;
+}
+
+html[data-transition="game-launch"]::view-transition-new(root) {
+  animation: game-launch-in 360ms cubic-bezier(.2, .8, .2, 1) 40ms both;
+}
+
+html[data-transition="game-launch"]::view-transition-group(app-topbar) {
+  animation-duration: 260ms;
+}
+
+@keyframes game-launch-out {
+  to {
     opacity: 0;
-    filter: blur(3px);
-    box-shadow: 0 18px 48px color-mix(in srgb, var(--card-accent) 0%, transparent);
+    transform: scale(1.03);
+  }
+}
+
+@keyframes game-launch-in {
+  from {
+    opacity: 0;
+    transform: scale(.985);
   }
 }
 
 .game-surface > :not(.topbar) {
-  animation: route-enter 320ms var(--ease-out) both;
+  animation: route-enter 280ms cubic-bezier(.2, .8, .2, 1) both;
 }
 
 @keyframes route-enter {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(.99);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
+    transform: translateY(6px);
   }
 }
 

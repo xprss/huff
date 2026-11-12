@@ -1,9 +1,16 @@
 import React from "react";
+import { flushSync } from "react-dom";
 import { ArrowRight, Check, Layers } from "lucide-react";
 import { HEXATRAP_AVAILABLE } from "../../app/constants";
 import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
-const LAUNCH_DURATION_MS = 380;
+// Swell phase before the route switch; the switch itself is a cross-fade.
+const LAUNCH_SWELL_MS = 200;
+const LAUNCH_FALLBACK_MS = 300;
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => { finished: Promise<void> };
+};
 
 export function GameSelector({
   hexawordCompleted, hexahackCompleted, hexaskyCompleted, hexaflowCompleted,
@@ -29,8 +36,10 @@ export function GameSelector({
   const selectorRef = React.useRef<HTMLElement | null>(null);
   React.useEffect(() => { selectorRef.current?.scrollTo(0, 0); }, []);
 
-  // Clicking a card plays a short "launch" (the card swells and fades while the
-  // others recede) before switching route; skipped when reduced motion is requested.
+  // Clicking a card swells it while the rest of the selector recedes, then the
+  // route switch runs inside a View Transition so the selector and the game view
+  // cross-fade with no blank frame. Without View Transitions the card fades out
+  // and the game view fades in (route-enter). Reduced motion navigates at once.
   const [launching, setLaunching] = React.useState<PuzzleKind | null>(null);
   const launchTimer = React.useRef<number | undefined>(undefined);
   React.useEffect(() => () => window.clearTimeout(launchTimer.current), []);
@@ -40,8 +49,27 @@ export function GameSelector({
       onPlay();
       return;
     }
+    const doc = document as ViewTransitionDocument;
+    if (!doc.startViewTransition) {
+      setLaunching(id);
+      launchTimer.current = window.setTimeout(onPlay, LAUNCH_FALLBACK_MS);
+      return;
+    }
     setLaunching(id);
-    launchTimer.current = window.setTimeout(onPlay, LAUNCH_DURATION_MS);
+    launchTimer.current = window.setTimeout(() => {
+      const root = document.documentElement;
+      root.dataset.transition = "game-launch";
+      const transition = doc.startViewTransition!(() => flushSync(onPlay));
+      void transition.finished.finally(() => {
+        delete root.dataset.transition;
+        // Re-enabling route-enter would replay it on the view that just faded in.
+        document.querySelectorAll(".game-surface > *").forEach((element) => {
+          element.getAnimations().forEach((animation) => {
+            if ((animation as CSSAnimation).animationName === "route-enter") animation.finish();
+          });
+        });
+      });
+    }, LAUNCH_SWELL_MS);
   };
 
   const games: { id: PuzzleKind; name: string; description: string; completed: boolean; available: boolean; unavailableLabel?: string; onPlay: () => void }[] = [
@@ -57,7 +85,7 @@ export function GameSelector({
   const completed = availableGames.filter((game) => game.completed).length;
 
   return (
-    <section ref={selectorRef} className={`game-selector${launching ? " is-launching" : ""}`} aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
+    <section ref={selectorRef} className={`game-selector${launching ? ` is-launching${"startViewTransition" in document ? "" : " is-launching--fade"}` : ""}`} aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
       <div className="daily-welcome">
         <div className="daily-progress" aria-label={`${completed} sfide completate su ${availableGames.length} disponibili oggi`}>
           <span className="daily-progress-icon"><Layers size={20} aria-hidden="true" /></span>
