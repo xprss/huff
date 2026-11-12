@@ -1,5 +1,6 @@
 import React from "react";
-import { ChevronLeft, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
+import { Avatar } from "../../shared/components/Avatar";
 import type { LeaderboardGame, LeaderboardPeriodDto, LeaderboardsDto } from "../../types";
 
 type LeaderboardTab = "allTime" | "yearly" | "monthly" | "weekly";
@@ -26,13 +27,11 @@ export function LeaderboardView({
   leaderboards,
   activeGame,
   onChangeGame,
-  onBack,
   onOpenPlayer
 }: {
   leaderboards: LeaderboardsDto;
   activeGame: LeaderboardGame;
   onChangeGame: (game: LeaderboardGame) => void;
-  onBack: () => void;
   onOpenPlayer: (nickname: string) => void;
 }) {
   const [activeTab, setActiveTab] = React.useState<LeaderboardTab>("weekly");
@@ -40,16 +39,6 @@ export function LeaderboardView({
 
   return (
     <section className="leaderboard-view" aria-label="Classifica">
-      <header className="leaderboard-head">
-        <button className="icon-button profile-back" type="button" onClick={onBack} aria-label="Torna al gioco" title="Torna">
-          <ChevronLeft size={23} />
-        </button>
-        <div>
-          <h2><Trophy size={21} aria-hidden="true" /> Classifica</h2>
-          <p>{periodLabel(period, activeTab)}</p>
-        </div>
-      </header>
-
       <div className="leaderboard-games" role="tablist" aria-label="Gioco della classifica">
         {GAME_TABS.map((game) => (
           <button
@@ -79,6 +68,7 @@ export function LeaderboardView({
           </button>
         ))}
       </div>
+      <p className="leaderboard-period">{periodLabel(period, activeTab)}</p>
 
       {period.entries.length === 0 ? (
         <div className="leaderboard-empty">
@@ -91,7 +81,7 @@ export function LeaderboardView({
             <li key={entry.nickname}>
               <button type="button" onClick={() => onOpenPlayer(entry.nickname)} aria-label={`Apri il profilo di ${entry.nickname}`}>
                 <span className={`leaderboard-rank rank-${entry.rank}`}>{entry.rank}</span>
-                <span className="leaderboard-emoji" aria-hidden="true">{entry.profileEmoji}</span>
+                <Avatar className="leaderboard-avatar" name={entry.displayName || entry.nickname} avatarUrl={entry.avatarUrl} size={36} />
                 <span className="leaderboard-player">
                   <strong>{entry.displayName}</strong>
                   <small>{entry.nickname}</small>

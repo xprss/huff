@@ -117,8 +117,8 @@ class AdminGameStatsResourceTest {
 
     private void createUser(String id, String displayName, String nickname) {
         QuarkusTransaction.requiringNew().run(() -> entityManager.createNativeQuery(
-                "INSERT INTO users (id, email, display_name, nickname, profile_emoji, created_at, star_available) "
-                    + "VALUES (?1, 'private@example.test', ?2, ?3, '😀', ?4, false) ON CONFLICT (id) DO NOTHING")
+                "INSERT INTO users (id, email, display_name, nickname, created_at, star_available) "
+                    + "VALUES (?1, 'private@example.test', ?2, ?3, ?4, false) ON CONFLICT (id) DO NOTHING")
             .setParameter(1, id)
             .setParameter(2, displayName)
             .setParameter(3, nickname)

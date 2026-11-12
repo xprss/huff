@@ -21,5 +21,4 @@ export const HEXATRAP_AVAILABLE = false;
 export const TOAST_DURATION_MS = 3800;
 export const REPOSITORY_URL = "https://github.com/xprss/huff";
 export const VIEWPORT_SYNC_DELAYS_MS = [40, 120, 280, 600, 1200];
-export const PROFILE_EMOJIS = ["😀", "😄", "😎", "🤓", "🥳", "😇", "🤠", "😴", "😤", "😍", "🙃", "😌"];
 export const ZOOM_KEYS = new Set(["+", "-", "=", "_", "0"]);

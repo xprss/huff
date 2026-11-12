@@ -79,6 +79,22 @@ The application is available at `http://localhost:8080`. Press Ctrl-C to stop
 the application container; the local PostgreSQL container and its named volume
 are retained for the next run. Use `--no-build` to reuse the existing image.
 
+Alternatively, with Docker Compose:
+
+```bash
+docker compose -f docker-compose.local.yml --profile stats up --build
+```
+
+It reads `.env`, starts PostgreSQL (exposed on `127.0.0.1:5433`) and the app on
+`http://localhost:8080`; the `stats` profile also creates the read-only role for the
+statistics agent once migrations have run (omit it if `POSTGRES_MCP_PASSWORD` is not
+set). `docker compose -f docker-compose.local.yml down -v` resets the database.
+
+The `frontend` service runs the Vite dev server on `http://localhost:5173` with hot
+reload on `frontend/`, proxying `/api`, `/q` and `/auth` to the app container. Use it
+for frontend work; the app on port 8080 still serves the build baked into the image.
+If file changes are not picked up, set `LOCAL_VITE_WATCH_POLLING=true`.
+
 ## Configuration
 
 The Quarkus development profile runs anonymously by default for local work. Docker local,
@@ -208,6 +224,8 @@ L'area admin include **hexAI**, una chat Mastra privata che risponde su conteggi
 Mastra gira nello stesso container applicativo, ascolta solo su `127.0.0.1` e non pubblica una porta Docker. Il backend lo raggiunge con `GAME_STATS_AGENT_TOKEN`. PostgreSQL è interrogato tramite `@microsoft/postgres-mcp` usando un ruolo dedicato con `SELECT` limitato alle colonne statistiche e ai nickname. Il container applicativo riceve `OPENAI_API_KEY`, `GAME_STATS_AGENT_TOKEN` e `POSTGRES_MCP_PASSWORD` dal file ambiente runtime; usare valori separati e segreti. Gli esempi `.env.example` e `.env.staging.example` indicano la configurazione richiesta.
 
 `scripts/deploy-image.sh` e `scripts/run-docker-local.sh` creano il ruolo PostgreSQL read-only dopo le migrazioni. Le chat admin sono persistite in `${DATA_DIR}/agents` nei deploy Docker.
+
+Le foto profilo caricate dagli utenti sono file su disco in `${DATA_DIR}/avatars` (montata in `/app/data/avatars`; in locale `data/local-avatars`). Non sono nel database: il backup di PostgreSQL non le include, quindi va salvata anche questa cartella.
 
 Useful commands:
 

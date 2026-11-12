@@ -944,8 +944,9 @@ export function getStoredThemeId(): string {
   const storedThemeId = localStorage.getItem(THEME_STORAGE_KEY);
   if (storedThemeId && appThemes.some((theme) => theme.id === storedThemeId)) return storedThemeId;
 
-  // Preserve the preference saved by versions that only offered light and dark modes.
-  return localStorage.getItem("darkMode") === "true" ? darkAppTheme.id : lightAppTheme.id;
+  // Default is "Notte" (dark); keep an explicit light choice saved by versions
+  // that only offered light and dark modes.
+  return localStorage.getItem("darkMode") === "false" ? lightAppTheme.id : darkAppTheme.id;
 }
 
 export function getThemeCssVariables(theme: AppTheme): ThemeCssVariables {
@@ -972,6 +973,7 @@ function setThemeCssVariables(theme: AppTheme, root: HTMLElement) {
   }
   root.style.colorScheme = theme.colorScheme;
   root.dataset.theme = theme.id;
+  root.dataset.colorScheme = theme.colorScheme;
 
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   themeColor?.setAttribute("content", theme.colors.page);

@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Edit3, Eye, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
+import { BarChart3, Bell, BellOff, Check, ChevronLeft, ChevronRight, Eye, Grid2X2, Info, LogOut, Menu, Palette, Shield, Star, Trophy, UserRound } from "lucide-react";
 import { APP_NAME } from "./constants";
 import type { AppRoute } from "./routing";
 import type { ToastMessage } from "../shared/toast";
@@ -11,7 +11,6 @@ export function AppHeader({
   toast,
   showStarButton,
   starCanUse,
-  showProfileEdit,
   showActionsMenu,
   actionsMenuRef,
   activeRoute,
@@ -24,7 +23,6 @@ export function AppHeader({
   patternsEnabled,
   showLogout,
   onUseStar,
-  onEditProfile,
   onToggleMenu,
   onOpenProfile,
   onOpenGames,
@@ -42,7 +40,6 @@ export function AppHeader({
   toast: ToastMessage | null;
   showStarButton: boolean;
   starCanUse: boolean;
-  showProfileEdit: boolean;
   showActionsMenu: boolean;
   actionsMenuRef: React.RefObject<HTMLDivElement>;
   activeRoute: AppRoute;
@@ -55,7 +52,6 @@ export function AppHeader({
   patternsEnabled: boolean;
   showLogout: boolean;
   onUseStar: () => void;
-  onEditProfile: () => void;
   onToggleMenu: () => void;
   onOpenProfile: () => void;
   onOpenGames: () => void;
@@ -97,7 +93,7 @@ export function AppHeader({
     <header className="topbar">
       <div className="title-row">
         <h1 className="brand-heading"><button className="brand-home" type="button" onClick={onOpenGames} aria-label={`${APP_NAME}, torna ai giochi`}>
-          <BrandLogo size={24} className="brand-symbol" />
+          <BrandLogo size={33.4} className="brand-symbol" />
           <span className="title-mark"><span className="brand-name">{APP_NAME}</span><span className="brand-date">{puzzleDate}</span></span>
         </button></h1>
         <div className="actions" ref={actionsMenuRef}>
@@ -111,17 +107,6 @@ export function AppHeader({
               title={starCanUse ? "Usa stella" : "Completa 3 partite di fila per ottenere una stella"}
             >
               <Star size={21} />
-            </button>
-          ) : null}
-          {showProfileEdit ? (
-            <button
-              className="icon-button profile-nav-edit"
-              type="button"
-              onClick={onEditProfile}
-              aria-label="Modifica nome e nickname"
-              title="Modifica"
-            >
-              <Edit3 size={19} />
             </button>
           ) : null}
           <button

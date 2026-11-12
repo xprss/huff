@@ -1,34 +1,27 @@
-import { ChevronLeft } from "lucide-react";
-import { MedalCounts } from "../../shared/components/MedalCounts";
 import React from "react";
 import { HexahackStatsPanel, HexaskyStatsPanel, HexaflowStatsPanel, HexaecoStatsPanel, HexatrapStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsView";
 import type { PublicPlayerProfileDto } from "../../types";
+import { ProfileIdentityCard, ProfileSummaryCard } from "./ProfileParts";
 
-export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerProfileDto; onBack: () => void }) {
+export function PublicProfileView({ profile }: { profile: PublicPlayerProfileDto }) {
   const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
   const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats, hexahack: profile.hexahackStats, hexasky: profile.hexaskyStats, hexaflow: profile.hexaflowStats, hexastar: profile.hexastarStats, hexaeco: profile.hexaecoStats, hexatrap: profile.hexatrapStats };
   return (
-    <section className="profile-view public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
-      <div className="profile-summary">
-        <div className="profile-head">
-          <button className="icon-button profile-back" type="button" onClick={onBack} aria-label="Torna alla leaderboard" title="Torna">
-            <ChevronLeft size={23} />
-          </button>
-          <span className="profile-emoji readonly" aria-hidden="true">
-            <span className="profile-emoji-glyph">{profile.profileEmoji}</span>
-          </span>
-          <div className="profile-identity">
-            <strong>{profile.displayName}</strong>
-            <span>{profile.nickname}</span>
-            {profile.bio ? <p className="profile-bio">{profile.bio}</p> : null}
-          </div>
-        </div>
-      </div>
-      <div className="profile-stats" aria-label="Statistiche pubbliche">
-        <MedalCounts medals={profile.medals} />
+    <section className="profile-view my-profile public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
+      <ProfileIdentityCard
+        avatarUrl={profile.avatarUrl}
+        name={profile.displayName || profile.nickname}
+        nickname={profile.nickname}
+        bio={profile.bio}
+      />
+      <ProfileSummaryCard stats={profile.overallStats} medals={profile.medals} />
+      <section className="my-profile-section" aria-labelledby="public-profile-stats-title">
+        <h3 id="public-profile-stats-title">Statistiche</h3>
         <StatsTabs active={activeStats} onChange={setActiveStats} />
-        {activeStats === "hexatrap" ? <HexatrapStatsPanel stats={stats.hexatrap}/> : activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : activeStats === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : activeStats === "hexaeco" ? <HexaecoStatsPanel stats={stats.hexaeco}/> : <StatsPanel stats={stats[activeStats]} />}
-      </div>
+        <div className="account-panel stats-detail">
+          {activeStats === "hexatrap" ? <HexatrapStatsPanel stats={stats.hexatrap} /> : activeStats === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : activeStats === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : activeStats === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow} /> : activeStats === "hexaeco" ? <HexaecoStatsPanel stats={stats.hexaeco} /> : <StatsPanel stats={stats[activeStats]} />}
+        </div>
+      </section>
     </section>
   );
 }

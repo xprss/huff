@@ -68,6 +68,18 @@ public class AdminResource {
     }
 
     @DELETE
+    @Path("/players/{userId}/avatar")
+    public Response removePlayerAvatar(@CookieParam("huff_session") String sessionId, @PathParam("userId") String userId) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized();
+        }
+        Response.ResponseBuilder response = Response.ok(adminService.removePlayerAvatar(resolvedUser.user(), userId));
+        setCookie(response, resolvedUser);
+        return response.build();
+    }
+
+    @DELETE
     @Path("/players/{userId}")
     public Response deletePlayer(@CookieParam("huff_session") String sessionId, @PathParam("userId") String userId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);

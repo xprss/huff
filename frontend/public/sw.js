@@ -1,5 +1,5 @@
-const CACHE_NAME = "hexaquot-shell-v4";
-const APP_SHELL = ["/", "/manifest.json?v=3", "/icons/huff-icon.svg?v=3", "/icons/hexaquot-180.png?v=3", "/icons/hexaquot-192.png?v=3", "/icons/hexaquot-512.png?v=3"];
+const CACHE_NAME = "hexaquot-shell-v5";
+const APP_SHELL = ["/", "/manifest.json?v=4", "/icons/huff-icon.svg?v=4", "/icons/hexaquot-180.png?v=4", "/icons/hexaquot-192.png?v=4", "/icons/hexaquot-512.png?v=4"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
@@ -59,8 +59,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(title, {
       body: payload.body || "Nuova partita disponibile.",
-      icon: payload.icon || "/icons/huff-icon.svg?v=3",
-      badge: "/icons/huff-icon.svg?v=3",
+      icon: payload.icon || "/icons/huff-icon.svg?v=4",
+      badge: "/icons/huff-icon.svg?v=4",
       tag: payload.tag || "new-game",
       data: {
         url: payload.url || "/"

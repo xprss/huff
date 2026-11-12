@@ -92,7 +92,6 @@ class HexahackDailyGameServiceTest {
         entity.id = "hexahack-test-" + UUID.randomUUID();
         entity.displayName = "Hack";
         entity.nickname = "@hack-" + UUID.randomUUID().toString().substring(0, 8);
-        entity.profileEmoji = "🕶️";
         entity.createdAt = Instant.now().toString();
         entity.starAvailable = false;
         entity.persist();

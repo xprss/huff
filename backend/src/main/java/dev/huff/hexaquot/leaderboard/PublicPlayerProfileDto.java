@@ -8,7 +8,7 @@ import dev.huff.hexaquot.game.HexaflowDtos;
 public record PublicPlayerProfileDto(
     String displayName,
     String nickname,
-    String profileEmoji,
+    String avatarUrl,
     String bio,
     StatsDto stats,
     StatsDto overallStats,

@@ -57,7 +57,7 @@ class HexaflowDailyGameServiceTest {
         String now=Instant.now().toString();HexaflowPuzzleEntity entity=new HexaflowPuzzleEntity();entity.id=UUID.randomUUID().toString();entity.puzzleDate=clock.todayDate();entity.status=HexaflowDtos.PuzzleStatus.PUBLISHED;entity.themeClue="Alfabeto";entity.gridJson=puzzles.write(grid);entity.answersJson=puzzles.write(answers);entity.createdBy="test";entity.updatedBy="test";entity.publishedBy="test";entity.createdAt=now;entity.updatedAt=now;entity.publishedAt=now;entity.persist();
         return new HexaflowDtos.PuzzleDraftDto(entity.puzzleDate,entity.themeClue,grid,answers);
     }
-    private AppUser createUser(){UserEntity e=new UserEntity();e.id="flow-"+UUID.randomUUID();e.displayName="Flow";e.nickname="@flow-"+UUID.randomUUID().toString().substring(0,8);e.profileEmoji="🌊";e.createdAt=Instant.now().toString();e.starAvailable=false;e.persist();return e.toAppUser(false);}
+    private AppUser createUser(){UserEntity e=new UserEntity();e.id="flow-"+UUID.randomUUID();e.displayName="Flow";e.nickname="@flow-"+UUID.randomUUID().toString().substring(0,8);e.createdAt=Instant.now().toString();e.starAvailable=false;e.persist();return e.toAppUser(false);}
     private List<Integer> reversed(List<Integer> source){List<Integer> result=new ArrayList<>(source);Collections.reverse(result);return result;}
     private String word(List<String>grid,List<Integer>path){StringBuilder result=new StringBuilder();path.forEach(i->result.append(grid.get(i)));return result.toString();}
 }

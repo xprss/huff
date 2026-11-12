@@ -27,7 +27,6 @@ class ScheduledAlertServiceTest {
         user.id = userId;
         user.displayName = "Alert User";
         user.nickname = "@alert-" + UUID.randomUUID().toString().substring(0, 8);
-        user.profileEmoji = "😀";
         user.createdAt = Instant.now().minusSeconds(3600).toString();
         user.persist();
 
@@ -73,7 +72,6 @@ class ScheduledAlertServiceTest {
         user.id = userId;
         user.displayName = "Push Alert User";
         user.nickname = "@push-alert-" + UUID.randomUUID().toString().substring(0, 8);
-        user.profileEmoji = "😀";
         user.createdAt = Instant.now().minusSeconds(3600).toString();
         user.persist();
         PushSubscriptionEntity subscription = new PushSubscriptionEntity();

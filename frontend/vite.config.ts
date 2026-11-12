@@ -18,6 +18,8 @@ function resolveAppVersion(): string {
   return appVersion;
 }
 
+const apiProxyTarget = process.env.VITE_API_PROXY_TARGET?.trim() || "http://localhost:8080";
+
 export default defineConfig({
   plugins: [react()],
   define: {
@@ -25,10 +27,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    watch: process.env.VITE_WATCH_POLLING === "true" ? { usePolling: true, interval: 300 } : undefined,
     proxy: {
-      "/api": "http://localhost:8080",
-      "/q": "http://localhost:8080",
-      "/auth": "http://localhost:8080"
+      "/api": apiProxyTarget,
+      "/q": apiProxyTarget,
+      "/auth": apiProxyTarget
     }
   },
   build: {

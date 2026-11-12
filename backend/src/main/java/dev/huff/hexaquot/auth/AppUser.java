@@ -5,7 +5,7 @@ public record AppUser(
     String email,
     String displayName,
     String nickname,
-    String profileEmoji,
+    String avatarUrl,
     String bio,
     String inputHandPreference,
     boolean authenticated,
@@ -16,11 +16,11 @@ public record AppUser(
         String email,
         String displayName,
         String nickname,
-        String profileEmoji,
+        String avatarUrl,
         String bio,
         boolean authenticated
     ) {
-        this(id, email, displayName, nickname, profileEmoji, bio, "RIGHT", authenticated, null);
+        this(id, email, displayName, nickname, avatarUrl, bio, "RIGHT", authenticated, null);
     }
 
     public AppUser(
@@ -28,11 +28,11 @@ public record AppUser(
         String email,
         String displayName,
         String nickname,
-        String profileEmoji,
+        String avatarUrl,
         String bio,
         boolean authenticated,
         AdminPrivileges admin
     ) {
-        this(id, email, displayName, nickname, profileEmoji, bio, "RIGHT", authenticated, admin);
+        this(id, email, displayName, nickname, avatarUrl, bio, "RIGHT", authenticated, admin);
     }
 }

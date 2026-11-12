@@ -1,11 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HexaQuot">
-  <rect width="512" height="512" fill="#f6f7f1"/>
-  <g transform="rotate(-10 256 256)" fill="#476237">
-    <rect x="121" y="125.5" width="72" height="117" rx="27"/>
-    <rect x="220" y="125.5" width="72" height="117" rx="27" opacity=".45"/>
-    <rect x="319" y="125.5" width="72" height="117" rx="27" fill="#6c51ac"/>
-    <rect x="121" y="269.5" width="72" height="117" rx="27"/>
-    <rect x="220" y="269.5" width="72" height="117" rx="27"/>
-    <rect x="319" y="269.5" width="72" height="117" rx="27" opacity=".45"/>
+  <defs>
+    <linearGradient id="q" x1="15%" y1="15%" x2="85%" y2="85%">
+      <stop offset="0%" stop-color="#ede9fe"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#2a2150"/>
+      <stop offset="100%" stop-color="#0d1019"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#glow)"/>
+  <!-- Same mark as BrandLogo.tsx, scaled into the maskable safe zone. -->
+  <g transform="translate(56 56) scale(4)" fill="none" stroke="url(#q)" stroke-width="7" stroke-linecap="round">
+    <path d="M 50 21 C 33 21, 21 34, 21 50 C 21 66, 34 79, 50 79 C 66 79, 79 66, 79 50 C 79 38, 72 28, 62 23.5"/>
+    <path d="M 60 62 C 66 70, 72 76, 81 79"/>
+    <circle cx="50" cy="50" r="6" fill="url(#q)" stroke="none"/>
   </g>
 </svg>

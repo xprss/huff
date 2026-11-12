@@ -33,8 +33,7 @@
 .trap-unlocked p { line-height: 1.5; }
 .trap-tutorial { border-top: 1px solid #8884; padding-top: 14px; margin-top: 14px; }
 .trap-error { color: #c44949; }
-.puzzle-card--trap { --art-node: #e1d6ed; --art-color: #88609f; }
-.puzzle-art--trap { color: #88609f; }
+
 @media (max-width: 360px) { .trap-view { padding-inline: 8px; } .trap-panel { padding: 12px; } .trap-notes { grid-template-columns: 1fr; } }
 
 .trap-view :is(button, input, select, summary) { scroll-margin-block: 100px; }

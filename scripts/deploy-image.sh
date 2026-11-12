@@ -138,7 +138,7 @@ command -v docker >/dev/null 2>&1 || { echo "Docker is required but was not foun
 command -v curl >/dev/null 2>&1 || { echo "curl is required but was not found in PATH." >&2; exit 1; }
 docker info >/dev/null 2>&1 || { echo "Docker is not running." >&2; exit 1; }
 
-mkdir -p "${DATA_DIR}" "${DATA_DIR}/agents" "${POSTGRES_DATA_DIR}" "${DIAGNOSTICS_DIR}"
+mkdir -p "${DATA_DIR}" "${DATA_DIR}/agents" "${DATA_DIR}/avatars" "${POSTGRES_DATA_DIR}" "${DIAGNOSTICS_DIR}"
 for diagnostic_file in inspect.json container.log health-response.json health-curl.log; do
   : > "${DIAGNOSTICS_DIR}/${diagnostic_file}"
 done
@@ -260,6 +260,7 @@ docker run -d \
   -e "GAME_STATS_AGENT_URL=http://127.0.0.1:${GAME_STATS_AGENT_PORT}" \
   -e "GAME_STATS_AGENT_DB_URL=file:./data/mastra.db" \
   -v "${DATA_DIR}/agents:/app/agents/data" \
+  -v "${DATA_DIR}/avatars:/app/data/avatars" \
   -p "127.0.0.1:${HOST_PORT}:${CONTAINER_PORT}" \
   "${IMAGE_REF}" >/dev/null
 

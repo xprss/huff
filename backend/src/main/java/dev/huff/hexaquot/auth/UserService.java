@@ -20,7 +20,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Locale;
-import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -28,11 +27,7 @@ import java.util.regex.Pattern;
 public class UserService {
     private static final String SESSION_COOKIE = "huff_session";
     private static final long SESSION_MAX_AGE_SECONDS = 30L * 24 * 60 * 60;
-    public static final String DEFAULT_PROFILE_EMOJI = "😀";
     public static final String DEFAULT_INPUT_HAND_PREFERENCE = "RIGHT";
-    public static final Set<String> ALLOWED_PROFILE_EMOJIS = Set.of(
-        "😀", "😄", "😎", "🤓", "🥳", "😇", "🤠", "😴", "😤", "😍", "🙃", "😌"
-    );
     private static final Pattern NICKNAME_PATTERN = Pattern.compile("@[a-z0-9._-]+");
     private static final int MAX_NICKNAME_LENGTH = 30;
     private static final int MAX_BIO_LENGTH = 200;
@@ -218,7 +213,6 @@ public class UserService {
             user.email = email;
             user.displayName = defaultDisplayName(displayName);
             user.nickname = defaultNickname(userId, user.displayName);
-            user.profileEmoji = DEFAULT_PROFILE_EMOJI;
             user.inputHandPreference = DEFAULT_INPUT_HAND_PREFERENCE;
             user.persist();
             return user.toAppUser(authenticated, adminPrivileges(userId));
@@ -231,9 +225,6 @@ public class UserService {
         if (isBlank(user.nickname)) {
             user.nickname = defaultNickname(userId, user.displayName);
         }
-        if (!ALLOWED_PROFILE_EMOJIS.contains(user.profileEmoji)) {
-            user.profileEmoji = DEFAULT_PROFILE_EMOJI;
-        }
         if (!isValidInputHandPreference(user.inputHandPreference)) {
             user.inputHandPreference = DEFAULT_INPUT_HAND_PREFERENCE;
         }
@@ -245,7 +236,6 @@ public class UserService {
         String userId,
         String displayName,
         String nickname,
-        String profileEmoji,
         String bio,
         String inputHandPreference,
         boolean authenticated
@@ -257,7 +247,6 @@ public class UserService {
 
         String normalizedDisplayName = normalizeDisplayName(displayName);
         String normalizedNickname = normalizeNickname(nickname);
-        String normalizedProfileEmoji = normalizeProfileEmoji(profileEmoji);
         String normalizedBio = normalizeBio(bio);
         String normalizedInputHandPreference = inputHandPreference == null
             ? (isValidInputHandPreference(user.inputHandPreference) ? user.inputHandPreference : DEFAULT_INPUT_HAND_PREFERENCE)
@@ -269,13 +258,12 @@ public class UserService {
 
         user.displayName = normalizedDisplayName;
         user.nickname = normalizedNickname;
-        user.profileEmoji = normalizedProfileEmoji;
         user.bio = normalizedBio;
         user.inputHandPreference = normalizedInputHandPreference;
         return user.toAppUser(authenticated, adminPrivileges(userId));
     }
 
-    private AdminPrivileges adminPrivileges(String userId) {
+    AdminPrivileges adminPrivileges(String userId) {
         AdminUserEntity admin = AdminUserEntity.findById(userId);
         return admin == null ? null : admin.toPrivileges();
     }
@@ -317,13 +305,6 @@ public class UserService {
             throw new BadRequestException("Il nickname deve avere formato @[a-z0-9._-]+.");
         }
         return normalized;
-    }
-
-    private String normalizeProfileEmoji(String profileEmoji) {
-        if (!ALLOWED_PROFILE_EMOJIS.contains(profileEmoji)) {
-            throw new BadRequestException("Emoji profilo non ammessa.");
-        }
-        return profileEmoji;
     }
 
     private String normalizeBio(String bio) {

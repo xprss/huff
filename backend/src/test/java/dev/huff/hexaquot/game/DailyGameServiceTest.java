@@ -368,11 +368,10 @@ class DailyGameServiceTest {
         user.id = "test-" + label + "-" + UUID.randomUUID();
         user.displayName = "Star Test";
         user.nickname = "@star-test-" + UUID.randomUUID().toString().substring(0, 8);
-        user.profileEmoji = "😀";
         user.createdAt = now;
         user.starAvailable = false;
         user.persist();
-        return new AppUser(user.id, null, user.displayName, user.nickname, user.profileEmoji, null, false);
+        return new AppUser(user.id, null, user.displayName, user.nickname, null, null, false);
     }
 
     private void createCompletedGame(AppUser user, LocalDate date, GameStatus status) throws Exception {

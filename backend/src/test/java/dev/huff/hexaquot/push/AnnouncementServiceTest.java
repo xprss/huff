@@ -23,7 +23,6 @@ class AnnouncementServiceTest {
         user.id = userId;
         user.displayName = "Annuncio";
         user.nickname = "@annuncio-" + UUID.randomUUID().toString().substring(0, 8);
-        user.profileEmoji = "😀";
         user.createdAt = Instant.now().toString();
         user.persist();
         UserAnnouncementEntity row = new UserAnnouncementEntity();
@@ -46,7 +45,6 @@ class AnnouncementServiceTest {
         user.id = userId;
         user.displayName = "Annuncio Hexaflow";
         user.nickname = "@flow-news-" + UUID.randomUUID().toString().substring(0, 8);
-        user.profileEmoji = "🌊";
         user.createdAt = Instant.now().toString();
         user.persist();
         UserAnnouncementEntity row = new UserAnnouncementEntity();

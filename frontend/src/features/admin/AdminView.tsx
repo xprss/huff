@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Check, ChevronLeft, ChevronRight, Eye, EyeOff, Search, Save, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api";
-import { PROFILE_EMOJIS } from "../../app/constants";
+import { Avatar } from "../../shared/components/Avatar";
 import { adminPlayerQueryOptions, adminPlayersQueryOptions } from "../../app/queries";
 import { Distribution } from "../../shared/components/Distribution";
 import { LoadingSpinner } from "../../shared/components/LoadingSpinner";
@@ -73,6 +73,15 @@ export function AdminView({
     }
   });
 
+  const removeAvatarMutation = useMutation({
+    mutationFn: api.removeAdminPlayerAvatar,
+    onSuccess: (updated) => {
+      queryClient.setQueryData(adminPlayerQueryOptions(updated.player.id).queryKey, updated);
+      void queryClient.invalidateQueries({ queryKey: ["admin", "players"] });
+      onSuccess("Foto profilo rimossa.");
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: api.deleteAdminPlayer,
     onSuccess: (result) => {
@@ -84,11 +93,11 @@ export function AdminView({
   });
 
   React.useEffect(() => {
-    const error = playersQuery.error ?? detailQuery.error ?? updateMutation.error ?? deleteMutation.error;
+    const error = playersQuery.error ?? detailQuery.error ?? updateMutation.error ?? removeAvatarMutation.error ?? deleteMutation.error;
     if (!error) return;
     if (onAuthRequired(error)) return;
     onError(error instanceof Error ? error.message : "Operazione admin non riuscita.");
-  }, [playersQuery.error, detailQuery.error, updateMutation.error, deleteMutation.error, onAuthRequired, onError]);
+  }, [playersQuery.error, detailQuery.error, updateMutation.error, removeAvatarMutation.error, deleteMutation.error, onAuthRequired, onError]);
 
   React.useEffect(() => {
     if (!detail) {
@@ -98,7 +107,6 @@ export function AdminView({
     setDraft({
       displayName: detail.player.displayName ?? "",
       nickname: detail.player.nickname,
-      profileEmoji: detail.player.profileEmoji,
       bio: detail.player.bio,
       starAvailable: detail.player.starAvailable,
       starAwardedAt: detail.player.starAwardedAt,
@@ -156,11 +164,27 @@ export function AdminView({
   const totalPages = playersPage?.totalPages ?? 1;
   const currentPage = playersPage?.page ?? page;
 
-  const sections = <nav className="admin-sections" aria-label="Sezioni admin">
-    {canViewPlayers ? <button className={adminSection === "players" ? "selected" : ""} type="button" onClick={() => setAdminSection("players")}>Giocatori</button> : null}
-    {canManageHexaflowPuzzles ? <button className={adminSection === "hexaflow" ? "selected" : ""} type="button" onClick={() => setAdminSection("hexaflow")}>Puzzle Hexaflow</button> : null}
-    <button className={adminSection === "stats-ai" ? "selected" : ""} type="button" onClick={() => setAdminSection("stats-ai")}>hexAI</button>
-    <button className={adminSection === "alerts" ? "selected" : ""} type="button" onClick={() => setAdminSection("alerts")}>Alert</button>
+  type AdminSection = typeof adminSection;
+  const tabs: { id: AdminSection; label: string; count?: number }[] = [
+    ...(canViewPlayers ? [{ id: "players" as const, label: "Giocatori", count: playersPage ? totalPlayers : undefined }] : []),
+    ...(canManageHexaflowPuzzles ? [{ id: "hexaflow" as const, label: "Hexaflow" }] : []),
+    { id: "stats-ai", label: "hexAI" },
+    { id: "alerts", label: "Alert" }
+  ];
+  const sections = <nav className="admin-tabs" role="tablist" aria-label="Sezioni admin">
+    {tabs.map((tab) => (
+      <button
+        key={tab.id}
+        type="button"
+        role="tab"
+        aria-selected={adminSection === tab.id}
+        className={adminSection === tab.id ? "selected" : ""}
+        onClick={() => setAdminSection(tab.id)}
+      >
+        {tab.label}
+        {tab.count !== undefined ? <span className="admin-tab-count" aria-label={`${tab.count} giocatori`}>{tab.count}</span> : null}
+      </button>
+    ))}
   </nav>;
 
   if (adminSection === "stats-ai") return <>{sections}<GameStatsAdmin adminId={adminId} onAuthRequired={onAuthRequired} onError={onError} /></>;
@@ -173,10 +197,6 @@ export function AdminView({
   return (
     <>{sections}<section className="admin-view" aria-label="Admin">
       <div className="admin-toolbar">
-        <div>
-          <h2>Admin</h2>
-          <p>{totalPlayers} giocatori</p>
-        </div>
         <div className="admin-controls">
           <label className="admin-search">
             <Search size={17} />
@@ -219,7 +239,7 @@ export function AdminView({
           <div className="admin-card-grid">
             {players.map((player) => (
               <button className="admin-player-card" type="button" key={player.id} onClick={() => openPlayer(player)}>
-                <span className="admin-player-emoji">{player.profileEmoji}</span>
+                <Avatar className="admin-player-avatar" name={player.displayName || player.nickname} avatarUrl={player.avatarUrl} size={40} />
                 <span className="admin-player-main">
                   <strong>{player.displayName ?? "Giocatore"}</strong>
                   <span>{player.nickname}</span>
@@ -314,20 +334,19 @@ export function AdminView({
                       />
                     </div>
                   </label>
-                  <label>
-                    <span>Emoji</span>
-                    <select
-                      value={draft.profileEmoji}
-                      onChange={(event) => setDraft({ ...draft, profileEmoji: event.target.value })}
-                      disabled={!canManagePlayers || updateMutation.isPending}
-                    >
-                      {PROFILE_EMOJIS.map((emoji) => (
-                        <option value={emoji} key={emoji}>
-                          {emoji}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {detail.player.avatarUrl ? (
+                    <div className="admin-avatar-row">
+                      <span>Foto profilo</span>
+                      <button
+                        className="profile-action-button danger"
+                        type="button"
+                        onClick={() => removeAvatarMutation.mutate(detail.player.id)}
+                        disabled={!canManagePlayers || removeAvatarMutation.isPending}
+                      >
+                        Rimuovi foto
+                      </button>
+                    </div>
+                  ) : null}
                   <label>
                     <span>Bio</span>
                     <textarea
@@ -414,7 +433,7 @@ export function AdminView({
 function PlayerIdentity({ detail }: { detail: AdminPlayerDetailDto }) {
   return (
     <div className="admin-detail-head">
-      <span className="admin-detail-emoji">{detail.player.profileEmoji}</span>
+      <Avatar className="admin-detail-avatar" name={detail.player.displayName || detail.player.nickname} avatarUrl={detail.player.avatarUrl} size={56} />
       <div>
         <strong>{detail.player.displayName ?? "Giocatore"}</strong>
         <span>{detail.player.nickname}</span>

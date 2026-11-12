@@ -841,6 +841,24 @@ export function App() {
     }
   }
 
+  /** Uploads (Blob) or removes (null) the profile photo and refreshes every view that shows it. */
+  async function saveAvatar(photo: Blob | null) {
+    try {
+      const updatedUser = photo ? await api.uploadAvatar(photo) : await api.deleteAvatar();
+      queryClient.setQueryData<MeDto | undefined>(queryKeys.me, (current) =>
+        current?.user ? { ...current, user: updatedUser } : current
+      );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.leaderboards() });
+      void queryClient.invalidateQueries({ queryKey: ["player"] });
+      return updatedUser;
+    } catch (error) {
+      if (handleAuthRequired(error)) {
+        throw new Error("Sessione scaduta. Accedi di nuovo.");
+      }
+      throw error;
+    }
+  }
+
   async function updateProfile(profile: ProfileUpdateDto) {
     try {
       return await updateProfileMutation.mutateAsync(profile);
@@ -913,7 +931,6 @@ export function App() {
             toast={toast}
             showStarButton={showStarButton}
             starCanUse={Boolean(game?.star.canUse)}
-            showProfileEdit={Boolean(activeRoute === "profile" && me?.user && !profileEditing)}
             showActionsMenu={showActionsMenu}
             actionsMenuRef={actionsMenuRef}
             activeRoute={activeRoute}
@@ -937,7 +954,6 @@ export function App() {
                 });
             }}
             onUseStar={() => void useStar()}
-            onEditProfile={() => setProfileEditing(true)}
             onToggleMenu={() => setShowActionsMenu((value) => !value)}
             onOpenProfile={() => {
               setActiveRoute("profile");
@@ -987,7 +1003,6 @@ export function App() {
                 leaderboards={leaderboardsQuery.data}
                 activeGame={leaderboardGame}
                 onChangeGame={setLeaderboardGame}
-                onBack={() => setActiveRoute("games")}
                 onOpenPlayer={(nickname) => {
                   window.location.hash = playerHash(nickname);
                 }}
@@ -999,7 +1014,7 @@ export function App() {
             publicPlayerQuery.isPending ? (
               <div className="play-area"><LoadingSpinner /></div>
             ) : publicPlayerQuery.data ? (
-              <PublicProfileView profile={publicPlayerQuery.data} onBack={() => setActiveRoute("leaderboard")} />
+              <PublicProfileView profile={publicPlayerQuery.data} />
             ) : (
               <div className="play-area">Giocatore non trovato.</div>
             )
@@ -1010,11 +1025,8 @@ export function App() {
               stats={statsSet}
               editing={profileEditing}
               onEditingChange={setProfileEditing}
-              onBack={() => {
-                setProfileEditing(false);
-                setActiveRoute("games");
-              }}
               onSave={(profile) => updateProfile(profile)}
+              onSaveAvatar={saveAvatar}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}
             />

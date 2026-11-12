@@ -1,5 +1,4 @@
 import React from "react";
-import { BarChart3 } from "lucide-react";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
 import type { HexahackRank, HexahackStatsDto, HexaskyStatsDto, HexaflowStatsDto, HexaecoStatsDto, HexatrapStatsDto, StatsDto, StatsSetDto } from "../../types";
@@ -31,8 +30,6 @@ export function StatsPanel({ stats }: { stats: StatsDto | null }) {
       <Metric label="Vinte" value={stats?.won ?? 0} />
       <Metric label="Perse" value={stats?.lost ?? 0} />
       <Metric label="Vittorie" value={`${winRate}%`} />
-    </div>
-    <div className="stat-grid compact">
       <Metric label="Serie" value={stats?.currentStreak ?? 0} />
       <Metric label="Record" value={stats?.maxStreak ?? 0} />
     </div>
@@ -60,7 +57,7 @@ export function HexahackStatsPanel({ stats }: { stats: HexahackStatsDto }) {
 
 export function HexaskyStatsPanel({ stats }: { stats: HexaskyStatsDto }) {
   const winRate = stats.played ? Math.round((stats.won / stats.played) * 100) : 0;
-  return <><div className="stat-grid"><Metric label="Giocate" value={stats.played} /><Metric label="Vinte" value={stats.won} /><Metric label="Perse" value={stats.lost} /><Metric label="Vittorie" value={`${winRate}%`} /></div><div className="stat-grid compact"><Metric label="Serie" value={stats.currentStreak} /><Metric label="Record" value={stats.maxStreak} /></div><div className="distribution"><h3>Controlli per vittoria</h3>{([1, 2] as const).map((check) => <div className="distribution-row" key={check}><span>{check}</span><div><i style={{ width: `${Math.min(100, (stats.checkDistribution[String(check) as "1" | "2"] ?? 0) * 10)}%` }} /></div><strong>{stats.checkDistribution[String(check) as "1" | "2"] ?? 0}</strong></div>)}</div></>;
+  return <><div className="stat-grid"><Metric label="Giocate" value={stats.played} /><Metric label="Vinte" value={stats.won} /><Metric label="Perse" value={stats.lost} /><Metric label="Vittorie" value={`${winRate}%`} /><Metric label="Serie" value={stats.currentStreak} /><Metric label="Record" value={stats.maxStreak} /></div><div className="distribution"><h3>Controlli per vittoria</h3>{([1, 2] as const).map((check) => <div className="distribution-row" key={check}><span>{check}</span><div><i style={{ width: `${Math.min(100, (stats.checkDistribution[String(check) as "1" | "2"] ?? 0) * 10)}%` }} /></div><strong>{stats.checkDistribution[String(check) as "1" | "2"] ?? 0}</strong></div>)}</div></>;
 }
 
 export function HexaflowStatsPanel({ stats }: { stats: HexaflowStatsDto }) {
@@ -83,14 +80,12 @@ export function StatsView({ stats, active, onChangeGame }: {
   const selected = active === "hexahack" || active === "hexasky" || active === "hexaflow" || active === "hexaeco" || active === "hexatrap" ? null : stats[active];
   const titles = { overall: "Il quadro completo", hexaword: "Le tue parole vincenti", hexahack: "La tua maestria nei codici", hexasky: "La tua prospettiva", hexaflow: "Il tuo Flusso", hexastar: "Le tue intuizioni", hexaeco: "La tua sincronia", hexatrap: "Le tue deduzioni" };
   return (
-    <section className="stats-view" aria-labelledby="stats-page-title">
-      <header className="account-page-heading"><span className="account-page-icon"><BarChart3 size={23} aria-hidden="true" /></span><div><p className="eyebrow">Un passo alla volta</p><h2 id="stats-page-title">Le tue statistiche</h2><p>Ogni sfida racconta un po’ dei tuoi progressi.</p></div></header>
+    <section className="stats-view" aria-label="Le tue statistiche">
       <StatsTabs active={active} onChange={onChangeGame} />
       <section className="account-panel stats-detail" aria-label={titles[active]}>
         <h3>{titles[active]}</h3>
         {active === "hexatrap" ? <HexatrapStatsPanel stats={stats.hexatrap}/> : active === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : active === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : active === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : active === "hexaeco" ? <HexaecoStatsPanel stats={stats.hexaeco}/> : <StatsPanel stats={selected} />}
       </section>
-      <p className="account-note">Le statistiche si aggiornano dopo ogni partita. Torna quando vuoi per scoprire come stai andando.</p>
     </section>
   );
 }
