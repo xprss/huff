@@ -2234,3 +2234,73 @@ a:focus-visible,
     transform: none;
   }
 }
+
+/* Card launch: the chosen card swells and dissolves, the rest of the selector
+   recedes, then the game view fades in (see .game-surface route-enter). */
+.game-selector.is-launching {
+  pointer-events: none;
+}
+
+.game-selector.is-launching > :not(.game-selector-grid),
+.game-selector.is-launching .puzzle-card:not(.is-launching) {
+  opacity: 0;
+  transform: scale(.97);
+  filter: blur(2px);
+  transition:
+    opacity 220ms var(--ease-out),
+    transform 260ms var(--ease-out),
+    filter 260ms var(--ease-out);
+}
+
+.puzzle-card.is-launching {
+  z-index: 2;
+  animation: puzzle-card-launch 380ms cubic-bezier(.2, .7, .2, 1) forwards;
+}
+
+.puzzle-card.is-launching .puzzle-art {
+  opacity: .75;
+  transform: rotate(0deg) scale(1.25);
+}
+
+@keyframes puzzle-card-launch {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  }
+
+  55% {
+    transform: scale(1.05);
+    opacity: 1;
+    box-shadow: 0 18px 48px color-mix(in srgb, var(--card-accent) 35%, transparent);
+  }
+
+  100% {
+    transform: scale(1.12);
+    opacity: 0;
+    filter: blur(3px);
+    box-shadow: 0 18px 48px color-mix(in srgb, var(--card-accent) 0%, transparent);
+  }
+}
+
+.game-surface > :not(.topbar) {
+  animation: route-enter 320ms var(--ease-out) both;
+}
+
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-surface > :not(.topbar) {
+    animation: none;
+  }
+}

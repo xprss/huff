@@ -3,6 +3,8 @@ import { ArrowRight, Check, Layers } from "lucide-react";
 import { HEXATRAP_AVAILABLE } from "../../app/constants";
 import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
+const LAUNCH_DURATION_MS = 380;
+
 export function GameSelector({
   hexawordCompleted, hexahackCompleted, hexaskyCompleted, hexaflowCompleted,
   hexaflowAvailable, hexastarCompleted, hexaecoCompleted, hexatrapCompleted,
@@ -27,6 +29,21 @@ export function GameSelector({
   const selectorRef = React.useRef<HTMLElement | null>(null);
   React.useEffect(() => { selectorRef.current?.scrollTo(0, 0); }, []);
 
+  // Clicking a card plays a short "launch" (the card swells and fades while the
+  // others recede) before switching route; skipped when reduced motion is requested.
+  const [launching, setLaunching] = React.useState<PuzzleKind | null>(null);
+  const launchTimer = React.useRef<number | undefined>(undefined);
+  React.useEffect(() => () => window.clearTimeout(launchTimer.current), []);
+  const launch = (id: PuzzleKind, onPlay: () => void) => {
+    if (launching) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      onPlay();
+      return;
+    }
+    setLaunching(id);
+    launchTimer.current = window.setTimeout(onPlay, LAUNCH_DURATION_MS);
+  };
+
   const games: { id: PuzzleKind; name: string; description: string; completed: boolean; available: boolean; unavailableLabel?: string; onPlay: () => void }[] = [
     { id: "word", name: "Hexaword", description: "Indovina la parola segreta di 6 lettere con gli indizi di colore.", completed: hexawordCompleted, available: true, onPlay: onHexaword },
     { id: "hack", name: "Hexahack", description: "Decifra il codice a 4 cifre massimizzando il tuo stealth.", completed: hexahackCompleted, available: true, onPlay: onHexahack },
@@ -40,7 +57,7 @@ export function GameSelector({
   const completed = availableGames.filter((game) => game.completed).length;
 
   return (
-    <section ref={selectorRef} className="game-selector" aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
+    <section ref={selectorRef} className={`game-selector${launching ? " is-launching" : ""}`} aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
       <div className="daily-welcome">
         <div className="daily-progress" aria-label={`${completed} sfide completate su ${availableGames.length} disponibili oggi`}>
           <span className="daily-progress-icon"><Layers size={20} aria-hidden="true" /></span>
@@ -57,9 +74,9 @@ export function GameSelector({
         {games.map((game, index) => (
           <button
             key={game.id}
-            className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}`}
+            className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}${launching === game.id ? " is-launching" : ""}`}
             type="button"
-            onClick={game.onPlay}
+            onClick={() => launch(game.id, game.onPlay)}
             disabled={!game.available}
             aria-label={`${game.name}: ${!game.available ? game.unavailableLabel ?? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}
           >
