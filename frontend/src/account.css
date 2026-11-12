@@ -173,3 +173,23 @@ html.zoomed .route-hexaflow .hexaflow-board-space { flex: 0 0 auto; height: max(
   .hexaflow .hexaflow-current { align-self: start; flex-direction: column; align-items: flex-start; }
   .hexaflow-board-space { grid-column: 2; grid-row: 1 / -1; height: 100%; }
 }
+
+/* Compact stats page: shorter heading, tighter panels, metrics in rows of three
+   (two-by-two when a panel has exactly four), slimmer distribution bars. */
+.account-page-heading { gap: 10px; padding: 4px 0 0; }
+.account-page-heading h2 { margin: 0; font-size: clamp(1.35rem, 5vw, 1.7rem); }
+.account-page-icon { width: 36px; height: 36px; border-radius: 11px; }
+.account-page-icon svg { width: 19px; height: 19px; }
+.stats-detail.account-panel { padding: 16px; }
+.stats-detail.account-panel h3 { margin-bottom: 10px; }
+.stats-detail .stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stats-detail .stat-grid:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stats-detail .metric { padding: 8px 6px; }
+.stats-detail .metric strong { font-size: 1.25rem; line-height: 1.2; }
+.stats-detail .metric span { font-size: .7rem; }
+.stats-detail .distribution { gap: 5px; margin-top: 14px; }
+.stats-detail .distribution-row div { height: 20px; }
+@media (min-width: 600px) {
+  .stats-detail .stat-grid:not(.compact) { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  .stats-detail.account-panel { padding: 20px; }
+}

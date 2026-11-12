@@ -31,8 +31,6 @@ export function StatsPanel({ stats }: { stats: StatsDto | null }) {
       <Metric label="Vinte" value={stats?.won ?? 0} />
       <Metric label="Perse" value={stats?.lost ?? 0} />
       <Metric label="Vittorie" value={`${winRate}%`} />
-    </div>
-    <div className="stat-grid compact">
       <Metric label="Serie" value={stats?.currentStreak ?? 0} />
       <Metric label="Record" value={stats?.maxStreak ?? 0} />
     </div>
@@ -60,7 +58,7 @@ export function HexahackStatsPanel({ stats }: { stats: HexahackStatsDto }) {
 
 export function HexaskyStatsPanel({ stats }: { stats: HexaskyStatsDto }) {
   const winRate = stats.played ? Math.round((stats.won / stats.played) * 100) : 0;
-  return <><div className="stat-grid"><Metric label="Giocate" value={stats.played} /><Metric label="Vinte" value={stats.won} /><Metric label="Perse" value={stats.lost} /><Metric label="Vittorie" value={`${winRate}%`} /></div><div className="stat-grid compact"><Metric label="Serie" value={stats.currentStreak} /><Metric label="Record" value={stats.maxStreak} /></div><div className="distribution"><h3>Controlli per vittoria</h3>{([1, 2] as const).map((check) => <div className="distribution-row" key={check}><span>{check}</span><div><i style={{ width: `${Math.min(100, (stats.checkDistribution[String(check) as "1" | "2"] ?? 0) * 10)}%` }} /></div><strong>{stats.checkDistribution[String(check) as "1" | "2"] ?? 0}</strong></div>)}</div></>;
+  return <><div className="stat-grid"><Metric label="Giocate" value={stats.played} /><Metric label="Vinte" value={stats.won} /><Metric label="Perse" value={stats.lost} /><Metric label="Vittorie" value={`${winRate}%`} /><Metric label="Serie" value={stats.currentStreak} /><Metric label="Record" value={stats.maxStreak} /></div><div className="distribution"><h3>Controlli per vittoria</h3>{([1, 2] as const).map((check) => <div className="distribution-row" key={check}><span>{check}</span><div><i style={{ width: `${Math.min(100, (stats.checkDistribution[String(check) as "1" | "2"] ?? 0) * 10)}%` }} /></div><strong>{stats.checkDistribution[String(check) as "1" | "2"] ?? 0}</strong></div>)}</div></>;
 }
 
 export function HexaflowStatsPanel({ stats }: { stats: HexaflowStatsDto }) {
