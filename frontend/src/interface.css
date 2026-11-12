@@ -307,12 +307,6 @@ a:focus-visible,
   flex-shrink: 0;
 }
 
-.daily-welcome {
-  display: grid;
-  gap: 22px;
-}
-
-.daily-welcome .eyebrow,
 .login-copy .eyebrow {
   display: flex;
   align-items: center;
@@ -329,83 +323,6 @@ a:focus-visible,
   flex-shrink: 0;
   border-radius: 50%;
   background: currentColor;
-}
-
-.daily-welcome h2 {
-  margin: 14px 0 10px;
-  font-size: clamp(2rem, 8.5vw, 3rem);
-  font-weight: 700;
-  letter-spacing: -.055em;
-  line-height: 1.07;
-}
-
-.daily-welcome h2 span {
-  color: var(--color-primary);
-}
-
-.daily-welcome-copy>p:last-child {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: .86rem;
-  line-height: 1.5;
-  font-weight: 400;
-}
-
-.daily-progress {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  column-gap: 12px;
-  row-gap: 12px;
-  align-items: center;
-  padding: 14px 16px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-surface-border);
-  border-radius: 18px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.daily-progress-icon {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-  color: var(--color-primary);
-  background: rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-.daily-progress strong {
-  display: block;
-  font-size: .84rem;
-  font-weight: 700;
-  letter-spacing: -.02em;
-}
-
-.daily-progress div>span {
-  display: block;
-  color: var(--color-muted);
-  font-size: .72rem;
-  margin-top: 3px;
-}
-
-.daily-progress-track {
-  display: flex;
-  grid-column: 1 / -1;
-  gap: 6px;
-}
-
-.daily-progress-track i {
-  height: 5px;
-  flex: 1;
-  border-radius: 9999px;
-  background: var(--color-track);
-  transition: background var(--motion-base), box-shadow var(--motion-base);
-}
-
-.daily-progress-track i.filled {
-  background: linear-gradient(90deg, #6366f1, #06b6d4);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.45);
 }
 
 .collection-heading {
@@ -1269,10 +1186,6 @@ a:focus-visible,
     gap: 24px;
   }
 
-  .daily-welcome h2 {
-    font-size: 3rem;
-  }
-
   .modal-backdrop {
     align-items: center;
     padding: 24px;
@@ -1325,21 +1238,6 @@ a:focus-visible,
   .brand-symbol i {
     width: 9px;
     height: 14px;
-  }
-
-  .daily-welcome {
-    align-items: end;
-    gap: 36px;
-  }
-
-  .daily-welcome h2 {
-    margin: 16px 0 12px;
-    font-size: 3.45rem;
-  }
-
-  .daily-progress {
-    margin-bottom: 4px;
-    padding: 18px;
   }
 
   .collection-heading h3 {
@@ -1543,16 +1441,6 @@ a:focus-visible,
 #root .game-selector {
   gap: 14px;
   padding: 0px 1px 18px;
-}
-
-#root .daily-welcome {
-  gap: 16px;
-}
-
-#root .daily-progress {
-  column-gap: 9px;
-  row-gap: 8px;
-  padding: 12px;
 }
 
 #root .collection-heading {
@@ -1939,7 +1827,7 @@ a:focus-visible,
   line-height: 1.35;
 }
 
-#root :is(.eyebrow, .daily-welcome .eyebrow, .login-copy .eyebrow, .daily-game-intro .eyebrow, .route-game .daily-game-intro .eyebrow, .hack-kicker, .sky-heading .eyebrow, .account-page-heading .eyebrow, .hexaflow-head .eyebrow) {
+#root :is(.eyebrow, .login-copy .eyebrow, .daily-game-intro .eyebrow, .route-game .daily-game-intro .eyebrow, .hack-kicker, .sky-heading .eyebrow, .account-page-heading .eyebrow, .hexaflow-head .eyebrow) {
   font-size: var(--type-meta);
   font-weight: 500;
   letter-spacing: .02em;

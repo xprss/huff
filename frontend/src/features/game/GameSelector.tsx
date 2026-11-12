@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, Check, Layers } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { HEXATRAP_AVAILABLE } from "../../app/constants";
 import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
@@ -55,23 +55,9 @@ export function GameSelector({
     { id: "eco", name: "Hexaeco", description: "Pianifica la traiettoria e sincronizza la luce con la sua eco.", completed: hexaecoCompleted, available: true, onPlay: onHexaeco },
     { id: "trap", name: "Hexatrap", description: "Interroga i due consiglieri e smaschera l'inganno.", completed: hexatrapCompleted, available: HEXATRAP_AVAILABLE, unavailableLabel: "In sviluppo", onPlay: onHexatrap }
   ];
-  const availableGames = games.filter((game) => game.available);
-  const completed = availableGames.filter((game) => game.completed).length;
 
   return (
-    <section ref={selectorRef} className={`game-selector${launching ? " is-launching" : ""}`} aria-labelledby="game-selector-title" tabIndex={-1} id="main-content">
-      <div className="daily-welcome">
-        <div className="daily-progress" aria-label={`${completed} sfide completate su ${availableGames.length} disponibili oggi`}>
-          <span className="daily-progress-icon"><Layers size={20} aria-hidden="true" /></span>
-          <div>
-            <strong>{completed === availableGames.length ? "Tutte le sfide completate!" : "Sfide di oggi"}</strong>
-            <span>{completed} di {availableGames.length} completate</span>
-          </div>
-          <div className="daily-progress-track" aria-hidden="true">
-            {availableGames.map((game) => <i key={game.id} className={game.completed ? "filled" : ""} />)}
-          </div>
-        </div>
-      </div>
+    <section ref={selectorRef} className={`game-selector${launching ? " is-launching" : ""}`} aria-label="Giochi di oggi" tabIndex={-1} id="main-content">
       <div className="game-selector-grid">
         {games.map((game, index) => (
           <button
