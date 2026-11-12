@@ -1009,6 +1009,8 @@ html[data-theme="chromatic"] .key.absent {
   min-height: 0;
   flex: 1 1 auto;
   display: grid;
+  /* Rows keep their content height; the grid scrolls instead of squashing cards. */
+  grid-auto-rows: max-content;
   align-content: start;
   gap: 9px;
   overflow-y: auto;
