@@ -864,8 +864,6 @@ a:focus-visible,
   letter-spacing: -.03em;
 }
 
-.profile-form input,
-.profile-form textarea,
 .profile-nickname-field,
 .admin-search input,
 .admin-edit-panel input,
@@ -1490,10 +1488,6 @@ a:focus-visible,
   gap: 14px;
 }
 
-#root .profile-editor .profile-form {
-  gap: 14px;
-}
-
 #root .profile-hero-body {
   gap: 12px;
   padding: 0 16px 16px;
@@ -1743,7 +1737,7 @@ a:focus-visible,
   padding: 8px;
 }
 
-#root :is(.profile-form input, .profile-form textarea, .profile-nickname-field, .admin-edit-panel input, .admin-edit-panel textarea, .admin-edit-panel select, .admin-confirm-panel input, .cms-create-card input, .cms-theme input, .cms-answer-fields input, .cms-answer-fields select, .cms-answer-word, .cms-generator-fields input, .cms-generator-fields textarea, .trap-submit input, .trap-notes select) {
+#root :is(.profile-nickname-field, .admin-edit-panel input, .admin-edit-panel textarea, .admin-edit-panel select, .admin-confirm-panel input, .cms-create-card input, .cms-theme input, .cms-answer-fields input, .cms-answer-fields select, .cms-answer-word, .cms-generator-fields input, .cms-generator-fields textarea, .trap-submit input, .trap-notes select) {
   padding: 8px 10px;
 }
 

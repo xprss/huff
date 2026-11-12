@@ -913,7 +913,6 @@ export function App() {
             toast={toast}
             showStarButton={showStarButton}
             starCanUse={Boolean(game?.star.canUse)}
-            showProfileEdit={Boolean(activeRoute === "profile" && me?.user && !profileEditing)}
             showActionsMenu={showActionsMenu}
             actionsMenuRef={actionsMenuRef}
             activeRoute={activeRoute}
@@ -937,7 +936,6 @@ export function App() {
                 });
             }}
             onUseStar={() => void useStar()}
-            onEditProfile={() => setProfileEditing(true)}
             onToggleMenu={() => setShowActionsMenu((value) => !value)}
             onOpenProfile={() => {
               setActiveRoute("profile");

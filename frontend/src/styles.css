@@ -459,9 +459,7 @@ h1 {
 .close-button:focus-visible,
 .profile-emoji:focus-visible,
 .profile-action-button:focus-visible,
-.profile-hand-preference button:focus-visible,
 .letter-joystick:focus-visible,
-.emoji-choice:focus-visible,
 .admin-player-card:focus-visible,
 .admin-search:focus-within,
 .admin-sort:focus-within {
@@ -932,28 +930,6 @@ html[data-theme="chromatic"] .key.absent {
   white-space: nowrap;
 }
 
-.profile-form {
-  width: 100%;
-  display: grid;
-  gap: 9px;
-}
-
-.profile-form label {
-  min-width: 0;
-  display: grid;
-  gap: 4px;
-}
-
-.profile-form label span {
-  color: var(--color-muted);
-  font-size: 0.7rem;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.profile-form input,
-.profile-form textarea,
 .profile-nickname-field {
   width: 100%;
   min-height: 38px;
@@ -966,67 +942,6 @@ html[data-theme="chromatic"] .key.absent {
   font-size: 0.94rem;
   font-weight: 820;
   outline: 0;
-}
-
-.profile-form textarea {
-  min-height: 78px;
-  padding: 9px 10px;
-  line-height: 1.28;
-  resize: vertical;
-}
-
-.profile-hand-preference {
-  min-width: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  display: grid;
-  gap: 6px;
-}
-
-.profile-hand-preference legend,
-.profile-hand-preference > span {
-  padding: 0;
-  color: var(--color-muted);
-  font-size: 0.7rem;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.profile-hand-preference > span {
-  font-size: 0.78rem;
-  font-weight: 680;
-  text-transform: none;
-}
-
-.profile-hand-preference [role="radiogroup"] {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.profile-hand-preference button {
-  min-height: 34px;
-  border: 1px solid var(--color-button-border);
-  border-radius: var(--compact-radius);
-  background: var(--color-button);
-  color: var(--color-muted);
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 820;
-}
-
-.profile-hand-preference button.selected {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: var(--color-on-solid);
-}
-
-.profile-hand-preference:disabled button {
-  cursor: default;
-  opacity: 0.66;
 }
 
 .profile-nickname-field {
@@ -1053,8 +968,6 @@ html[data-theme="chromatic"] .key.absent {
   box-shadow: none;
 }
 
-.profile-form input:focus,
-.profile-form textarea:focus,
 .profile-nickname-field:focus-within {
   border-color: var(--color-hover-border);
   box-shadow: 0 0 0 3px var(--color-focus-ring);
@@ -1062,12 +975,6 @@ html[data-theme="chromatic"] .key.absent {
 
 .profile-nickname-field input:focus {
   box-shadow: none;
-}
-
-.profile-form-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .profile-action-button {
@@ -2256,7 +2163,6 @@ html[data-theme="chromatic"] .key.absent {
 
 .leaderboard-wins small { color: var(--color-muted); font-size: .58rem; white-space: nowrap; }
 
-
 .medal-count {
   min-width: 0;
   border: 1px solid var(--color-surface-border);
@@ -2474,43 +2380,6 @@ html[data-theme="chromatic"] .key.absent {
 }
 
 .leaderboard-empty p { margin: 0; }
-
-.emoji-modal {
-  width: min(100%, 360px);
-}
-
-.emoji-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 9px;
-}
-
-.emoji-choice {
-  aspect-ratio: 1;
-  min-width: 0;
-  border: 1px solid var(--color-button-border);
-  border-radius: var(--control-radius);
-  display: grid;
-  place-items: center;
-  background: var(--color-button);
-  cursor: pointer;
-  font-size: 1.8rem;
-  line-height: 1;
-  transition:
-    transform var(--motion-fast) var(--ease-press),
-    border-color var(--motion-base) var(--ease-out),
-    background var(--motion-base) var(--ease-out);
-}
-
-.emoji-choice:hover,
-.emoji-choice.selected {
-  border-color: var(--color-primary);
-  background: var(--color-surface-strong);
-}
-
-.emoji-choice:active {
-  transform: translateY(1px) scale(0.98);
-}
 
 .loading-spinner {
   width: min(100%, 430px);
