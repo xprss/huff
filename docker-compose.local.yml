@@ -68,6 +68,25 @@ services:
       retries: 30
       start_period: 20s
 
+  # Vite dev server with hot reload on the bind-mounted sources.
+  # Open http://localhost:5173; /api, /q and /auth are proxied to the app service.
+  frontend:
+    image: node:22-alpine
+    working_dir: /workspace/frontend
+    command: sh -c "npm ci && npx vite --host 0.0.0.0 --port 5173 --strictPort"
+    environment:
+      VITE_API_PROXY_TARGET: http://app:8080
+      VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      VITE_WATCH_POLLING: ${LOCAL_VITE_WATCH_POLLING:-false}
+    volumes:
+      - ./frontend:/workspace/frontend
+      - ./VERSION:/workspace/VERSION:ro
+      - frontend-node-modules:/workspace/frontend/node_modules
+    ports:
+      - "127.0.0.1:${LOCAL_FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      - app
+
   # One-shot: creates the read-only role used by the statistics agent,
   # once Flyway migrations have run (the app is healthy).
   stats-role:
@@ -96,3 +115,4 @@ services:
 
 volumes:
   postgres-data:
+  frontend-node-modules:

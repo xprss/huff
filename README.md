@@ -90,6 +90,11 @@ It reads `.env`, starts PostgreSQL (exposed on `127.0.0.1:5433`) and the app on
 statistics agent once migrations have run (omit it if `POSTGRES_MCP_PASSWORD` is not
 set). `docker compose -f docker-compose.local.yml down -v` resets the database.
 
+The `frontend` service runs the Vite dev server on `http://localhost:5173` with hot
+reload on `frontend/`, proxying `/api`, `/q` and `/auth` to the app container. Use it
+for frontend work; the app on port 8080 still serves the build baked into the image.
+If file changes are not picked up, set `LOCAL_VITE_WATCH_POLLING=true`.
+
 ## Configuration
 
 The Quarkus development profile runs anonymously by default for local work. Docker local,
