@@ -1367,7 +1367,7 @@ a:focus-visible,
 
 /* Compact, low elevation controls across the app. Keep game boards, cards, and
    virtual keyboards on their own sizing systems. */
-#root button:not(.key):not(.menu-item):not(.sky-keyboard button):not(.terminal-cell):not(.sky-cell):not(.hexaflow-cell):not(.cms-grid button):not(.puzzle-card):not(.cms-puzzle-card) {
+#root button:not(.key):not(.menu-item):not(.sky-keyboard button):not(.terminal-cell):not(.sky-cell):not(.hexaflow-cell):not(.cms-grid button):not(.puzzle-card):not(.cms-puzzle-card):not(.my-profile button) {
   min-height: 32px;
   padding: 6px 10px;
   border-radius: 7px;
@@ -1482,42 +1482,12 @@ a:focus-visible,
   padding: 10px;
 }
 
-#root .profile-sections,
-#root .stats-view,
-#root .personal-profile {
+#root .stats-view {
   gap: 14px;
 }
 
-#root .profile-hero-body {
-  gap: 12px;
-  padding: 0 16px 16px;
-}
-
-#root .profile-cover {
-  gap: 12px;
-  padding: 16px 18px 26px;
-}
-
-#root .profile-metrics {
-  gap: 8px;
-}
-
-#root .profile-metrics .metric,
 #root .metric {
   padding: 12px 8px;
-}
-
-#root .profile-medals .medal-count {
-  padding: 10px 4px;
-}
-
-#root .profile-game-row {
-  gap: 9px;
-  padding: 10px 0;
-}
-
-#root .profile-text-link {
-  margin-top: 8px;
 }
 
 #root .route-game .game-board-wrap {
@@ -1852,6 +1822,17 @@ a:focus-visible,
   letter-spacing: .04em;
   line-height: 1;
 }
+/* Per-game accent colors, shared by the home cards and the profile. */
+:root {
+  --game-accent-word: #a78bfa;
+  --game-accent-hack: #4ade80;
+  --game-accent-sky: #60a5fa;
+  --game-accent-flow: #22d3ee;
+  --game-accent-star: #facc15;
+  --game-accent-eco: #fb923c;
+  --game-accent-trap: #fb7185;
+}
+
 /* Game cards: per-game accent, artwork as an oversized background emblem. */
 .puzzle-card {
   --card-accent: #a78bfa;
@@ -1886,13 +1867,13 @@ a:focus-visible,
     box-shadow var(--motion-base) var(--ease-out);
 }
 
-.puzzle-card--word { --card-accent: #a78bfa; }
-.puzzle-card--hack { --card-accent: #4ade80; }
-.puzzle-card--sky { --card-accent: #60a5fa; }
-.puzzle-card--flow { --card-accent: #22d3ee; }
-.puzzle-card--star { --card-accent: #facc15; }
-.puzzle-card--eco { --card-accent: #fb923c; }
-.puzzle-card--trap { --card-accent: #fb7185; }
+.puzzle-card--word { --card-accent: var(--game-accent-word); }
+.puzzle-card--hack { --card-accent: var(--game-accent-hack); }
+.puzzle-card--sky { --card-accent: var(--game-accent-sky); }
+.puzzle-card--flow { --card-accent: var(--game-accent-flow); }
+.puzzle-card--star { --card-accent: var(--game-accent-star); }
+.puzzle-card--eco { --card-accent: var(--game-accent-eco); }
+.puzzle-card--trap { --card-accent: var(--game-accent-trap); }
 
 .puzzle-card:focus-visible {
   outline: 2px solid var(--card-accent);

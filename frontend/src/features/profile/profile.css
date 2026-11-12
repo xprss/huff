@@ -352,3 +352,368 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Personal profile view
+   --------------------------------------------------------------------------- */
+.my-profile {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  display: grid;
+  gap: 14px;
+  padding-bottom: 24px;
+}
+
+.my-profile button {
+  font-family: inherit;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+.my-profile button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.my-profile-back {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 11px;
+  background: var(--color-surface-strong);
+}
+
+.my-profile-card {
+  border: 1px solid var(--color-surface-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+}
+
+/* Identity */
+.my-profile-identity {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 12px;
+  padding: 16px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--color-primary) 18%, transparent), transparent 60%),
+    var(--color-surface);
+}
+
+.my-profile-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--color-primary) 35%, transparent), transparent 70%),
+    var(--color-surface-strong);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 45%, transparent), 0 8px 24px color-mix(in srgb, var(--color-primary) 22%, transparent);
+  font-size: 2rem;
+  line-height: 1;
+  transition: transform var(--motion-base, 170ms) var(--ease-out);
+}
+
+.my-profile-avatar:active {
+  transform: scale(.95);
+}
+
+.my-profile-names {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.my-profile-names strong {
+  overflow: hidden;
+  color: var(--color-title-text, var(--color-text));
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-profile-names span {
+  overflow: hidden;
+  color: var(--color-muted);
+  font-size: .82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-profile-edit {
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 50%;
+  background: var(--color-surface-strong);
+  color: var(--color-muted-strong, var(--color-text));
+}
+
+.my-profile-bio {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-muted-strong, var(--color-text));
+  font-size: .88rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.my-profile-add-bio {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-size: .86rem;
+  font-weight: 700;
+}
+
+/* Summary: three key numbers + medals */
+.my-profile-summary {
+  overflow: hidden;
+}
+
+.my-profile-numbers {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  padding: 14px 28px 14px 8px;
+  border: 0;
+  background: none;
+  text-align: center;
+}
+
+.my-profile-numbers > span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.my-profile-numbers > span + span {
+  border-left: 1px solid var(--color-surface-border);
+}
+
+.my-profile-numbers strong {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1.15;
+}
+
+.my-profile-numbers small {
+  color: var(--color-muted);
+  font-size: .7rem;
+  font-weight: 600;
+}
+
+.my-profile-numbers-chevron {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  color: var(--color-muted);
+  transform: translateY(-50%);
+}
+
+.my-profile-medals {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-surface-border);
+  font-size: .9rem;
+}
+
+.my-profile-medals small {
+  flex: 1;
+  color: var(--color-muted);
+  font-size: .74rem;
+  font-weight: 600;
+}
+
+.my-profile-medals strong {
+  font-weight: 800;
+}
+
+/* Sections */
+.my-profile-section {
+  display: grid;
+  gap: 8px;
+}
+
+#root .my-profile-section h3 {
+  margin: 4px 4px 0;
+  color: var(--color-muted);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+/* Games grid: same accents and emblems as the home cards */
+.my-profile-games {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.my-profile-game {
+  --card-accent: var(--color-primary);
+  --card-accent-soft: color-mix(in srgb, var(--card-accent) 35%, #ffffff);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  align-content: end;
+  gap: 2px;
+  min-width: 0;
+  min-height: 84px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--card-accent) 24%, transparent);
+  border-radius: 16px;
+  background:
+    radial-gradient(90% 120% at 100% 100%, color-mix(in srgb, var(--card-accent) 26%, transparent), transparent 65%),
+    var(--color-surface);
+  text-align: left;
+  transition: transform var(--motion-base, 170ms) var(--ease-out), border-color var(--motion-base, 170ms);
+}
+
+.my-profile-game--word { --card-accent: var(--game-accent-word); }
+.my-profile-game--hack { --card-accent: var(--game-accent-hack); }
+.my-profile-game--sky { --card-accent: var(--game-accent-sky); }
+.my-profile-game--flow { --card-accent: var(--game-accent-flow); }
+.my-profile-game--star { --card-accent: var(--game-accent-star); }
+.my-profile-game--eco { --card-accent: var(--game-accent-eco); }
+.my-profile-game--trap { --card-accent: var(--game-accent-trap); }
+
+.my-profile-game .puzzle-art {
+  position: absolute;
+  z-index: -1;
+  top: -14px;
+  right: -14px;
+  width: 72px;
+  height: 72px;
+  opacity: .5;
+  transform: rotate(-10deg);
+  pointer-events: none;
+}
+
+.my-profile-game .puzzle-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.my-profile-game strong {
+  font-size: .92rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.my-profile-game span {
+  color: var(--color-muted);
+  font-size: .74rem;
+}
+
+.my-profile-game span b {
+  color: var(--card-accent-soft);
+  font-size: .95rem;
+  font-weight: 800;
+}
+
+.my-profile-game:active {
+  transform: scale(.97);
+}
+
+/* Settings list */
+.my-profile-settings > * {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px 0 16px;
+  border: 0;
+  background: none;
+  font-size: .9rem;
+  text-align: left;
+}
+
+.my-profile-settings > * + * {
+  border-top: 1px solid var(--color-surface-border);
+}
+
+.my-profile-settings > * > span:first-child {
+  flex: none;
+  font-weight: 600;
+}
+
+.my-profile-setting-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-profile-settings svg {
+  flex: none;
+  color: var(--color-muted);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .my-profile-game:hover {
+    border-color: color-mix(in srgb, var(--card-accent) 55%, transparent);
+    transform: translateY(-2px);
+  }
+
+  .my-profile-numbers:hover,
+  .my-profile-settings > button:hover {
+    background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  }
+}
+
+@media (min-width: 600px) {
+  .my-profile-games {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .my-profile-identity {
+    padding: 20px;
+  }
+
+  .my-profile-avatar {
+    width: 76px;
+    height: 76px;
+    font-size: 2.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-profile-avatar:active,
+  .my-profile-game:active,
+  .my-profile-game:hover {
+    transform: none;
+  }
+}

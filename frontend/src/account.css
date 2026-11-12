@@ -52,79 +52,10 @@ html.zoomed .app-shell.has-navigation { padding-bottom: max(20px, env(safe-area-
 .stats-detail .hack-mastery { border: 0; padding: 0; }
 .stats-view .account-note { margin: 0 4px; }
 
-.personal-profile { display: flex; flex-direction: column; gap: 20px; padding-bottom: 24px; }
-.personal-profile > * { flex: 0 0 auto; }
-.profile-hero { border: 1px solid var(--color-surface-border); background: var(--color-surface); border-radius: 24px; overflow: hidden; }
-.profile-cover {
-  position: relative;
-  min-height: 110px;
-  padding: 20px 24px 34px;
-  background:
-    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.35), transparent 70%),
-    radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, 0.25), transparent 60%),
-    var(--color-surface-strong);
-  overflow: hidden;
-}
-.profile-hero-body { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 0 20px 22px; }
-.personal-profile .profile-emoji { position: relative; width: 78px; height: 78px; flex: 0 0 78px; margin-top: -24px; border: 4px solid var(--color-surface); border-radius: 24px; background: var(--color-surface-soft); font-size: 2.6rem; }
-.personal-profile .profile-emoji:disabled { cursor: default; }
-.personal-profile .profile-emoji-edit { width: 23px; height: 23px; right: -4px; bottom: -4px; border: 2px solid var(--color-surface); }
-.profile-hero-body .profile-identity { flex: 1 1 140px; margin-top: 12px; }
-.personal-profile .profile-identity strong { font-size: 1.5rem; line-height: 1.15; }
-.personal-profile .profile-identity > span { margin-top: 6px; font-size: .83rem; }
-.profile-hero-body > .profile-action-button { flex-basis: 100%; justify-content: center; }
-.personal-profile .profile-bio { flex-basis: 100%; margin: 0; font-size: .86rem; line-height: 1.65; font-weight: 400; }
-.personal-profile .empty-bio { color: var(--color-muted); }
-.profile-sections { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
-.profile-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.profile-metrics .metric { padding: 18px 8px; }
-.profile-metrics .metric strong { font-size: 1.8rem; }
-.profile-metrics .metric span { font-size: .68rem; }
-.profile-text-link { min-height: 44px; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 8px 0; border: 0; background: transparent; color: var(--color-primary); text-align: left; font-size: .8rem; font-weight: 600; cursor: pointer; }
-.profile-text-link svg { flex-shrink: 0; }
-.profile-medals .medal-counts { margin: 0; gap: 8px; }
-.profile-medals .medal-counts > h3 { display: none; }
-.profile-medals .medal-count { min-width: 0; padding: 14px 4px; border-radius: 16px; }
-.profile-game-list { display: grid; }
-.profile-game-row { display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; padding: 14px 0; border: 0; border-bottom: 1px solid var(--color-surface-border); background: transparent; color: var(--color-text); text-align: left; cursor: pointer; }
-.profile-game-row:last-child { border-bottom: 0; padding-bottom: 0; }
-.profile-game-row > span:nth-child(2) { min-width: 0; flex: 1; }
-.profile-game-row strong, .profile-game-row small { display: block; overflow-wrap: anywhere; }
-.profile-game-row strong { font-size: .87rem; }
-.profile-game-row small { margin-top: 5px; font-size: .7rem; color: var(--color-muted); line-height: 1.4; }
-.profile-game-row > svg { color: var(--color-muted); flex-shrink: 0; }
-.profile-game-mark {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: 12px;
-  background: var(--color-surface-soft);
-  border: 1px solid var(--color-surface-border);
-  color: var(--color-text);
-  font-weight: 700;
-}
-.profile-game-row--hexaword .profile-game-mark { border-color: rgba(99, 102, 241, 0.4); color: #818cf8; background: rgba(99, 102, 241, 0.1); }
-.profile-game-row--hexahack .profile-game-mark { border-color: rgba(6, 182, 212, 0.4); color: #06b6d4; background: rgba(6, 182, 212, 0.1); }
-.profile-game-row--hexasky .profile-game-mark { border-color: rgba(56, 189, 248, 0.4); color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
-.profile-game-row--hexaflow .profile-game-mark { border-color: rgba(20, 184, 166, 0.4); color: #14b8a6; background: rgba(20, 184, 166, 0.1); }
-.profile-game-row--hexastar .profile-game-mark { border-color: rgba(236, 72, 153, 0.4); color: #ec4899; background: rgba(236, 72, 153, 0.1); }
-.profile-game-row--hexaeco .profile-game-mark { border-color: rgba(245, 158, 11, 0.4); color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
-.profile-account { display: grid; gap: 6px; padding-top: 16px; margin-top: 8px; border-top: 1px solid var(--color-surface-border); }
-.profile-account span { font-size: .7rem; color: var(--color-muted); }
-.profile-account strong { font-size: .8rem; font-weight: 500; overflow-wrap: anywhere; }
-
 @media (min-width: 600px) {
-  .profile-hero-body > .profile-action-button { flex-basis: auto; }
-  .profile-cover { min-height: 130px; }
   .stats-detail .stat-grid:not(.compact) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (min-width: 900px) {
-  .route-profile .personal-profile { max-width: 900px; }
-  .profile-sections { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
-  .profile-games { grid-column: 1; }
-  .profile-preferences { grid-column: 2; }
   .account-panel { padding: 24px; }
 }
 

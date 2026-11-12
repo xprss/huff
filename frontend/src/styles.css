@@ -885,22 +885,6 @@ html[data-theme="chromatic"] .key.absent {
   line-height: 1;
 }
 
-.profile-emoji-edit {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 17px;
-  height: 17px;
-  border: 1px solid var(--color-button-border);
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--color-surface-strong);
-  color: var(--color-text);
-  opacity: 0.4;
-  pointer-events: none;
-}
-
 .profile-identity {
   min-width: 0;
   flex: 1 1 auto;
