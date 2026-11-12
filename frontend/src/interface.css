@@ -840,13 +840,6 @@ a:focus-visible,
   overflow-y: auto;
 }
 
-.leaderboard-head {
-  padding: 18px;
-  border-radius: 20px;
-  background: var(--color-surface);
-  box-shadow: none;
-}
-
 .profile-nickname-field,
 .admin-search input,
 .admin-edit-panel input,
@@ -859,11 +852,6 @@ a:focus-visible,
   min-height: 44px;
   border-radius: 12px;
   font-weight: 600;
-}
-
-.leaderboard-head h2 {
-  font-size: 1.25rem;
-  letter-spacing: -.03em;
 }
 
 .leaderboard-games,
@@ -1449,7 +1437,7 @@ a:focus-visible,
   display: none;
 }
 
-#root :is(.account-panel, .leaderboard-head, .trap-panel, .hack-console, .hack-log, .hack-mastery, .admin-stats-panel, .admin-edit-panel, .admin-confirm-panel, .admin-games-panel, .cms-library-panel, .cms-grid-panel, .cms-answers-panel, .cms-generator, .cms-create-card, .cms-puzzle-card) {
+#root :is(.account-panel, .trap-panel, .hack-console, .hack-log, .hack-mastery, .admin-stats-panel, .admin-edit-panel, .admin-confirm-panel, .admin-games-panel, .cms-library-panel, .cms-grid-panel, .cms-answers-panel, .cms-generator, .cms-create-card, .cms-puzzle-card) {
   padding: 14px;
 }
 
@@ -1783,7 +1771,7 @@ a:focus-visible,
   line-height: 1.35;
 }
 
-#root :is(.eyebrow, .login-copy .eyebrow, .daily-game-intro .eyebrow, .route-game .daily-game-intro .eyebrow, .hack-kicker, .sky-heading .eyebrow, .account-page-heading .eyebrow, .hexaflow-head .eyebrow) {
+#root :is(.eyebrow, .login-copy .eyebrow, .daily-game-intro .eyebrow, .route-game .daily-game-intro .eyebrow, .hack-kicker, .sky-heading .eyebrow, .hexaflow-head .eyebrow) {
   font-size: var(--type-meta);
   font-weight: 500;
   letter-spacing: .02em;

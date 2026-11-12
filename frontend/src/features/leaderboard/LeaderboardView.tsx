@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft, Trophy } from "lucide-react";
+import { Trophy } from "lucide-react";
 import type { LeaderboardGame, LeaderboardPeriodDto, LeaderboardsDto } from "../../types";
 
 type LeaderboardTab = "allTime" | "yearly" | "monthly" | "weekly";
@@ -26,13 +26,11 @@ export function LeaderboardView({
   leaderboards,
   activeGame,
   onChangeGame,
-  onBack,
   onOpenPlayer
 }: {
   leaderboards: LeaderboardsDto;
   activeGame: LeaderboardGame;
   onChangeGame: (game: LeaderboardGame) => void;
-  onBack: () => void;
   onOpenPlayer: (nickname: string) => void;
 }) {
   const [activeTab, setActiveTab] = React.useState<LeaderboardTab>("weekly");
@@ -40,16 +38,6 @@ export function LeaderboardView({
 
   return (
     <section className="leaderboard-view" aria-label="Classifica">
-      <header className="leaderboard-head">
-        <button className="icon-button profile-back" type="button" onClick={onBack} aria-label="Torna al gioco" title="Torna">
-          <ChevronLeft size={23} />
-        </button>
-        <div>
-          <h2><Trophy size={21} aria-hidden="true" /> Classifica</h2>
-          <p>{periodLabel(period, activeTab)}</p>
-        </div>
-      </header>
-
       <div className="leaderboard-games" role="tablist" aria-label="Gioco della classifica">
         {GAME_TABS.map((game) => (
           <button
@@ -79,6 +67,7 @@ export function LeaderboardView({
           </button>
         ))}
       </div>
+      <p className="leaderboard-period">{periodLabel(period, activeTab)}</p>
 
       {period.entries.length === 0 ? (
         <div className="leaderboard-empty">

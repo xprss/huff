@@ -4,7 +4,7 @@ import type { ProfileUpdateDto, StatsSetDto, UserDto } from "../../types";
 import { PuzzleArtwork, type PuzzleKind } from "../game/components/PuzzleArtwork";
 import type { StatsGame } from "../stats/StatsView";
 import { ProfileEditSheet, type ProfileEditFocus } from "./ProfileEditSheet";
-import { ProfileHeading, ProfileIdentityCard, ProfileSummaryCard } from "./ProfileParts";
+import { ProfileIdentityCard, ProfileSummaryCard } from "./ProfileParts";
 import "./profile.css";
 
 export function ProfileView({
@@ -12,7 +12,6 @@ export function ProfileView({
   stats,
   editing,
   onEditingChange,
-  onBack,
   onOpenStats,
   onSave,
   onSuccess,
@@ -22,7 +21,6 @@ export function ProfileView({
   stats: StatsSetDto;
   editing: boolean;
   onEditingChange: (editing: boolean) => void;
-  onBack: () => void;
   onOpenStats: (game: StatsGame) => void;
   onSave: (profile: ProfileUpdateDto) => Promise<UserDto>;
   onSuccess: (message: string) => void;
@@ -45,8 +43,7 @@ export function ProfileView({
   ];
 
   return (
-    <section className="profile-view my-profile" aria-labelledby="profile-page-title">
-      <ProfileHeading id="profile-page-title" title="Profilo" backLabel="Torna ai giochi" onBack={onBack} />
+    <section className="profile-view my-profile" aria-label="Il tuo profilo">
       <ProfileIdentityCard
         emoji={user.profileEmoji}
         name={user.displayName || user.nickname}

@@ -1,18 +1,6 @@
-import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import type { MedalCountsDto, StatsDto } from "../../types";
 import "./profile.css";
-
-/** Compact page heading with a back button, shared by personal and public profiles. */
-export function ProfileHeading({ id, title, backLabel, onBack }: { id: string; title: string; backLabel: string; onBack: () => void }) {
-  return (
-    <header className="account-page-heading">
-      <button className="my-profile-back" type="button" onClick={onBack} aria-label={backLabel}>
-        <ChevronLeft size={20} aria-hidden="true" />
-      </button>
-      <div><h2 id={id}>{title}</h2></div>
-    </header>
-  );
-}
 
 /**
  * Identity card: emoji avatar, name, nickname and bio. With `onEdit` the

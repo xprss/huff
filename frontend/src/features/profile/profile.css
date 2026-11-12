@@ -377,18 +377,6 @@
   outline-offset: 2px;
 }
 
-.my-profile-back {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  flex: none;
-  padding: 0;
-  border: 1px solid var(--color-surface-border);
-  border-radius: 11px;
-  background: var(--color-surface-strong);
-}
-
 .my-profile-card {
   border: 1px solid var(--color-surface-border);
   border-radius: 20px;

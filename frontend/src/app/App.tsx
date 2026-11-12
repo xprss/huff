@@ -985,7 +985,6 @@ export function App() {
                 leaderboards={leaderboardsQuery.data}
                 activeGame={leaderboardGame}
                 onChangeGame={setLeaderboardGame}
-                onBack={() => setActiveRoute("games")}
                 onOpenPlayer={(nickname) => {
                   window.location.hash = playerHash(nickname);
                 }}
@@ -997,7 +996,7 @@ export function App() {
             publicPlayerQuery.isPending ? (
               <div className="play-area"><LoadingSpinner /></div>
             ) : publicPlayerQuery.data ? (
-              <PublicProfileView profile={publicPlayerQuery.data} onBack={() => setActiveRoute("leaderboard")} />
+              <PublicProfileView profile={publicPlayerQuery.data} />
             ) : (
               <div className="play-area">Giocatore non trovato.</div>
             )
@@ -1008,10 +1007,6 @@ export function App() {
               stats={statsSet}
               editing={profileEditing}
               onEditingChange={setProfileEditing}
-              onBack={() => {
-                setProfileEditing(false);
-                setActiveRoute("games");
-              }}
               onSave={(profile) => updateProfile(profile)}
               onSuccess={(message) => showToast(message, "success")}
               onError={(message) => showToast(message, "error")}

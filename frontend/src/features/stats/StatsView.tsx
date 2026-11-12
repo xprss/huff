@@ -1,5 +1,4 @@
 import React from "react";
-import { BarChart3 } from "lucide-react";
 import { Distribution } from "../../shared/components/Distribution";
 import { Metric } from "../../shared/components/Metric";
 import type { HexahackRank, HexahackStatsDto, HexaskyStatsDto, HexaflowStatsDto, HexaecoStatsDto, HexatrapStatsDto, StatsDto, StatsSetDto } from "../../types";
@@ -81,8 +80,7 @@ export function StatsView({ stats, active, onChangeGame }: {
   const selected = active === "hexahack" || active === "hexasky" || active === "hexaflow" || active === "hexaeco" || active === "hexatrap" ? null : stats[active];
   const titles = { overall: "Il quadro completo", hexaword: "Le tue parole vincenti", hexahack: "La tua maestria nei codici", hexasky: "La tua prospettiva", hexaflow: "Il tuo Flusso", hexastar: "Le tue intuizioni", hexaeco: "La tua sincronia", hexatrap: "Le tue deduzioni" };
   return (
-    <section className="stats-view" aria-labelledby="stats-page-title">
-      <header className="account-page-heading"><span className="account-page-icon"><BarChart3 size={23} aria-hidden="true" /></span><div><h2 id="stats-page-title">Le tue statistiche</h2></div></header>
+    <section className="stats-view" aria-label="Le tue statistiche">
       <StatsTabs active={active} onChange={onChangeGame} />
       <section className="account-panel stats-detail" aria-label={titles[active]}>
         <h3>{titles[active]}</h3>

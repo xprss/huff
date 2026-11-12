@@ -1,14 +1,13 @@
 import React from "react";
 import { HexahackStatsPanel, HexaskyStatsPanel, HexaflowStatsPanel, HexaecoStatsPanel, HexatrapStatsPanel, StatsPanel, StatsTabs, type StatsGame } from "../stats/StatsView";
 import type { PublicPlayerProfileDto } from "../../types";
-import { ProfileHeading, ProfileIdentityCard, ProfileSummaryCard } from "./ProfileParts";
+import { ProfileIdentityCard, ProfileSummaryCard } from "./ProfileParts";
 
-export function PublicProfileView({ profile, onBack }: { profile: PublicPlayerProfileDto; onBack: () => void }) {
+export function PublicProfileView({ profile }: { profile: PublicPlayerProfileDto }) {
   const [activeStats, setActiveStats] = React.useState<StatsGame>("overall");
   const stats = { overall: profile.overallStats, hexaword: profile.hexawordStats, hexahack: profile.hexahackStats, hexasky: profile.hexaskyStats, hexaflow: profile.hexaflowStats, hexastar: profile.hexastarStats, hexaeco: profile.hexaecoStats, hexatrap: profile.hexatrapStats };
   return (
-    <section className="profile-view my-profile public-profile-view" aria-labelledby="public-profile-title">
-      <ProfileHeading id="public-profile-title" title="Giocatore" backLabel="Torna alla classifica" onBack={onBack} />
+    <section className="profile-view my-profile public-profile-view" aria-label={`Profilo di ${profile.nickname}`}>
       <ProfileIdentityCard
         emoji={profile.profileEmoji}
         name={profile.displayName || profile.nickname}
