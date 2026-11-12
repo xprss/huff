@@ -64,7 +64,7 @@ COPY --from=backend-build /workspace/backend/target/quarkus-app /app
 COPY --from=agents-build /workspace/agents/.mastra/output /app/agents/.mastra/output
 COPY --from=agents-build /workspace/agents/node_modules/@microsoft /app/agents/node_modules/@microsoft
 COPY scripts/start-huff-app.sh /app/start-huff-app.sh
-RUN chmod +x /app/start-huff-app.sh && mkdir -p /app/agents/data
+RUN chmod +x /app/start-huff-app.sh && mkdir -p /app/agents/data /app/data/avatars
 
 EXPOSE 8080
 ENTRYPOINT ["/usr/bin/tini", "--", "/app/start-huff-app.sh"]

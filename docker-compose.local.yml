@@ -56,6 +56,7 @@ services:
       GAME_STATS_AGENT_DB_URL: file:./data/mastra.db
     volumes:
       - ./data/local-agents:/app/agents/data
+      - ./data/local-avatars:/app/data/avatars
     ports:
       - "127.0.0.1:${LOCAL_HOST_PORT:-8080}:8080"
     depends_on:

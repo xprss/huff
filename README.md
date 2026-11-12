@@ -225,6 +225,8 @@ Mastra gira nello stesso container applicativo, ascolta solo su `127.0.0.1` e no
 
 `scripts/deploy-image.sh` e `scripts/run-docker-local.sh` creano il ruolo PostgreSQL read-only dopo le migrazioni. Le chat admin sono persistite in `${DATA_DIR}/agents` nei deploy Docker.
 
+Le foto profilo caricate dagli utenti sono file su disco in `${DATA_DIR}/avatars` (montata in `/app/data/avatars`; in locale `data/local-avatars`). Non sono nel database: il backup di PostgreSQL non le include, quindi va salvata anche questa cartella.
+
 Useful commands:
 
 ```bash
