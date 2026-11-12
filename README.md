@@ -79,6 +79,17 @@ The application is available at `http://localhost:8080`. Press Ctrl-C to stop
 the application container; the local PostgreSQL container and its named volume
 are retained for the next run. Use `--no-build` to reuse the existing image.
 
+Alternatively, with Docker Compose:
+
+```bash
+docker compose -f docker-compose.local.yml --profile stats up --build
+```
+
+It reads `.env`, starts PostgreSQL (exposed on `127.0.0.1:5433`) and the app on
+`http://localhost:8080`; the `stats` profile also creates the read-only role for the
+statistics agent once migrations have run (omit it if `POSTGRES_MCP_PASSWORD` is not
+set). `docker compose -f docker-compose.local.yml down -v` resets the database.
+
 ## Configuration
 
 The Quarkus development profile runs anonymously by default for local work. Docker local,

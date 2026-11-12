@@ -1,0 +1,98 @@
+# Local stack for Hexaquot: PostgreSQL + application image built from source.
+#
+#   docker compose -f docker-compose.local.yml up --build
+#
+# Secrets and OIDC settings are read from .env (see .env.example). The values
+# below override the deploy-oriented ones in .env so the stack works locally.
+# Reset the database with: docker compose -f docker-compose.local.yml down -v
+
+name: huff-local
+
+services:
+  postgres:
+    image: ${LOCAL_POSTGRES_IMAGE:-postgres:16-alpine}
+    environment:
+      POSTGRES_DB: ${LOCAL_POSTGRES_DB:-huff_hexaquot}
+      POSTGRES_USER: ${LOCAL_POSTGRES_USER:-huff}
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:-huff}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:${LOCAL_POSTGRES_HOST_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build:
+      context: .
+      args:
+        APP_VERSION: ${LOCAL_APP_VERSION:-0.0.0}
+        GIT_COMMIT: ${LOCAL_GIT_COMMIT:-local}
+        GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    image: ${LOCAL_IMAGE_NAME:-huff-local}:latest
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      AUTH_ENABLED: ${LOCAL_AUTH_ENABLED:-${AUTH_ENABLED:-true}}
+      COOKIE_SECURE: ${LOCAL_COOKIE_SECURE:-false}
+      PORT: 8080
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${LOCAL_POSTGRES_DB:-huff_hexaquot}
+      POSTGRES_USER: ${LOCAL_POSTGRES_USER:-huff}
+      POSTGRES_PASSWORD: ${LOCAL_POSTGRES_PASSWORD:-huff}
+      POSTGRES_MCP_USER: ${POSTGRES_MCP_USER:-huff_stats_agent}
+      POSTGRES_MCP_PASSWORD: ${POSTGRES_MCP_PASSWORD:-}
+      POSTGRES_MCP_DATABASE: ${LOCAL_POSTGRES_DB:-huff_hexaquot}
+      POSTGRES_MCP_HOST: postgres
+      POSTGRES_MCP_PORT: 5432
+      GAME_STATS_AGENT_HOST: 127.0.0.1
+      GAME_STATS_AGENT_PORT: 4111
+      GAME_STATS_AGENT_URL: http://127.0.0.1:4111
+      GAME_STATS_AGENT_DB_URL: file:./data/mastra.db
+    volumes:
+      - ./data/local-agents:/app/agents/data
+    ports:
+      - "127.0.0.1:${LOCAL_HOST_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/q/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  # One-shot: creates the read-only role used by the statistics agent,
+  # once Flyway migrations have run (the app is healthy).
+  stats-role:
+    image: ${LOCAL_POSTGRES_IMAGE:-postgres:16-alpine}
+    profiles: ["stats"]
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${LOCAL_POSTGRES_DB:-huff_hexaquot}
+      PGUSER: ${LOCAL_POSTGRES_USER:-huff}
+      PGPASSWORD: ${LOCAL_POSTGRES_PASSWORD:-huff}
+      STATS_ROLE: ${POSTGRES_MCP_USER:-huff_stats_agent}
+      STATS_PASSWORD: ${POSTGRES_MCP_PASSWORD:-}
+    volumes:
+      - ./scripts/sql/game-stats-role.sql:/game-stats-role.sql:ro
+    command:
+      - sh
+      - -c
+      - >-
+        test -n "$$STATS_PASSWORD" || { echo "POSTGRES_MCP_PASSWORD is required"; exit 1; };
+        psql -X -q -v ON_ERROR_STOP=1
+        -v stats_role="$$STATS_ROLE" -v stats_password="$$STATS_PASSWORD"
+        -v stats_database="$$PGDATABASE" -f /game-stats-role.sql
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
