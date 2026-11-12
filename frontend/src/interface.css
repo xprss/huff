@@ -1338,7 +1338,7 @@ a:focus-visible,
 
 /* Compact, low elevation controls across the app. Keep game boards, cards, and
    virtual keyboards on their own sizing systems. */
-#root button:not(.key):not(.menu-item):not(.sky-keyboard button):not(.terminal-cell):not(.sky-cell):not(.hexaflow-cell):not(.cms-grid button):not(.puzzle-card):not(.cms-puzzle-card):not(.my-profile button) {
+#root button:not(.key):not(.menu-item):not(.sky-keyboard button):not(.terminal-cell):not(.sky-cell):not(.hexaflow-cell):not(.cms-grid button):not(.puzzle-card):not(.cms-puzzle-card):not(.my-profile button):not(.admin-tabs button) {
   min-height: 32px;
   padding: 6px 10px;
   border-radius: 7px;
