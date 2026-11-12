@@ -63,19 +63,17 @@ export function GameSelector({
             disabled={!game.available}
             aria-label={`${game.name}: ${!game.available ? game.unavailableLabel ?? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}
           >
-            {game.completed ? (
-              <span className="puzzle-card-heading">
-                <span className="puzzle-status"><Check size={13} aria-hidden="true" /> Fatto</span>
-              </span>
-            ) : null}
             <PuzzleArtwork kind={game.id} />
+            {game.completed ? (
+              <span className="puzzle-status"><Check size={12} strokeWidth={3} aria-hidden="true" /> Fatto</span>
+            ) : null}
             <span className="puzzle-card-copy">
               <strong>{game.name}</strong>
               <span>{game.available ? game.description : "Nuova sfida in arrivo."}</span>
             </span>
-            <span className="puzzle-card-footer">
-              <span>{!game.available ? game.unavailableLabel ?? "In arrivo" : game.completed ? "Risultato" : "Gioca"}</span>
-              <ArrowRight size={17} aria-hidden="true" />
+            <span className="puzzle-card-cta">
+              {!game.available ? game.unavailableLabel ?? "In arrivo" : game.completed ? "Risultato" : "Gioca"}
+              {game.available ? <ArrowRight size={15} strokeWidth={2.5} aria-hidden="true" /> : null}
             </span>
           </button>
         ))}

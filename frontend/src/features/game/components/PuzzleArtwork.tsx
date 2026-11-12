@@ -4,7 +4,7 @@ export type PuzzleKind = "word" | "hack" | "sky" | "flow" | "star" | "eco" | "tr
 
 /**
  * Playful, abstract neon vector emblems for each puzzle.
- * Clean tubular strokes without glow, sharing the white-to-primary brand gradient.
+ * Clean tubular strokes without glow, tinted with the game accent (--card-accent).
  */
 export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
   const id = React.useId();
@@ -15,8 +15,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--word" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <path
@@ -36,8 +36,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--hack" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <path
@@ -56,8 +56,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--sky" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <path
@@ -83,8 +83,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--flow" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <path
@@ -104,8 +104,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--star" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <path
@@ -129,8 +129,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--eco" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <circle cx="38" cy="50" r="22" fill="none" stroke={`url(#${id}-neon)`} strokeWidth="3.6" />
@@ -151,8 +151,8 @@ export function PuzzleArtwork({ kind }: { kind: PuzzleKind }) {
         <svg viewBox="0 0 100 100" className="art-svg art-svg--trap" focusable="false">
           <defs>
             <linearGradient id={`${id}-neon`} x1="15%" y1="15%" x2="85%" y2="85%">
-              <stop offset="0%" stopColor="var(--color-title-text, #ffffff)" />
-              <stop offset="100%" stopColor="var(--color-primary, #6366f1)" />
+              <stop offset="0%" stopColor="var(--card-accent-soft, #ffffff)" />
+              <stop offset="100%" stopColor="var(--card-accent, #a78bfa)" />
             </linearGradient>
           </defs>
           <path

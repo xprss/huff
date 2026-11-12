@@ -35,22 +35,6 @@ html.zoomed :is(.game-selector, .profile-view, .profile-stats, .leaderboard-view
 html.zoomed .app-navigation { position: static; width: 100%; max-width: 560px; transform: none; margin: 20px auto 0; }
 html.zoomed .app-shell.has-navigation { padding-bottom: max(20px, env(safe-area-inset-bottom, 0px)); }
 
-.puzzle-card.completed {
-  border-color: rgba(16, 185, 129, 0.45);
-  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3), 0 8px 24px rgba(16, 185, 129, 0.12);
-}
-.puzzle-card.completed .puzzle-status {
-  background: rgba(16, 185, 129, 0.16);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  color: #10b981;
-}
-@media (hover: hover) and (pointer: fine) {
-  .puzzle-card.completed:hover {
-    border-color: #10b981;
-    box-shadow: 0 0 0 1px #10b981, 0 12px 32px rgba(16, 185, 129, 0.22);
-  }
-}
-
 .account-page-heading { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; min-width: 0; }
 .account-page-heading > div { min-width: 0; }
 .account-page-heading h2 { margin: 6px 0; font-size: clamp(1.7rem, 6vw, 2.2rem); font-weight: 700; letter-spacing: -.045em; line-height: 1.1; }
