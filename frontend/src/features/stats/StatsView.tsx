@@ -84,13 +84,12 @@ export function StatsView({ stats, active, onChangeGame }: {
   const titles = { overall: "Il quadro completo", hexaword: "Le tue parole vincenti", hexahack: "La tua maestria nei codici", hexasky: "La tua prospettiva", hexaflow: "Il tuo Flusso", hexastar: "Le tue intuizioni", hexaeco: "La tua sincronia", hexatrap: "Le tue deduzioni" };
   return (
     <section className="stats-view" aria-labelledby="stats-page-title">
-      <header className="account-page-heading"><span className="account-page-icon"><BarChart3 size={23} aria-hidden="true" /></span><div><p className="eyebrow">Un passo alla volta</p><h2 id="stats-page-title">Le tue statistiche</h2><p>Ogni sfida racconta un po’ dei tuoi progressi.</p></div></header>
+      <header className="account-page-heading"><span className="account-page-icon"><BarChart3 size={23} aria-hidden="true" /></span><div><h2 id="stats-page-title">Le tue statistiche</h2></div></header>
       <StatsTabs active={active} onChange={onChangeGame} />
       <section className="account-panel stats-detail" aria-label={titles[active]}>
         <h3>{titles[active]}</h3>
         {active === "hexatrap" ? <HexatrapStatsPanel stats={stats.hexatrap}/> : active === "hexahack" ? <HexahackStatsPanel stats={stats.hexahack} /> : active === "hexasky" ? <HexaskyStatsPanel stats={stats.hexasky} /> : active === "hexaflow" ? <HexaflowStatsPanel stats={stats.hexaflow}/> : active === "hexaeco" ? <HexaecoStatsPanel stats={stats.hexaeco}/> : <StatsPanel stats={selected} />}
       </section>
-      <p className="account-note">Le statistiche si aggiornano dopo ogni partita. Torna quando vuoi per scoprire come stai andando.</p>
     </section>
   );
 }
