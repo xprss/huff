@@ -105,6 +105,14 @@ a:focus-visible,
 .topbar .brand-home {
   gap: 8px;
   max-width: 100%;
+  align-items: flex-start;
+}
+
+/* Top-align the logo with the cap height of "HexaQuot": the Q glyph starts
+   ~0.128em below the name's line box (line-height 1, #root .brand-name is
+   1.25rem) and the logo stroke starts ~1px inside its 30px box. */
+.topbar .brand-symbol {
+  margin-top: calc(1.25rem * .128 - 1px);
 }
 
 .topbar .title-mark {
