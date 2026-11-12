@@ -972,6 +972,7 @@ function setThemeCssVariables(theme: AppTheme, root: HTMLElement) {
   }
   root.style.colorScheme = theme.colorScheme;
   root.dataset.theme = theme.id;
+  root.dataset.colorScheme = theme.colorScheme;
 
   const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
   themeColor?.setAttribute("content", theme.colors.page);

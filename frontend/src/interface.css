@@ -1808,7 +1808,9 @@ a:focus-visible,
 .puzzle-card {
   --card-accent: #a78bfa;
   --card-accent-soft: color-mix(in srgb, var(--card-accent) 35%, #ffffff);
-  --card-base: #0d1019;
+  /* Accent-tinted text (CTA); darker on light themes, see below. */
+  --card-ink: var(--card-accent-soft);
+  --card-base: var(--color-surface);
   position: relative;
   isolation: isolate;
   display: flex;
@@ -1895,7 +1897,7 @@ a:focus-visible,
   font-weight: 800;
   letter-spacing: -.035em;
   line-height: 1.1;
-  color: #fff;
+  color: var(--color-title-text, var(--color-text));
 }
 
 .puzzle-card-copy > span {
@@ -1915,8 +1917,8 @@ a:focus-visible,
   padding: 7px 12px 7px 14px;
   border: 1px solid color-mix(in srgb, var(--card-accent) 40%, transparent);
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--card-accent) 16%, rgba(0, 0, 0, 0.25));
-  color: var(--card-accent-soft);
+  background: color-mix(in srgb, var(--card-accent) 16%, var(--card-base));
+  color: var(--card-ink);
   font-size: .76rem;
   font-weight: 700;
   letter-spacing: .01em;
@@ -2095,4 +2097,50 @@ a:focus-visible,
   font-weight: 800;
   letter-spacing: -.02em;
   line-height: 1;
+}
+
+/* Light themes (data-color-scheme is set by theme.tsx): deeper game accents
+   so yellow/cyan stay readable on white, darker accent text, softer shadows. */
+html[data-color-scheme="light"] {
+  --game-accent-word: #7c3aed;
+  --game-accent-hack: #16a34a;
+  --game-accent-sky: #2563eb;
+  --game-accent-flow: #0891b2;
+  --game-accent-star: #ca8a04;
+  --game-accent-eco: #ea580c;
+  --game-accent-trap: #e11d48;
+}
+
+html[data-color-scheme="light"] :is(.puzzle-card, .my-profile-game) {
+  --card-accent-soft: color-mix(in srgb, var(--card-accent) 55%, #ffffff);
+  --card-ink: color-mix(in srgb, var(--card-accent) 80%, #000000);
+}
+
+html[data-color-scheme="light"] .puzzle-card {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+html[data-color-scheme="light"] .puzzle-card:disabled .puzzle-card-cta {
+  border-color: rgba(15, 23, 42, 0.12);
+  background: rgba(15, 23, 42, 0.04);
+}
+
+html[data-color-scheme="light"] .puzzle-card.completed .puzzle-card-cta {
+  border-color: rgba(22, 163, 74, 0.45);
+  background: #dcfce7;
+  color: #166534;
+}
+
+html[data-color-scheme="light"] .avatar:not(.avatar--photo) {
+  color: #ffffff;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html[data-color-scheme="light"] .puzzle-card:hover:not(:disabled) {
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.06),
+      0 14px 30px color-mix(in srgb, var(--card-accent) 22%, transparent);
+  }
 }
