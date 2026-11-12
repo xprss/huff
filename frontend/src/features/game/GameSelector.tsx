@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { HEXATRAP_AVAILABLE } from "../../app/constants";
 import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
@@ -69,9 +69,6 @@ export function GameSelector({
             aria-label={`${game.name}: ${!game.available ? game.unavailableLabel ?? "non disponibile oggi" : game.completed ? "completato, vedi risultato" : game.description}`}
           >
             <PuzzleArtwork kind={game.id} />
-            {game.completed ? (
-              <span className="puzzle-status"><Check size={12} strokeWidth={3} aria-hidden="true" /> Fatto</span>
-            ) : null}
             <span className="puzzle-card-copy">
               <strong>{game.name}</strong>
               <span>{game.available ? game.description : "Nuova sfida in arrivo."}</span>

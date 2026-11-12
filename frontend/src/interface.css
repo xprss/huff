@@ -1977,29 +1977,15 @@ a:focus-visible,
   color: var(--color-muted);
 }
 
-.puzzle-status {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 9px;
-  border: 1px solid rgba(74, 222, 128, 0.45);
-  border-radius: 9999px;
-  background: rgba(22, 101, 52, 0.55);
-  color: #bbf7d0;
-  font-size: .66rem;
-  font-weight: 800;
-  letter-spacing: .02em;
-}
-
 .puzzle-card.completed .puzzle-art {
   opacity: .22;
 }
 
+/* Completed games: the CTA becomes a success "Risultato" button. */
 .puzzle-card.completed .puzzle-card-cta {
-  background: rgba(0, 0, 0, 0.25);
+  border-color: rgba(74, 222, 128, 0.5);
+  background: rgba(22, 101, 52, 0.6);
+  color: #bbf7d0;
 }
 
 @media (hover: hover) and (pointer: fine) {
