@@ -59,10 +59,10 @@ export function GameSelector({
   return (
     <section ref={selectorRef} className={`game-selector${launching ? " is-launching" : ""}`} aria-label="Giochi di oggi" tabIndex={-1} id="main-content">
       <div className="game-selector-grid">
-        {games.map((game, index) => (
+        {games.map((game) => (
           <button
             key={game.id}
-            className={`puzzle-card puzzle-card--${game.id}${index === 0 ? " puzzle-card--featured" : ""}${game.completed ? " completed" : ""}${launching === game.id ? " is-launching" : ""}`}
+            className={`puzzle-card puzzle-card--${game.id}${game.completed ? " completed" : ""}${launching === game.id ? " is-launching" : ""}`}
             type="button"
             onClick={() => launch(game.id, game.onPlay)}
             disabled={!game.available}

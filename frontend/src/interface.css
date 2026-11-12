@@ -1249,7 +1249,7 @@ a:focus-visible,
   }
 
   .game-selector-grid {
-    grid-template-columns: 1.2fr 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
   }
 
@@ -2002,27 +2002,6 @@ a:focus-visible,
   background: rgba(0, 0, 0, 0.25);
 }
 
-.puzzle-card--featured {
-  min-height: 190px;
-  padding: 22px;
-}
-
-.puzzle-card--featured .puzzle-art {
-  right: -26px;
-  bottom: -40px;
-  width: 210px;
-  height: 210px;
-}
-
-.puzzle-card--featured .puzzle-card-copy > strong {
-  font-size: 1.85rem;
-}
-
-.puzzle-card--featured .puzzle-card-copy > span {
-  font-size: .86rem;
-  max-width: 26ch;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .puzzle-card:hover:not(:disabled) {
     transform: translateY(-3px);
@@ -2043,75 +2022,31 @@ a:focus-visible,
 }
 
 @media (min-width: 380px) {
-  .puzzle-card--featured {
-    grid-column: 1 / -1;
-  }
-
-  .puzzle-card:not(.puzzle-card--featured) {
+  .puzzle-card {
     min-height: 176px;
     padding: 16px;
   }
 
-  .puzzle-card:not(.puzzle-card--featured) .puzzle-art {
+  .puzzle-card .puzzle-art {
     width: 120px;
     height: 120px;
     right: -20px;
     bottom: -24px;
   }
 
-  .puzzle-card:not(.puzzle-card--featured) .puzzle-card-copy > strong {
+  .puzzle-card .puzzle-card-copy > strong {
     font-size: 1.2rem;
   }
 
-  .puzzle-card:not(.puzzle-card--featured) .puzzle-card-copy > span {
+  .puzzle-card .puzzle-card-copy > span {
     font-size: .74rem;
   }
 }
 
 @media (min-width: 600px) {
-  .puzzle-card:not(.puzzle-card--featured) {
+  .puzzle-card {
     min-height: 190px;
     padding: 20px;
-  }
-
-  .puzzle-card--featured {
-    min-height: 220px;
-    padding: 28px;
-  }
-
-  .puzzle-card--featured .puzzle-art {
-    width: 260px;
-    height: 260px;
-    right: -10px;
-    bottom: -50px;
-  }
-
-  .puzzle-card--featured .puzzle-card-copy > strong {
-    font-size: 2.2rem;
-  }
-
-  .puzzle-card--featured .puzzle-card-copy > span {
-    font-size: .92rem;
-    max-width: 32ch;
-  }
-}
-
-@media (min-width: 900px) {
-  .puzzle-card--featured {
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    padding: 30px;
-  }
-
-  .puzzle-card--featured .puzzle-art {
-    width: 300px;
-    height: 300px;
-    right: -40px;
-    bottom: -40px;
-  }
-
-  .puzzle-card--featured .puzzle-card-copy > strong {
-    font-size: 2.5rem;
   }
 }
 
