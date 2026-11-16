@@ -3832,9 +3832,14 @@ html[data-patterns="enabled"] .login-decor-tile.absent {
    horizontal scroll when the labels do not fit. */
 .admin-tabs {
   display: flex;
+  /* The admin surface is a flex column: as a scroll container the bar would
+     otherwise shrink below its buttons' height by an amount that depends on
+     the active section's content, clipping the tabs on every switch. */
+  flex: none;
   gap: 4px;
   margin: 0 0 12px;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
   border-bottom: 1px solid var(--color-surface-border);
 }
