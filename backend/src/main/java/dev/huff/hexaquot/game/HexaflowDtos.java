@@ -22,6 +22,9 @@ public final class HexaflowDtos {
     public record PuzzleSummaryDto(String puzzleDate, PuzzleStatus status, String themeClue, int answerCount,
                                    int coveredCells, boolean valid, boolean immutable) {}
     public record PuzzleMonthDto(String month, List<PuzzleSummaryDto> puzzles) {}
+    public record AmbiguousAnswerDto(String answerId, int answerIndex, String word, AnswerType type,
+                                     int alternativeCount, boolean truncated, List<List<Integer>> alternativePaths) {}
+    public record AmbiguityReportDto(int checkedAnswers, List<AmbiguousAnswerDto> ambiguousAnswers) {}
 
     public record FoundAnswerDto(String id, String label, AnswerType type, List<Integer> cells) {}
     public record GameDto(String puzzleDate, GameStatus status, List<FoundAnswerDto> foundAnswers,

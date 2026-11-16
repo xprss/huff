@@ -18,6 +18,7 @@ public class HexaflowPuzzleService {
     @Inject ObjectMapper objectMapper;
     @Inject HexaflowPuzzleValidator validator;
     @Inject HexaflowBoardGenerator boardGenerator;
+    @Inject HexaflowAmbiguityChecker ambiguityChecker;
     @ConfigProperty(name="app.game.timezone") String timezone;
 
     public HexaflowDtos.PuzzleMonthDto month(AppUser admin, String month) {
@@ -28,6 +29,8 @@ public class HexaflowPuzzleService {
     }
     public HexaflowDtos.PuzzleAdminDto detail(AppUser admin,String date){require(admin);return toAdmin(find(date));}
     public HexaflowDtos.GeneratedBoardDto generate(AppUser admin,String date,HexaflowDtos.BoardGenerationRequest request){require(admin);parseDate(date);return boardGenerator.generate(request);}
+    /** Advisory check on the editor's current draft (saved or not): it never blocks saving or publishing. */
+    public HexaflowDtos.AmbiguityReportDto ambiguity(AppUser admin,String date,HexaflowDtos.PuzzleDraftDto draft){require(admin);parseDate(date);if(draft==null)throw new BadRequestException("Bozza mancante.");return ambiguityChecker.check(draft);}
 
     @Transactional
     public HexaflowDtos.PuzzleAdminDto save(AppUser admin,String date,HexaflowDtos.PuzzleDraftDto request){

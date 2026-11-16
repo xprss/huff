@@ -1,9 +1,9 @@
 import React from "react";
-import { ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Grid3X3, ListChecks, Plus, Save, Send, Sparkles, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Grid3X3, ListChecks, Plus, Save, SearchCheck, Send, Sparkles, Trash2, TriangleAlert } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api";
 import { queryKeys } from "../../app/queries";
-import type { HexaflowAnswerDto, HexaflowPuzzleAdminDto, HexaflowPuzzleDraftDto } from "../../types";
+import type { HexaflowAmbiguityReportDto, HexaflowAnswerDto, HexaflowPuzzleAdminDto, HexaflowPuzzleDraftDto } from "../../types";
 
 const EDITOR_TIMEZONE = "Europe/Rome";
 const blankGrid = () => Array.from({ length: 48 }, () => "");
@@ -33,8 +33,15 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   const [confirmAction, setConfirmAction] = React.useState<"publish" | "delete" | null>(null);
   const [themeWordsInput, setThemeWordsInput] = React.useState("");
   const [flowWord, setFlowWord] = React.useState("");
+  const [ambiguity, setAmbiguity] = React.useState<{ snapshot: string; report: HexaflowAmbiguityReportDto } | null>(null);
+  const [highlightedPath, setHighlightedPath] = React.useState<readonly number[] | null>(null);
   const monthQuery = useQuery({ queryKey: queryKeys.adminHexaflowPuzzles(month), queryFn: () => api.adminHexaflowPuzzles(month) });
   const detailQuery = useQuery({ queryKey: queryKeys.adminHexaflowPuzzle(date ?? ""), queryFn: () => api.adminHexaflowPuzzle(date ?? ""), enabled: Boolean(date) && !isNew });
+
+  React.useEffect(() => {
+    setAmbiguity(null);
+    setHighlightedPath(null);
+  }, [date]);
 
   React.useEffect(() => {
     if (detailQuery.data) {
@@ -65,6 +72,13 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
       onSuccess("Tabellone generato. Puoi rigenerarlo o rifinirlo manualmente prima di salvare.");
     }
   });
+  const checkAmbiguity = useMutation({
+    mutationFn: (value: HexaflowPuzzleDraftDto) => api.checkAdminHexaflowAmbiguity(value.puzzleDate, value).then((report) => ({ snapshot: boardSnapshot(value), report })),
+    onSuccess: (result) => {
+      setAmbiguity(result);
+      setHighlightedPath(null);
+    }
+  });
   const publish = useMutation({ mutationFn: (value: string) => api.publishAdminHexaflowPuzzle(value), onSuccess: updated });
   const unpublish = useMutation({ mutationFn: (value: string) => api.draftAdminHexaflowPuzzle(value), onSuccess: updated });
   const remove = useMutation({
@@ -80,9 +94,9 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   });
 
   React.useEffect(() => {
-    const error = monthQuery.error ?? detailQuery.error ?? generate.error ?? save.error ?? publish.error ?? unpublish.error ?? remove.error;
+    const error = monthQuery.error ?? detailQuery.error ?? generate.error ?? checkAmbiguity.error ?? save.error ?? publish.error ?? unpublish.error ?? remove.error;
     if (error) onError(error instanceof Error ? error.message : "Operazione CMS non riuscita.");
-  }, [monthQuery.error, detailQuery.error, generate.error, save.error, publish.error, unpublish.error, remove.error, onError]);
+  }, [monthQuery.error, detailQuery.error, generate.error, checkAmbiguity.error, save.error, publish.error, unpublish.error, remove.error, onError]);
 
   function newPuzzle() {
     const value = creationDate;
@@ -207,6 +221,8 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
   const preparedDraft = prepareDraft(draft);
   const hasUnsavedChanges = !saved || JSON.stringify(preparedDraft) !== JSON.stringify(prepareDraft(toDraft(saved)));
   const missingThemeClue = !draft.themeClue.trim();
+  const ambiguityStale = ambiguity !== null && ambiguity.snapshot !== boardSnapshot(draft);
+  const visibleHighlight = ambiguityStale ? null : highlightedPath;
 
   return (
     <section className="hexaflow-cms cms-editor" aria-label="Editor puzzle Hexaflow">
@@ -241,13 +257,14 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
 
       <div className="cms-editor-layout">
         <section className="cms-grid-panel">
-          <div className="cms-panel-heading"><div><h3>Griglia</h3><p>Inserisci le lettere, poi traccia il percorso selezionato.</p></div><div className="cms-grid-legend"><span className="selected">Selezionato</span><span className="covered">Usato</span><span className="overlap">Sovrapposto</span></div></div>
+          <div className="cms-panel-heading"><div><h3>Griglia</h3><p>Inserisci le lettere, poi traccia il percorso selezionato.</p></div><div className="cms-grid-legend"><span className="selected">Selezionato</span><span className="covered">Usato</span><span className="overlap">Sovrapposto</span>{visibleHighlight ? <span className="alternative">Alternativa</span> : null}</div></div>
           <div className="hexaflow-grid cms-grid" role="grid" aria-label="Griglia Hexaflow 8 per 6">
             {draft.grid.map((letter, index) => (
-              <div key={index} role="gridcell" className={`${covered.get(index) ? "covered" : ""} ${(covered.get(index) ?? 0) > 1 ? "overlap" : ""} ${draft.answers[activeAnswer]?.path.includes(index) ? "selected" : ""}`}>
+              <div key={index} role="gridcell" className={`${covered.get(index) ? "covered" : ""} ${(covered.get(index) ?? 0) > 1 ? "overlap" : ""} ${draft.answers[activeAnswer]?.path.includes(index) ? "selected" : ""} ${visibleHighlight?.includes(index) ? "alternative" : ""}`}>
                 <input value={letter} disabled={editorLocked} onChange={(event) => setCell(index, event.target.value)} aria-label={`Lettera riga ${Math.floor(index / 6) + 1}, colonna ${(index % 6) + 1}`} />
                 <button type="button" disabled={editorLocked || !draft.answers[activeAnswer]} onClick={() => drawCell(index)} aria-label={`Aggiungi la cella ${index + 1} al percorso`}>{draft.answers[activeAnswer]?.path.includes(index) ? "✓" : "+"}</button>
                 <small>{index + 1}</small>
+                {visibleHighlight?.includes(index) ? <em className="cms-alternative-step" aria-hidden="true">{visibleHighlight.indexOf(index) + 1}</em> : null}
               </div>
             ))}
           </div>
@@ -281,6 +298,22 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
         </section>
       </div>
 
+      <section className="cms-ambiguity" aria-label="Controllo percorsi alternativi" aria-live="polite">
+        <div className="cms-panel-heading">
+          <div><h3><SearchCheck size={17} />Percorsi alternativi</h3><p>Verifica che nessuna parola sia componibile sul tabellone con un percorso diverso da quello previsto. Il controllo è solo informativo e non blocca salvataggio o pubblicazione.</p></div>
+          <button type="button" disabled={checkAmbiguity.isPending || draft.answers.length === 0} title={draft.answers.length === 0 ? "Aggiungi almeno un percorso." : undefined} onClick={() => checkAmbiguity.mutate(preparedDraft)}><SearchCheck size={16} />{checkAmbiguity.isPending ? "Verifica…" : ambiguity ? "Ripeti verifica" : "Verifica percorsi"}</button>
+        </div>
+        {ambiguity ? <AmbiguityResult
+          report={ambiguity.report}
+          stale={ambiguityStale}
+          highlightedPath={visibleHighlight}
+          onHighlight={(answerIndex, path) => {
+            if (path && draft.answers[answerIndex]) setActiveAnswer(answerIndex);
+            setHighlightedPath(path);
+          }}
+        /> : null}
+      </section>
+
       {errorCount > 0 ? <section className="cms-errors" aria-live="polite"><div><CircleAlert size={20} /><strong>Controlla questi punti prima di pubblicare</strong></div>{saved?.validationErrors.map((error, index) => <p key={`${error.code}-${index}`}>{error.message}{error.answerIndex !== null ? ` · percorso ${error.answerIndex + 1}` : ""}</p>)}</section> : null}
 
       <footer className="cms-actions" aria-label="Azioni puzzle">
@@ -294,6 +327,46 @@ export function HexaflowPuzzleAdmin({ onSuccess, onError }: { onSuccess: (messag
       </footer>
     </section>
   );
+}
+
+function AmbiguityResult({ report, stale, highlightedPath, onHighlight }: {
+  report: HexaflowAmbiguityReportDto;
+  stale: boolean;
+  highlightedPath: readonly number[] | null;
+  onHighlight: (answerIndex: number, path: readonly number[] | null) => void;
+}) {
+  if (stale) return <p className="cms-ambiguity-note">Griglia o percorsi sono cambiati dopo l'ultima verifica: ripeti il controllo.</p>;
+  if (report.checkedAnswers === 0) return <p className="cms-ambiguity-note">Nessuna parola da verificare: completa la griglia e traccia i percorsi.</p>;
+  if (report.ambiguousAnswers.length === 0) return <p className="cms-ambiguity-ok"><CircleCheck size={16} />Nessuna ambiguità: {report.checkedAnswers === 1 ? "la parola è componibile" : `tutte le ${report.checkedAnswers} parole sono componibili`} solo con il percorso previsto.</p>;
+  return <div className="cms-ambiguity-list">
+    <p className="cms-ambiguity-warning"><TriangleAlert size={16} />{report.ambiguousAnswers.length === 1 ? "Una parola è componibile" : `${report.ambiguousAnswers.length} parole sono componibili`} anche con un percorso diverso: chi gioca troverebbe la parola giusta ma il percorso verrebbe contato come extra.</p>
+    {report.ambiguousAnswers.map((item) => (
+      <article key={item.answerId} className="cms-ambiguity-item">
+        <div>
+          <span className={`cms-answer-type ${item.type.toLowerCase()}`}>{item.type === "FLOW" ? "Flusso" : "Tema"}</span>
+          <strong>{item.word}</strong>
+          <span>percorso {item.answerIndex + 1} · {item.truncated ? `almeno ${item.alternativeCount}` : item.alternativeCount} {item.alternativeCount === 1 ? "percorso alternativo" : "percorsi alternativi"}</span>
+        </div>
+        <div className="cms-ambiguity-paths">
+          {item.alternativePaths.map((path, index) => {
+            const active = highlightedPath !== null && samePath(highlightedPath, path);
+            return <button key={path.join("-")} type="button" aria-pressed={active} className={active ? "active" : ""} onClick={() => onHighlight(item.answerIndex, active ? null : path)}>
+              Alternativa {index + 1}: celle {path.map((cell) => cell + 1).join(" → ")}
+            </button>;
+          })}
+          {item.alternativeCount > item.alternativePaths.length ? <small>Mostrate le prime {item.alternativePaths.length}.</small> : null}
+        </div>
+      </article>
+    ))}
+  </div>;
+}
+
+function samePath(a: readonly number[], b: readonly number[]) {
+  return a.length === b.length && a.every((cell, index) => cell === b[index]);
+}
+
+function boardSnapshot(draft: HexaflowPuzzleDraftDto) {
+  return JSON.stringify([draft.grid, draft.answers.map((answer) => [answer.id, answer.path])]);
 }
 
 function adjacent(a: number, b: number) {

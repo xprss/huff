@@ -368,6 +368,8 @@ export interface HexaflowBoardGenerationRequestDto { readonly themeWords: readon
 export interface HexaflowGeneratedBoardDto { readonly grid: readonly string[]; readonly answers: readonly HexaflowAnswerDto[]; }
 export interface HexaflowPuzzleAdminDto extends HexaflowPuzzleDraftDto { readonly id: string; readonly status: HexaflowPuzzleStatus; readonly validationErrors: readonly HexaflowValidationErrorDto[]; readonly immutable: boolean; readonly createdBy: string; readonly updatedBy: string; readonly publishedBy: string | null; readonly createdAt: string; readonly updatedAt: string; readonly publishedAt: string | null; }
 export interface HexaflowPuzzleSummaryDto { readonly puzzleDate: IsoDateString; readonly status: HexaflowPuzzleStatus; readonly themeClue: string; readonly answerCount: number; readonly coveredCells: number; readonly valid: boolean; readonly immutable: boolean; }
+export interface HexaflowAmbiguousAnswerDto { readonly answerId: string; readonly answerIndex: number; readonly word: string; readonly type: HexaflowAnswerType; readonly alternativeCount: number; readonly truncated: boolean; readonly alternativePaths: readonly (readonly number[])[]; }
+export interface HexaflowAmbiguityReportDto { readonly checkedAnswers: number; readonly ambiguousAnswers: readonly HexaflowAmbiguousAnswerDto[]; }
 export interface HexaflowPuzzleMonthDto { readonly month: string; readonly puzzles: readonly HexaflowPuzzleSummaryDto[]; }
 
 export interface StatsSetDto {
@@ -751,6 +753,7 @@ export type ApiEndpointMap = {
     DELETE: { response: void };
   };
   "/api/admin/hexaflow/puzzles/:date/generate": { POST: { body: HexaflowBoardGenerationRequestDto; response: HexaflowGeneratedBoardDto } };
+  "/api/admin/hexaflow/puzzles/:date/ambiguity": { POST: { body: HexaflowPuzzleDraftDto; response: HexaflowAmbiguityReportDto } };
   "/api/admin/hexaflow/puzzles/:date/publish": { POST: { response: HexaflowPuzzleAdminDto } };
   "/api/admin/hexaflow/puzzles/:date/draft": { POST: { response: HexaflowPuzzleAdminDto } };
 };
