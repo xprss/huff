@@ -957,10 +957,6 @@ a:focus-visible,
   padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 24px);
 }
 
-.admin-shell .cms-actions {
-  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 8px);
-}
-
 /* Welcome / authentication */
 .app-shell.login-shell {
   display: flex;
@@ -1671,11 +1667,6 @@ a:focus-visible,
 #root .cms-answer-fields {
   gap: 7px;
   padding: 9px 10px;
-}
-
-#root .cms-actions {
-  gap: 6px;
-  padding: 8px;
 }
 
 #root :is(.profile-nickname-field, .admin-edit-panel input, .admin-edit-panel textarea, .admin-edit-panel select, .admin-confirm-panel input, .cms-create-card input, .cms-theme input, .cms-answer-fields input, .cms-answer-fields select, .cms-answer-word, .cms-generator-fields input, .cms-generator-fields textarea, .trap-submit input, .trap-notes select) {
