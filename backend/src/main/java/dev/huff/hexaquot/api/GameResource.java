@@ -3,9 +3,11 @@ package dev.huff.hexaquot.api;
 import dev.huff.hexaquot.auth.ResolvedUser;
 import dev.huff.hexaquot.auth.UserService;
 import dev.huff.hexaquot.game.DailyGameService;
+import dev.huff.hexaquot.game.GameDto;
 import dev.huff.hexaquot.game.GuessRequest;
 import dev.huff.hexaquot.game.ModeRequest;
 import dev.huff.hexaquot.game.StarRevealDto;
+import dev.huff.hexaquot.game.WordExplanationService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.CookieParam;
 import jakarta.ws.rs.GET;
@@ -20,6 +22,9 @@ public class GameResource {
 
     @Inject
     DailyGameService dailyGameService;
+
+    @Inject
+    WordExplanationService wordExplanationService;
 
     @GET
     @Path("/game/today")
@@ -70,7 +75,9 @@ public class GameResource {
         if (resolvedUser.user() == null) {
             return unauthorized();
         }
-        Response.ResponseBuilder response = Response.ok(dailyGameService.guess(resolvedUser.user(), request == null ? null : request.guess()));
+        GameDto game = dailyGameService.guess(resolvedUser.user(), request == null ? null : request.guess());
+        wordExplanationService.prefetchHexaword(game);
+        Response.ResponseBuilder response = Response.ok(game);
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
         }
@@ -119,6 +126,20 @@ public class GameResource {
     @POST
     @Path("/hexaword/today/star")
     public Response useHexawordStar(@CookieParam("huff_session") String sessionId) { return useStar(sessionId); }
+
+    @GET
+    @Path("/hexaword/today/explanation")
+    public Response hexawordExplanation(@CookieParam("huff_session") String sessionId) {
+        ResolvedUser resolvedUser = userService.resolve(sessionId);
+        if (resolvedUser.user() == null) {
+            return unauthorized();
+        }
+        Response.ResponseBuilder response = Response.ok(wordExplanationService.hexaword(resolvedUser.user()));
+        if (resolvedUser.setCookieHeader() != null) {
+            response.header("Set-Cookie", resolvedUser.setCookieHeader());
+        }
+        return response.build();
+    }
 
     @GET
     @Path("/stats")

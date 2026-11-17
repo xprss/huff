@@ -4,6 +4,7 @@ import type { GameDto, GameMode, GameModeDto } from "../../../types";
 import type { BoardColumn, CrabYellowRequirement } from "../gameUtils";
 import { ModeSelection } from "./ModeSelection";
 import { TerminalInput } from "./TerminalInput";
+import { WordExplanation } from "./WordExplanation";
 
 export function GameBoard({
   game,
@@ -128,6 +129,7 @@ export function GameBoard({
           </p>
         ) : null}
       </div>
+      {completedSolution ? <WordExplanation game="hexaword" puzzleDate={game.puzzleDate} /> : null}
     </div>
   );
 }

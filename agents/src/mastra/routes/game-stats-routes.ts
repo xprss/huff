@@ -3,6 +3,7 @@ import { RequestContext } from '@mastra/core/request-context';
 import { z } from 'zod';
 import { gameStatsAgent } from '../agents/game-stats-agent';
 import { dailyGameSummaryAgent } from '../agents/daily-game-summary-agent';
+import { wordExplanationAgent } from '../agents/word-explanation-agent';
 
 const streamRequest = z.object({
   message: z.string().trim().min(1).max(4000),
@@ -17,6 +18,7 @@ const streamRequest = z.object({
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
 });
 const dailySummaryRequest = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) });
+const wordExplanationRequest = z.object({ word: z.string().regex(/^[a-z]{6}$/) });
 
 const encoder = new TextEncoder();
 
@@ -95,6 +97,23 @@ export const gameStatsRoutes = [
         return c.json({ date, summary });
       } catch {
         return c.json({ message: 'Generazione del riepilogo non riuscita.' }, 503);
+      }
+    },
+  }),
+  registerApiRoute('/internal/words/explanation', {
+    method: 'POST',
+    handler: async (c) => {
+      const parsed = wordExplanationRequest.safeParse(await c.req.json().catch(() => null));
+      if (!parsed.success) return c.json({ message: 'Parola non valida.' }, 400);
+
+      const { word } = parsed.data;
+      try {
+        const result = await wordExplanationAgent.generate(`Parola: ${word}`);
+        const explanation = result.text.trim().replace(/^["«“]|["»”]$/g, '').trim();
+        if (!explanation) return c.json({ message: 'La spiegazione generata è vuota.' }, 502);
+        return c.json({ word, explanation });
+      } catch {
+        return c.json({ message: 'Generazione della spiegazione non riuscita.' }, 503);
       }
     },
   }),

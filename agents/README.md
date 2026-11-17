@@ -24,4 +24,6 @@ Per creare il ruolo locale, configurare `POSTGRES_MCP_PASSWORD` nell'ambiente de
 
 Gli strumenti includono statistiche aggregate, andamento delle registrazioni e delle attività, coinvolgimento per gioco e un gruppo di monitoraggio dei nuovi giocatori. Quest'ultimo considera gli account registrati negli ultimi 14 giorni per impostazione predefinita e misura attivazione, partite, giochi scelti, ritorno e tempo alla prima partita. L'agente `dailyGameSummaryAgent` viene invocato ogni giorno dal backend e produce il riepilogo del giorno precedente visibile nella sezione admin hexAI; gli amministratori possono anche generarlo o aggiornarlo con il pulsante della sezione. Gli strumenti di elenco e inattività restituiscono nickname e date, mai email o ID interni.
 
-La route `POST /internal/game-stats/stream` è destinata esclusivamente al backend; non esporre la porta Mastra all'esterno.
+L'agente `wordExplanationAgent`, senza strumenti né accesso al database, scrive la spiegazione della parola del giorno di Hexaword e Hexastar tramite `POST /internal/words/explanation` (`{ "word": "abbaia" }` → `{ "word", "explanation" }`). Il backend lo invoca una sola volta per parola, alla prima partita conclusa, e memorizza il risultato.
+
+Le route `POST /internal/game-stats/stream` e `POST /internal/words/explanation` sono destinate esclusivamente al backend; non esporre la porta Mastra all'esterno.

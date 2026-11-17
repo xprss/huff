@@ -1,6 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 import { api } from "../api";
-import type { AdminPlayerSortDto, LeaderboardGame } from "../types";
+import type { AdminPlayerSortDto, LeaderboardGame, WordExplanationDto } from "../types";
+
+export type ExplainedGame = "hexaword" | "hexastar";
+
+// The agent writes the explanation only once, right after the first game of
+// the day ends: poll briefly while it is being generated, then stop.
+const EXPLANATION_POLL_INTERVAL = 2_000;
+const EXPLANATION_MAX_POLLS = 30;
 
 export const queryKeys = {
   me: ["me"] as const,
@@ -19,6 +26,7 @@ export const queryKeys = {
   hexatrapToday: ["hexatrap", "today"] as const,
   hexatrapStats: ["hexatrap", "stats"] as const,
   hexatrapEvents: (date: string) => ["hexatrap", "events", date] as const,
+  wordExplanation: (game: ExplainedGame, date: string) => ["explanation", game, date] as const,
   overallStats: ["stats", "overall"] as const,
   globalStats: ["stats", "global"] as const,
   leaderboards: (game?: LeaderboardGame) => game ? ["leaderboards", game] as const : ["leaderboards"] as const,
@@ -109,3 +117,16 @@ export const adminPlayerQueryOptions = (userId: string) =>
 
 export const hexatrapTodayQueryOptions = () => queryOptions({ queryKey: queryKeys.hexatrapToday, queryFn: api.hexatrapToday, refetchInterval: 60_000, refetchOnWindowFocus: "always", refetchOnMount: "always" });
 export const hexatrapStatsQueryOptions = () => queryOptions({ queryKey: queryKeys.hexatrapStats, queryFn: api.hexatrapStats });
+
+export const wordExplanationQueryOptions = (game: ExplainedGame, puzzleDate: string) => queryOptions({
+  queryKey: queryKeys.wordExplanation(game, puzzleDate),
+  queryFn: game === "hexaword" ? api.explanation : api.hexastarExplanation,
+  staleTime: (query) => query.state.data?.status === "READY" ? Infinity : 0,
+  retry: false,
+  refetchOnWindowFocus: false,
+  refetchInterval: (query) => isExplanationPending(query.state) ? EXPLANATION_POLL_INTERVAL : false
+});
+
+export function isExplanationPending(state: { data?: WordExplanationDto; dataUpdateCount: number }) {
+  return state.data?.status === "PENDING" && state.dataUpdateCount < EXPLANATION_MAX_POLLS;
+}
