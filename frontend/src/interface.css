@@ -2135,3 +2135,66 @@ html[data-color-scheme="light"] .avatar:not(.avatar--photo) {
       0 14px 30px color-mix(in srgb, var(--card-accent) 22%, transparent);
   }
 }
+
+/* Explanation of the daily word (Hexaword, Hexastar), shown at game end. */
+.word-explanation {
+  width: 100%;
+  flex: 0 0 auto;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px 13px;
+  border: 1px solid var(--color-surface-border);
+  border-radius: 14px;
+  background: var(--color-surface-soft);
+  text-align: left;
+  animation: word-explanation-enter 320ms var(--ease-out) both;
+}
+
+#root .word-explanation .eyebrow {
+  color: var(--color-primary);
+}
+
+#root .word-explanation-text {
+  margin: 0;
+  color: var(--color-text);
+  text-wrap: pretty;
+  animation: word-explanation-enter 320ms var(--ease-out) both;
+}
+
+.word-explanation-placeholder {
+  display: grid;
+  gap: 7px;
+  padding: 5px 0 3px;
+}
+
+.word-explanation-placeholder i {
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-text) 7%, transparent) 0%,
+    color-mix(in srgb, var(--color-text) 14%, transparent) 50%,
+    color-mix(in srgb, var(--color-text) 7%, transparent) 100%) 0 0 / 200% 100%;
+  animation: word-explanation-shimmer 1.4s ease-in-out infinite;
+}
+
+.word-explanation-placeholder i:last-child {
+  width: 62%;
+}
+
+@keyframes word-explanation-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes word-explanation-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-explanation,
+  #root .word-explanation-text,
+  .word-explanation-placeholder i {
+    animation: none;
+  }
+}

@@ -5,6 +5,7 @@ import { SHARE_EMOJI, STATE_RANK } from "../../app/constants";
 import { formatPuzzleDate } from "../../shared/utils/date";
 import type { HexastarAttemptDto, HexastarGuessActionDto, HexastarSyllableResultDto, HexastarTodayDto, TileState } from "../../types";
 import { HexastarTutorial } from "./HexastarTutorial";
+import { WordExplanation } from "../game/components/WordExplanation";
 
 type AnimationPhase = "idle" | "assembling" | "separating" | "won" | "rejected";
 
@@ -140,6 +141,13 @@ export function HexastarView({
     }
   }
 
+  function revealExplanation() {
+    const board = boardRef.current;
+    if (!board) return;
+    const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    board.scrollTo({ top: board.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  }
+
   async function share() {
     if (!game || game.status === "IN_PROGRESS" || !navigator.share) {
       onError("Condivisione non disponibile su questo dispositivo.");
@@ -190,6 +198,10 @@ export function HexastarView({
           <span>{game?.solutionSyllables?.join(" · ")}</span>
         </div>
       )}
+
+      {game && game.status !== "IN_PROGRESS" && phase === "idle"
+        ? <WordExplanation game="hexastar" puzzleDate={game.puzzleDate} onReady={revealExplanation}/>
+        : null}
 
     </div>
 

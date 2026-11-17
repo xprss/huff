@@ -96,6 +96,7 @@ export type ApiClient = {
   readonly useKitten: EndpointHandler<"/api/hexaword/today/kitten", "POST">;
   readonly useStar: EndpointHandler<"/api/hexaword/today/star", "POST">;
   readonly stats: EndpointHandler<"/api/hexaword/stats", "GET">;
+  readonly explanation: EndpointHandler<"/api/hexaword/today/explanation", "GET">;
   readonly hexahackToday: EndpointHandler<"/api/hexahack/today", "GET">;
   readonly hexahackProbe: EndpointHandler<"/api/hexahack/today/probes", "POST", [probe: HexahackProbeRequestDto]>;
   readonly hexahackSubmit: EndpointHandler<"/api/hexahack/today/submissions", "POST", [submission: HexahackSubmissionRequestDto]>;
@@ -109,6 +110,7 @@ export type ApiClient = {
   readonly hexastarToday: EndpointHandler<"/api/hexastar/today", "GET">;
   readonly hexastarGuess: EndpointHandler<"/api/hexastar/today/guesses", "POST", [requestId: string, syllables: readonly string[]]>;
   readonly hexastarStats: EndpointHandler<"/api/hexastar/stats", "GET">;
+  readonly hexastarExplanation: EndpointHandler<"/api/hexastar/today/explanation", "GET">;
   readonly hexaecoToday: EndpointHandler<"/api/hexaeco/today", "GET">;
   readonly hexaecoSubmit: EndpointHandler<"/api/hexaeco/today/submissions", "POST", [request: HexaecoSubmitRequestDto]>;
   readonly hexaecoStats: EndpointHandler<"/api/hexaeco/stats", "GET">;
@@ -274,6 +276,7 @@ export const api = {
       method: "POST"
     }),
   stats: () => request("/api/hexaword/stats", { method: "GET" }),
+  explanation: () => request("/api/hexaword/today/explanation", { method: "GET" }),
   hexahackToday: () => request("/api/hexahack/today", { method: "GET" }),
   hexahackProbe: (probe: HexahackProbeRequestDto) => request("/api/hexahack/today/probes", { method: "POST", body: probe }),
   hexahackSubmit: (submission: HexahackSubmissionRequestDto) => request("/api/hexahack/today/submissions", { method: "POST", body: submission }),
@@ -288,6 +291,7 @@ export const api = {
   hexastarGuess: (requestId: string, syllables: readonly string[]) =>
     request("/api/hexastar/today/guesses", { method: "POST", body: { requestId, syllables } }),
   hexastarStats: () => request("/api/hexastar/stats", { method: "GET" }),
+  hexastarExplanation: () => request("/api/hexastar/today/explanation", { method: "GET" }),
   hexaecoToday: () => request("/api/hexaeco/today", { method: "GET" }),
   hexaecoSubmit: (submission: HexaecoSubmitRequestDto) => request("/api/hexaeco/today/submissions", { method: "POST", body: submission }),
   hexaecoStats: () => request("/api/hexaeco/stats", { method: "GET" }),

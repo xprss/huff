@@ -573,6 +573,13 @@ export interface AdminDeleteResultDto {
   readonly adminRows: number;
 }
 
+export type WordExplanationStatus = "READY" | "PENDING" | "UNAVAILABLE";
+
+export interface WordExplanationDto {
+  readonly status: WordExplanationStatus;
+  readonly explanation: string | null;
+}
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export type ApiEndpointMap = {
@@ -622,6 +629,7 @@ export type ApiEndpointMap = {
   "/api/hexaword/today/guesses": { POST: { body: GuessRequestDto; response: GameDto } };
   "/api/hexaword/today/kitten": { POST: { response: GameDto } };
   "/api/hexaword/today/star": { POST: { response: StarRevealDto } };
+  "/api/hexaword/today/explanation": { GET: { response: WordExplanationDto } };
   "/api/hexaword/stats": { GET: { response: StatsDto } };
   "/api/hexahack/today": { GET: { response: HexahackTodayDto } };
   "/api/hexahack/today/probes": { POST: { body: HexahackProbeRequestDto; response: HexahackProbeActionDto } };
@@ -636,6 +644,7 @@ export type ApiEndpointMap = {
   "/api/hexastar/today": { GET: { response: HexastarTodayDto } };
   "/api/hexastar/today/guesses": { POST: { body: HexastarGuessRequestDto; response: HexastarGuessActionDto } };
   "/api/hexastar/stats": { GET: { response: StatsDto } };
+  "/api/hexastar/today/explanation": { GET: { response: WordExplanationDto } };
   "/api/hexaeco/today": { GET: { response: HexaecoTodayDto } };
   "/api/hexaeco/today/submissions": { POST: { body: HexaecoSubmitRequestDto; response: HexaecoSubmitActionDto } };
   "/api/hexaeco/stats": { GET: { response: HexaecoStatsDto } };
