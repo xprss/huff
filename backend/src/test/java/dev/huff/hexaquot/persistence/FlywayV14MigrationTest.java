@@ -25,7 +25,8 @@ class FlywayV14MigrationTest {
     void migratesAnEmptyDatabaseDirectlyToTheLatestVersion() throws Exception {
         withSchema(schema -> {
             flyway(schema, null).migrate();
-            assertEquals("23", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
+            assertEquals("24", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
+            assertTrue(tableExists(schema, "word_explanations"));
             assertTrue(tableExists(schema, "hexaword_games"));
             assertTrue(tableExists(schema, "hexahack_games"));
             assertTrue(tableExists(schema, "hexasky_games"));
