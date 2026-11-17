@@ -47,6 +47,24 @@ Both engines use the same golden examples in
 solvability; the planned five-person playtest is still needed to validate the
 3–5 minute target and unaided tutorial comprehension before launch.
 
+## Word explanations
+
+When a Hexaword or Hexastar game ends, the page shows a short explanation of
+the day's word under the solution. It is written by `wordExplanationAgent`
+(Mastra, `openai/gpt-6-luna`) the first time a game of that word ends, stored in
+`word_explanations` (Flyway `V24__word_explanations.sql`, keyed by word, so the
+two games share it when they land on the same word) and reused for every other
+player; the agent is never called twice for the same word.
+
+- `GET /api/hexaword/today/explanation` and `GET /api/hexastar/today/explanation`
+  return `{ status, explanation }` once the player's game is over (409 before).
+  `status` is `READY`, `PENDING` while the agent is writing it (the client polls
+  every 2 s) or `UNAVAILABLE` when the agent is not configured or failed; a
+  failed word is retried at most once a minute.
+- The backend calls the internal `POST /internal/words/explanation` route of
+  the agents service with the existing `GAME_STATS_AGENT_URL` and
+  `GAME_STATS_AGENT_TOKEN`; no new environment variables are needed.
+
 ## Local Development
 
 Backend:
