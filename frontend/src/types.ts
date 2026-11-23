@@ -222,10 +222,8 @@ export interface MeDto {
   readonly loggedIn: boolean;
   readonly user: UserDto | null;
   readonly authEnabled: boolean;
-  readonly pendingAnnouncements: readonly AnnouncementCampaign[];
 }
 
-export type AnnouncementCampaign = "HEXAHACK_LAUNCH" | "HEXAFLOW_LAUNCH";
 export interface ScheduledAlertDto {
   readonly id: string;
   readonly type: "PUSH" | "MODAL";
@@ -607,12 +605,6 @@ export type ApiEndpointMap = {
     GET: {
       response: MeDto;
     };
-  };
-  "/api/me/announcements/HEXAHACK_LAUNCH/seen": {
-    POST: { response: void };
-  };
-  "/api/me/announcements/HEXAFLOW_LAUNCH/seen": {
-    POST: { response: void };
   };
   "/api/me/alerts": { GET: { response: readonly ScheduledAlertDto[] } };
   "/api/me/alerts/:id/seen": { POST: { response: void } };

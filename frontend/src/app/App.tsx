@@ -96,8 +96,6 @@ import { HexaflowView } from "../features/hexaflow/HexaflowView";
 import { HexastarView } from "../features/hexastar/HexastarView";
 import { HexatrapView } from "../features/hexatrap/HexatrapView";
 import { HexaecoView } from "../features/hexaeco/HexaecoView";
-import { HexahackLaunchModal } from "../features/notifications/HexahackLaunchModal";
-import { HexaflowLaunchModal } from "../features/notifications/HexaflowLaunchModal";
 import { ScheduledAlertModal } from "../features/notifications/ScheduledAlertModal";
 import { AdminView } from "../features/admin/AdminView";
 import { GoogleLoginScreen } from "../features/login/GoogleLoginScreen";
@@ -143,11 +141,6 @@ export function App() {
   const [nextChallengeCountdown, setNextChallengeCountdown] = React.useState(formatNextChallengeCountdown);
   const actionsMenuRef = React.useRef<HTMLDivElement | null>(null);
   const notificationPromptHandledRef = React.useRef(false);
-  const launchAnnouncementHandledRef = React.useRef(false);
-  const [showLaunchAnnouncement, setShowLaunchAnnouncement] = React.useState(false);
-  const hexaflowLaunchAnnouncementHandledRef = React.useRef(false);
-  const [showHexaflowLaunchAnnouncement, setShowHexaflowLaunchAnnouncement] = React.useState(false);
-  const launchModalOpen = showLaunchAnnouncement || showHexaflowLaunchAnnouncement;
   const appTheme = React.useMemo(() => getAppTheme(themeId), [themeId]);
   const meQuery = useQuery(meQueryOptions());
   const me = meQuery.data ?? null;
@@ -437,29 +430,6 @@ export function App() {
     leaderboardsQuery.error, publicPlayerQuery.error]);
 
   React.useEffect(() => {
-    if (
-      me?.pendingAnnouncements.includes("HEXAFLOW_LAUNCH") ||
-      !me?.pendingAnnouncements.includes("HEXAHACK_LAUNCH") ||
-      launchAnnouncementHandledRef.current ||
-      showNotificationPrompt ||
-      (needsNotificationPrompt && !notificationPromptHandledRef.current)
-    ) return;
-    launchAnnouncementHandledRef.current = true;
-    setShowLaunchAnnouncement(true);
-  }, [me?.pendingAnnouncements, needsNotificationPrompt, showNotificationPrompt]);
-
-  React.useEffect(() => {
-    if (
-      !me?.pendingAnnouncements.includes("HEXAFLOW_LAUNCH") ||
-      hexaflowLaunchAnnouncementHandledRef.current ||
-      showNotificationPrompt ||
-      (needsNotificationPrompt && !notificationPromptHandledRef.current)
-    ) return;
-    hexaflowLaunchAnnouncementHandledRef.current = true;
-    setShowHexaflowLaunchAnnouncement(true);
-  }, [me?.pendingAnnouncements, needsNotificationPrompt, showNotificationPrompt]);
-
-  React.useEffect(() => {
     localStorage.setItem(THEME_STORAGE_KEY, appTheme.id);
   }, [appTheme.id]);
 
@@ -485,7 +455,6 @@ export function App() {
   React.useEffect(() => {
     if (
       !needsNotificationPrompt ||
-      launchModalOpen ||
       Boolean(pendingAlert) ||
       notificationPromptHandledRef.current
     ) {
@@ -494,7 +463,7 @@ export function App() {
 
     notificationPromptHandledRef.current = true;
     setShowNotificationPrompt(true);
-  }, [launchModalOpen, needsNotificationPrompt, pendingAlert]);
+  }, [needsNotificationPrompt, pendingAlert]);
 
   React.useEffect(() => {
     if (!toast) return;
@@ -512,7 +481,7 @@ export function App() {
 
   React.useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (activeRoute !== "game" || showInfo || starReveal || showNotificationPrompt || launchModalOpen || pendingAlert) return;
+      if (activeRoute !== "game" || showInfo || starReveal || showNotificationPrompt || pendingAlert) return;
       if (event.key === "Enter") {
         void submitGuess();
       } else if (event.key === "Backspace") {
@@ -877,30 +846,6 @@ export function App() {
     setSelectedCellIndex(null);
   }
 
-  function dismissLaunchAnnouncement(play: boolean) {
-    setShowLaunchAnnouncement(false);
-    queryClient.setQueryData<MeDto | undefined>(queryKeys.me, (current) => current ? {
-      ...current,
-      pendingAnnouncements: current.pendingAnnouncements.filter((campaign) => campaign !== "HEXAHACK_LAUNCH")
-    } : current);
-    void api.markHexahackLaunchSeen().catch(() => {
-      // The local close is immediate. A later identity refresh/access will retry via the persistent pending row.
-    });
-    if (play) setActiveRoute("hexahack");
-  }
-
-  function dismissHexaflowLaunchAnnouncement(play: boolean) {
-    setShowHexaflowLaunchAnnouncement(false);
-    queryClient.setQueryData<MeDto | undefined>(queryKeys.me, (current) => current ? {
-      ...current,
-      pendingAnnouncements: current.pendingAnnouncements.filter((campaign) => campaign !== "HEXAFLOW_LAUNCH")
-    } : current);
-    void api.markHexaflowLaunchSeen().catch(() => {
-      // La chiusura locale è immediata; un refresh successivo riproverà dalla riga persistente.
-    });
-    if (play) setActiveRoute("hexaflow");
-  }
-
   function dismissScheduledAlert(id: string) {
     queryClient.setQueryData<readonly ScheduledAlertDto[] | undefined>(["me", "alerts"],
       (current) => current?.filter((alert) => alert.id !== id));
@@ -1061,7 +1006,7 @@ export function App() {
           ) : activeRoute === "hexatrap" && HEXATRAP_AVAILABLE ? (
             hexatrapToday && me?.user ? <HexatrapView key={`${me.user.id}.${hexatrapToday.puzzleDate}`}
               today={hexatrapToday} userId={me.user.id}
-              inputBlocked={showInfo || showNotificationPrompt || launchModalOpen || Boolean(pendingAlert) || showActionsMenu}
+              inputBlocked={showInfo || showNotificationPrompt || Boolean(pendingAlert) || showActionsMenu}
               onError={error => { handleAuthRequired(error); }}
               onComplete={() => { showToast("Hexatrap risolto!", "success"); void launchVictoryConfetti(); }}
             /> : <div className="eco-save-error"><p>Non riesco a caricare Hexatrap.</p><button type="button" onClick={() => void hexatrapTodayQuery.refetch()}>Riprova</button></div>
@@ -1069,7 +1014,7 @@ export function App() {
             hexaecoToday && me?.user ? <HexaecoView
               today={hexaecoToday}
               userId={me.user.id}
-              inputBlocked={showInfo || showNotificationPrompt || launchModalOpen || Boolean(pendingAlert) || showActionsMenu}
+              inputBlocked={showInfo || showNotificationPrompt || Boolean(pendingAlert) || showActionsMenu}
               onSubmit={(request) => hexaecoSubmitMutation.mutateAsync(request)}
               onComplete={() => showToast("Hexaeco completato. In perfetta sincronia!", "success")}
               onError={(error) => { handleAuthRequired(error); }}
@@ -1219,15 +1164,7 @@ export function App() {
           />
         ) : null}
 
-        {showHexaflowLaunchAnnouncement ? (
-          <HexaflowLaunchModal onPlay={() => dismissHexaflowLaunchAnnouncement(true)} onClose={() => dismissHexaflowLaunchAnnouncement(false)} />
-        ) : null}
-
-        {showLaunchAnnouncement ? (
-          <HexahackLaunchModal onPlay={() => dismissLaunchAnnouncement(true)} onClose={() => dismissLaunchAnnouncement(false)} />
-        ) : null}
-
-        {pendingAlert && !showNotificationPrompt && !launchModalOpen ? (
+        {pendingAlert && !showNotificationPrompt ? (
           <ScheduledAlertModal alert={pendingAlert} onClose={() => dismissScheduledAlert(pendingAlert.id)} />
         ) : null}
 

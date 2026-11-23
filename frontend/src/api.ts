@@ -82,8 +82,6 @@ export function clearAccessToken() {
 export type ApiClient = {
   readonly logout: EndpointHandler<"/api/logout", "POST">;
   readonly me: EndpointHandler<"/api/me", "GET">;
-  readonly markHexahackLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAHACK_LAUNCH/seen", "POST">;
-  readonly markHexaflowLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAFLOW_LAUNCH/seen", "POST">;
   readonly pendingAlerts: EndpointHandler<"/api/me/alerts", "GET">;
   readonly markAlertSeen: EndpointHandler<"/api/me/alerts/:id/seen", "POST", [id: string]>;
   readonly adminAlerts: EndpointHandler<"/api/admin/alerts", "GET">;
@@ -248,8 +246,6 @@ async function streamAdminGameStats(body: AdminGameStatsChatRequestDto, onToken:
 export const api = {
   logout: () => request("/api/logout", { method: "POST" }),
   me: () => request("/api/me", { method: "GET" }),
-  markHexahackLaunchSeen: () => request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" }),
-  markHexaflowLaunchSeen: () => request("/api/me/announcements/HEXAFLOW_LAUNCH/seen", { method: "POST" }),
   pendingAlerts: () => request("/api/me/alerts", { method: "GET" }),
   markAlertSeen: (id: string) => request(`/api/me/alerts/${encodeURIComponent(id)}/seen` as "/api/me/alerts/:id/seen", { method: "POST" }),
   adminAlerts: () => request("/api/admin/alerts", { method: "GET" }),
