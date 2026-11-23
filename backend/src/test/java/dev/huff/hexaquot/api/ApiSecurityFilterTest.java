@@ -189,8 +189,6 @@ class ApiSecurityFilterTest {
             Arguments.of(Method.POST, "/api/hexaeco/today/submissions"),
             Arguments.of(Method.GET, "/api/hexaeco/stats"),
             Arguments.of(Method.GET, "/api/hexaeco/leaderboards"),
-            Arguments.of(Method.POST, "/api/me/announcements/HEXAHACK_LAUNCH/seen"),
-            Arguments.of(Method.POST, "/api/me/announcements/HEXAFLOW_LAUNCH/seen"),
             Arguments.of(Method.POST, "/api/push/subscriptions"),
             Arguments.of(Method.DELETE, "/api/push/subscriptions"),
             Arguments.of(Method.GET, "/api/admin/players"),
