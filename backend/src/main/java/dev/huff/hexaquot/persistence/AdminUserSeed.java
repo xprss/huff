@@ -25,6 +25,7 @@ public class AdminUserSeed {
             admin.canManagePlayers = true;
             admin.canManageAdmins = true;
             admin.canManageHexaflowPuzzles = true;
+            admin.canManageHexatrapCases = true;
             admin.updatedAt = now;
             admin.persist();
             return;
@@ -35,6 +36,7 @@ public class AdminUserSeed {
         admin.canManagePlayers = true;
         admin.canManageAdmins = true;
         admin.canManageHexaflowPuzzles = true;
+        admin.canManageHexatrapCases = true;
         admin.updatedAt = now;
     }
 }

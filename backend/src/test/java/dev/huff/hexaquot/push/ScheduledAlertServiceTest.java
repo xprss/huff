@@ -31,7 +31,7 @@ class ScheduledAlertServiceTest {
         user.persist();
 
         AppUser admin = new AppUser("admin", null, "Admin", "@admin", "😀", null, false,
-            new AdminPrivileges(true, true, true, true, true));
+            new AdminPrivileges(true, true, true, true, true, true));
         String future = Instant.now().plusSeconds(3600).toString();
         var request = new ScheduledAlertService.AlertRequest("MODAL", "Titolo", "Messaggio", "/#/games", future);
         var created = service.create(admin, request);
@@ -58,7 +58,7 @@ class ScheduledAlertServiceTest {
     @Test @TestTransaction
     void rejectsPastAndExternalLinks() {
         AppUser admin = new AppUser("admin", null, "Admin", "@admin", "😀", null, false,
-            new AdminPrivileges(true, true, true, true, true));
+            new AdminPrivileges(true, true, true, true, true, true));
         assertThrows(BadRequestException.class, () -> service.create(admin,
             new ScheduledAlertService.AlertRequest("PUSH", "Test", "Body", null, Instant.now().minusSeconds(1).toString())));
         assertThrows(BadRequestException.class, () -> service.create(admin,
@@ -85,7 +85,7 @@ class ScheduledAlertServiceTest {
         subscription.persist();
 
         AppUser admin = new AppUser("admin", null, "Admin", "@admin", "😀", null, false,
-            new AdminPrivileges(true, true, true, true, true));
+            new AdminPrivileges(true, true, true, true, true, true));
         var created = service.create(admin, new ScheduledAlertService.AlertRequest("PUSH", "Titolo", "Messaggio", null,
             Instant.now().plusSeconds(3600).toString()));
         ScheduledAlertEntity row = ScheduledAlertEntity.findById(created.id());
