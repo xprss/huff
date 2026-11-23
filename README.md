@@ -47,6 +47,19 @@ Both engines use the same golden examples in
 solvability; the planned five-person playtest is still needed to validate the
 3–5 minute target and unaided tutorial comprehension before launch.
 
+## Hexatrap
+
+Hexatrap is a daily knights-and-knaves investigation: one character always
+tells the truth, the other always lies, and the player interrogates them and
+examines clues against a 60-minute budget before a single verdict on the liar
+and the key facts. Every night `hexatrapAuthorAgent` (Mastra,
+`openai/gpt-6-luna`) writes the next day's case; the backend validates it
+exhaustively, has `hexatrapAuditorAgent` back-translate every sentence to check
+it says exactly what its formula says, and sends specific feedback until a case
+passes. Players never interact with the AI. Until `HEXATRAP_ENABLED=true` only
+admins can play the cases (preview). Rules, the case language, validation,
+generation, API and configuration are in [docs/hexatrap.md](docs/hexatrap.md).
+
 ## Word explanations
 
 When a Hexaword or Hexastar game ends, the page shows a short explanation of
