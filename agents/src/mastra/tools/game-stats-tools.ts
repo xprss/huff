@@ -68,8 +68,8 @@ const gameRows: Record<Exclude<Game, 'all'>, string> = {
        true AS completed, true AS won, false AS lost
     FROM hexaeco_games g JOIN users u ON u.id = g.user_id`,
   hexatrap: `SELECT 'hexatrap' AS game, u.id AS user_id, u.nickname, g.puzzle_date AS played_on, g.created_at AS activity_at, g.status,
-       (g.status = 'WON') AS completed,
-       (g.status = 'WON') AS won, false AS lost
+       (g.status IN ('WON', 'LOST')) AS completed,
+       (g.status = 'WON') AS won, (g.status = 'LOST') AS lost
     FROM hexatrap_games g JOIN users u ON u.id = g.user_id`,
 };
 
