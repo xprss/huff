@@ -5,7 +5,8 @@ import java.util.*;
 
 /**
  * Finds answers whose word can also be traced on the board along a path different from the intended one.
- * Gameplay accepts only the stored path (or its reverse), so an alternative path would be counted as an extra.
+ * Gameplay accepts only the stored path (or its reverse when it spells the same word, i.e. palindromes),
+ * so an alternative path would be counted as an extra.
  * The check is advisory: it never blocks saving or publishing.
  */
 @ApplicationScoped
@@ -102,7 +103,7 @@ public class HexaflowAmbiguityChecker {
             for (int cell : current) path.add(cell);
             List<Integer> reversed = new ArrayList<>(path);
             Collections.reverse(reversed);
-            // Gameplay treats a path and its reverse as the same answer (relevant for palindromes).
+            // Gameplay also accepts the reverse of the intended path when it spells the same word (palindromes).
             if (path.equals(intended) || reversed.equals(intended)) return;
             if (seen.contains(reversed) || !seen.add(path)) return;
             alternatives.add(List.copyOf(path));

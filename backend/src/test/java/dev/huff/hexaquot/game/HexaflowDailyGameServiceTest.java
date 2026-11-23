@@ -18,7 +18,7 @@ class HexaflowDailyGameServiceTest {
     @Inject DailyGameService clock;
 
     @Test @TestTransaction
-    void supportsReverseSolutionsUniqueExtrasCompletionAndReplay() {
+    void acceptsOnlyForwardSolutionsUniqueExtrasCompletionAndReplay() {
         HexaflowDtos.PuzzleDraftDto puzzle=createPuzzle();
         AppUser user=createUser();
         var initial=service.today(user);
@@ -26,10 +26,14 @@ class HexaflowDailyGameServiceTest {
         assertNull(initial.game());
         assertEquals(2,initial.totalAnswers());
 
-        List<Integer> reverseFlow=reversed(puzzle.answers().get(0).path());
-        var flow=service.submitPath(user,new HexaflowDtos.PathRequest("flow",reverseFlow));
+        List<Integer> flowPath=puzzle.answers().get(0).path();
+        var reversedFlow=service.submitPath(user,new HexaflowDtos.PathRequest("flow-reversed",reversed(flowPath)));
+        assertEquals(HexaflowDtos.PathOutcome.EXTRA,reversedFlow.result().outcome());
+        assertTrue(reversedFlow.game().foundAnswers().isEmpty());
+
+        var flow=service.submitPath(user,new HexaflowDtos.PathRequest("flow",flowPath));
         assertEquals(HexaflowDtos.PathOutcome.FLOW,flow.result().outcome());
-        assertTrue(service.submitPath(user,new HexaflowDtos.PathRequest("flow",reverseFlow)).replayed());
+        assertTrue(service.submitPath(user,new HexaflowDtos.PathRequest("flow",flowPath)).replayed());
         assertEquals(1,service.today(user).game().foundAnswers().size());
 
         var firstExtra=service.submitPath(user,new HexaflowDtos.PathRequest("extra-1",List.of(1,2,3,4)));
@@ -38,9 +42,9 @@ class HexaflowDailyGameServiceTest {
         assertEquals(HexaflowDtos.PathOutcome.DUPLICATE,duplicate.result().outcome());
         service.submitPath(user,new HexaflowDtos.PathRequest("extra-2",List.of(7,8,9,10)));
         var thirdExtra=service.submitPath(user,new HexaflowDtos.PathRequest("extra-3",List.of(13,14,15,16)));
-        assertEquals(3,thirdExtra.game().extraCount());
+        assertEquals(4,thirdExtra.game().extraCount());
 
-        var completed=service.submitPath(user,new HexaflowDtos.PathRequest("theme",reversed(puzzle.answers().get(1).path())));
+        var completed=service.submitPath(user,new HexaflowDtos.PathRequest("theme",puzzle.answers().get(1).path()));
         assertEquals(HexaflowDtos.GameStatus.COMPLETED,completed.game().status());
         assertEquals(2,completed.game().foundAnswers().size());
         var stats=service.stats(user);
