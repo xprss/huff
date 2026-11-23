@@ -222,6 +222,9 @@ export interface MeDto {
   readonly loggedIn: boolean;
   readonly user: UserDto | null;
   readonly authEnabled: boolean;
+  /** Hexatrap is playable: public, or an admin-only preview. */
+  readonly hexatrapAvailable: boolean;
+  readonly hexatrapPublic: boolean;
 }
 
 export interface ScheduledAlertDto {
@@ -387,6 +390,7 @@ export interface AdminPrivilegesDto {
   readonly canManagePlayers: boolean;
   readonly canManageAdmins: boolean;
   readonly canManageHexaflowPuzzles: boolean;
+  readonly canManageHexatrapCases: boolean;
 }
 
 export interface UserDto {
@@ -592,8 +596,11 @@ export type ApiEndpointMap = {
   };
   "/api/hexatrap/today": { GET: { response: HexatrapTodayDto } };
   "/api/hexatrap/today/questions": { POST: { body: HexatrapQuestionRequestDto; response: HexatrapActionDto } };
-  "/api/hexatrap/today/submissions": { POST: { body: HexatrapSubmissionRequestDto; response: HexatrapActionDto } };
-  "/api/hexatrap/today/events": { GET: { response: HexatrapEventsDto } };
+  "/api/hexatrap/today/clues": { POST: { body: HexatrapClueRequestDto; response: HexatrapActionDto } };
+  "/api/hexatrap/today/verdict": { POST: { body: HexatrapVerdictRequestDto; response: HexatrapActionDto } };
+  "/api/admin/hexatrap/cases": { GET: { response: readonly HexatrapCaseSummaryDto[] } };
+  "/api/admin/hexatrap/cases/:date": { GET: { response: HexatrapCaseDetailDto } };
+  "/api/admin/hexatrap/cases/:date/generate": { POST: { response: { readonly puzzleDate: IsoDateString; readonly queued: boolean } } };
   "/api/hexatrap/stats": { GET: { response: HexatrapStatsDto } };
   "/api/hexatrap/leaderboards": { GET: { response: LeaderboardsDto } };
   "/api/logout": {
@@ -760,13 +767,62 @@ export type ApiEndpointMap = {
 };
 
 
-export interface HexatrapDossierDto { readonly litCount: number; readonly relation: "SAME" | "IMPLIES" | "AT_LEAST_ONE"; readonly firstSeal: number; readonly secondSeal: number; }
 export interface HexatrapEnvelopeDto { readonly requestId: string; readonly puzzleDate: IsoDateString; readonly rulesVersion: number; }
-export interface HexatrapQuestionRequestDto extends HexatrapEnvelopeDto { readonly type: "SEAL" | "NUMBER"; readonly advisor: number; readonly seal: number | null; }
-export interface HexatrapSubmissionRequestDto extends HexatrapEnvelopeDto { readonly number: number; }
-export interface HexatrapEventDto { readonly sequence: number; readonly type: "SEAL" | "NUMBER" | "SUBMISSION"; readonly advisor: number | null; readonly seal: number | null; readonly answer: boolean | null; readonly number: number | null; readonly correct: boolean | null; readonly createdAt: string; }
-export interface HexatrapEventsDto { readonly events: readonly HexatrapEventDto[]; readonly nextBefore: number | null; }
-export interface HexatrapGameDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly status: "IN_PROGRESS" | "WON"; readonly questions: number; readonly wrongSubmissions: number; readonly points: number; readonly numberUnlocked: boolean; readonly numberRequested: boolean; readonly history: HexatrapEventsDto; readonly reveal: { readonly number: number; readonly loyalAdvisor: number; readonly configuration: number; readonly explanation: string } | null; }
-export interface HexatrapTodayDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly dossier: HexatrapDossierDto; readonly game: HexatrapGameDto | null; }
-export interface HexatrapActionDto { readonly game: HexatrapGameDto; readonly event: HexatrapEventDto; readonly replayed: boolean; }
-export interface HexatrapStatsDto { readonly started: number; readonly won: number; readonly currentStreak: number; readonly maxStreak: number; readonly averagePoints: number; readonly bestPoints: number | null; readonly averageQuestions: number; }
+export interface HexatrapQuestionRequestDto extends HexatrapEnvelopeDto { readonly questionId: string; }
+export interface HexatrapClueRequestDto extends HexatrapEnvelopeDto { readonly clueId: string; }
+export interface HexatrapVerdictRequestDto extends HexatrapEnvelopeDto { readonly liar: HexatrapCharacterId; readonly facts: Readonly<Record<string, string>>; }
+export type HexatrapCharacterId = "A" | "B";
+export interface HexatrapCharacterDto { readonly id: HexatrapCharacterId; readonly name: string; readonly role: string; readonly icon: string; }
+export interface HexatrapOptionDto { readonly id: string; readonly label: string; }
+export interface HexatrapFactDto { readonly id: string; readonly label: string; readonly options: readonly HexatrapOptionDto[]; readonly verdict: boolean; }
+/** What an item implies about the facts if A lies, and if B lies. */
+export interface HexatrapReadingsDto { readonly ifALies: string; readonly ifBLies: string; }
+export interface HexatrapCertaintyDto { readonly id: string; readonly text: string; readonly record: string; }
+export interface HexatrapStatementDto { readonly id: string; readonly speaker: HexatrapCharacterId; readonly text: string; readonly record: string; readonly readings: HexatrapReadingsDto; }
+export interface HexatrapQuestionDto { readonly id: string; readonly to: HexatrapCharacterId; readonly text: string; readonly record: string; }
+export interface HexatrapClueCardDto { readonly id: string; readonly title: string; readonly cost: number; }
+export interface HexatrapCaseDto {
+  readonly title: string; readonly format: string; readonly difficulty: number; readonly intro: string; readonly budget: number; readonly questionCost: number;
+  readonly characters: readonly HexatrapCharacterDto[]; readonly facts: readonly HexatrapFactDto[]; readonly certainties: readonly HexatrapCertaintyDto[];
+  readonly statements: readonly HexatrapStatementDto[]; readonly questions: readonly HexatrapQuestionDto[]; readonly clues: readonly HexatrapClueCardDto[];
+}
+export interface HexatrapAskedDto { readonly sequence: number; readonly questionId: string; readonly to: HexatrapCharacterId; readonly answer: boolean; readonly readings: HexatrapReadingsDto; }
+export interface HexatrapRevealedDto { readonly sequence: number; readonly clueId: string; readonly title: string; readonly text: string; readonly record: string; }
+export interface HexatrapVerdictDto { readonly liar: HexatrapCharacterId; readonly facts: Readonly<Record<string, string>>; }
+export interface HexatrapEvidenceDto { readonly kind: "CERTAINTY" | "STATEMENT" | "QUESTION" | "CLUE" | "UNKNOWN"; readonly id: string; readonly label: string; }
+export interface HexatrapRevealDto {
+  readonly liar: HexatrapCharacterId; readonly facts: Readonly<Record<string, string>>; readonly epilogue: string; readonly liarCorrect: boolean; readonly factsCorrect: boolean;
+  readonly proofFound: boolean; readonly proof: readonly HexatrapEvidenceDto[]; readonly optimalPath: readonly HexatrapEvidenceDto[]; readonly optimalMinutes: number;
+  readonly expertMinutes: number; readonly share: string;
+}
+export type HexatrapStatus = "IN_PROGRESS" | "WON" | "LOST";
+export type HexatrapOutcome = "SOLVED" | "PARTIAL" | "WRONG";
+export interface HexatrapGameDto {
+  readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly status: HexatrapStatus; readonly outcome: HexatrapOutcome | null;
+  readonly minutesUsed: number; readonly minutesLeft: number; readonly sequence: number; readonly asked: readonly HexatrapAskedDto[];
+  readonly revealed: readonly HexatrapRevealedDto[]; readonly verdict: HexatrapVerdictDto | null; readonly points: number; readonly reveal: HexatrapRevealDto | null;
+  readonly completedAt: string | null;
+}
+export interface HexatrapTodayDto { readonly puzzleDate: IsoDateString; readonly rulesVersion: number; readonly available: boolean; readonly caseFile: HexatrapCaseDto | null; readonly game: HexatrapGameDto | null; }
+export interface HexatrapActionDto { readonly game: HexatrapGameDto; readonly replayed: boolean; }
+export interface HexatrapStatsDto { readonly started: number; readonly won: number; readonly lost: number; readonly partial: number; readonly currentStreak: number; readonly maxStreak: number; readonly averagePoints: number; readonly bestPoints: number | null; readonly averageMinutes: number; }
+export type HexatrapCaseStatus = "GENERATING" | "READY" | "FAILED";
+export interface HexatrapCaseMetricsDto {
+  readonly worlds: number; readonly h0Size: number; readonly roleBalance: number; readonly totalCost: number; readonly certificateCost: number;
+  readonly certificate: readonly string[]; readonly minimumActions: number; readonly expertPar: number; readonly expertPath: readonly string[];
+  readonly naiveMedian: number; readonly traps: number; readonly oracles: number; readonly guessOdds: number;
+}
+export interface HexatrapCaseSummaryDto {
+  readonly puzzleDate: IsoDateString; readonly status: HexatrapCaseStatus; readonly difficulty: number; readonly format: string; readonly title: string | null;
+  readonly attempts: number; readonly model: string | null; readonly generatedAt: string | null; readonly lastError: string | null; readonly games: number;
+  readonly metrics: HexatrapCaseMetricsDto | null; readonly warnings: readonly string[] | null; readonly regenerable: boolean;
+}
+export interface HexatrapAttemptDto { readonly runId: string; readonly attempt: number; readonly phase: "DRAFT" | "VALIDATE" | "AUDIT" | "ACCEPTED"; readonly ok: boolean; readonly issues: readonly unknown[] | null; readonly metrics: HexatrapCaseMetricsDto | null; readonly durationMs: number; readonly createdAt: string; }
+export interface HexatrapAdminItemDto { readonly id: string; readonly text: string; readonly formula: string; readonly speaker?: HexatrapCharacterId; readonly to?: HexatrapCharacterId; readonly title?: string; readonly cost?: number; }
+export interface HexatrapAdminCaseDto {
+  readonly title: string; readonly intro: string; readonly epilogue: string; readonly format: string;
+  readonly characters: readonly HexatrapCharacterDto[]; readonly facts: readonly (HexatrapFactDto & { readonly options: readonly (HexatrapOptionDto & { readonly affirm: string; readonly deny: string })[] })[];
+  readonly certainties: readonly HexatrapAdminItemDto[]; readonly statements: readonly HexatrapAdminItemDto[]; readonly questions: readonly HexatrapAdminItemDto[]; readonly clues: readonly HexatrapAdminItemDto[];
+  readonly verdictFacts: readonly string[]; readonly solution: { readonly liar: HexatrapCharacterId; readonly facts: Readonly<Record<string, string>> };
+}
+export interface HexatrapCaseDetailDto { readonly summary: HexatrapCaseSummaryDto; readonly caseFile: HexatrapAdminCaseDto | null; readonly records: Readonly<Record<string, string>>; readonly attempts: readonly HexatrapAttemptDto[]; }

@@ -69,7 +69,7 @@ export function HexaecoStatsPanel({ stats }: { stats: HexaecoStatsDto }) {
 }
 
 export function HexatrapStatsPanel({ stats }: { stats: HexatrapStatsDto }) {
-  return <><div className="stat-grid"><Metric label="Iniziate" value={stats.started}/><Metric label="Vinte" value={stats.won}/><Metric label="Serie" value={stats.currentStreak}/><Metric label="Record serie" value={stats.maxStreak}/><Metric label="Punti medi" value={Math.round(stats.averagePoints)}/><Metric label="Punti migliori" value={stats.bestPoints ?? "—"}/><Metric label="Domande medie" value={stats.averageQuestions.toFixed(1)}/></div><p className="account-note">Medie e punti migliori si riferiscono alle partite vinte.</p></>;
+  return <><div className="stat-grid"><Metric label="Iniziati" value={stats.started}/><Metric label="Risolti" value={stats.won}/><Metric label="Mancati" value={stats.lost}/><Metric label="Serie" value={stats.currentStreak}/><Metric label="Record serie" value={stats.maxStreak}/><Metric label="Punti medi" value={Math.round(stats.averagePoints)}/><Metric label="Punti migliori" value={stats.bestPoints ?? "—"}/><Metric label="Minuti medi" value={stats.averageMinutes.toFixed(0)}/></div><p className="account-note">Punti medi e migliori si riferiscono ai casi risolti; i minuti medi a tutti i verdetti.</p></>;
 }
 
 export function StatsView({ stats, active, onChangeGame }: {

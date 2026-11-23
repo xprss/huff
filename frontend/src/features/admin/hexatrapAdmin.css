@@ -1,0 +1,30 @@
+.trap-admin-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.trap-admin-row { border: 1px solid var(--color-surface-border); border-radius: 14px; padding: 12px; background: var(--color-surface); display: grid; gap: 10px; }
+.trap-admin-row.is-failed { border-color: var(--color-danger); }
+.trap-admin-open { all: unset; cursor: pointer; display: grid; gap: 4px; }
+.trap-admin-open:focus-visible { outline: 3px solid var(--color-focus-ring, var(--color-primary)); outline-offset: 3px; border-radius: 8px; }
+.trap-admin-date { font-size: .8rem; color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.trap-admin-tags { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: .82rem; color: var(--color-muted); }
+.trap-admin-status { font-weight: 700; }
+.trap-admin-status.is-ready { color: var(--color-correct); }
+.trap-admin-status.is-failed { color: var(--color-danger); }
+.trap-admin-status.is-generating { color: var(--color-present); }
+.trap-admin-metrics { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 12px; font-size: .82rem; }
+.trap-admin-metrics dt { color: var(--color-muted); }
+.trap-admin-metrics dd { margin: 0; font-weight: 600; }
+.trap-admin-detail { border-top: 1px solid var(--color-surface-border); padding-top: 10px; display: grid; gap: 6px; }
+.trap-admin-detail p { margin: 4px 0; line-height: 1.5; }
+.trap-admin-detail h4 { margin: 12px 0 4px; }
+.trap-admin-cast { font-size: .9rem; color: var(--color-muted); }
+.trap-admin-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.trap-admin-items li { padding: 8px 10px; border-radius: 10px; background: var(--color-surface-soft, transparent); border: 1px solid var(--color-surface-border); }
+.trap-admin-items code, .trap-admin-detail code { font-size: .82rem; overflow-wrap: anywhere; }
+.trap-admin-record { color: var(--color-muted); font-size: .88rem; }
+.trap-admin-warnings { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--color-present); }
+.trap-admin-warnings ul { margin: 6px 0 0; padding-left: 18px; }
+.trap-admin-error { color: var(--color-danger); }
+.trap-admin-attempts { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: .85rem; }
+.trap-admin-attempts li.ko > span { color: var(--color-danger); }
+.trap-admin-attempts ul { margin: 4px 0 0; padding-left: 18px; color: var(--color-muted); }
+.trap-admin .admin-toolbar { gap: 12px; }
+.trap-admin .admin-toolbar button { flex: none; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }

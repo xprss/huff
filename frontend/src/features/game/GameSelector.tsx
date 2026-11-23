@@ -1,6 +1,5 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
-import { HEXATRAP_AVAILABLE } from "../../app/constants";
 import { PuzzleArtwork, type PuzzleKind } from "./components/PuzzleArtwork";
 
 // The card swells and fades out; the route switches when it is almost gone and
@@ -9,7 +8,7 @@ const LAUNCH_SWITCH_MS = 300;
 
 export function GameSelector({
   hexawordCompleted, hexahackCompleted, hexaskyCompleted, hexaflowCompleted,
-  hexaflowAvailable, hexastarCompleted, hexaecoCompleted, hexatrapCompleted,
+  hexaflowAvailable, hexastarCompleted, hexaecoCompleted, hexatrapCompleted, hexatrapAvailable, hexatrapVisible, hexatrapPreview,
   onHexatrap, onHexaword, onHexahack, onHexasky, onHexaflow, onHexastar, onHexaeco
 }: {
   hexawordCompleted: boolean;
@@ -20,6 +19,11 @@ export function GameSelector({
   hexastarCompleted: boolean;
   hexaecoCompleted: boolean;
   hexatrapCompleted: boolean;
+  /** A ready case exists and the player may open it. */
+  hexatrapAvailable: boolean;
+  /** Public, or previewed by an admin; otherwise the card is hidden. */
+  hexatrapVisible: boolean;
+  hexatrapPreview: boolean;
   onHexatrap: () => void;
   onHexaword: () => void;
   onHexahack: () => void;
@@ -53,7 +57,7 @@ export function GameSelector({
     { id: "flow", name: "Hexaflow", description: "Collega le lettere adiacenti per completare il flusso continuo.", completed: hexaflowCompleted, available: hexaflowAvailable, onPlay: onHexaflow },
     { id: "star", name: "Hexastar", description: "Combina le tessere sillabiche per ricostruire la griglia.", completed: hexastarCompleted, available: true, onPlay: onHexastar },
     { id: "eco", name: "Hexaeco", description: "Pianifica la traiettoria e sincronizza la luce con la sua eco.", completed: hexaecoCompleted, available: true, onPlay: onHexaeco },
-    { id: "trap", name: "Hexatrap", description: "Interroga i due consiglieri e smaschera l'inganno.", completed: hexatrapCompleted, available: HEXATRAP_AVAILABLE, unavailableLabel: "In sviluppo", onPlay: onHexatrap }
+    ...(hexatrapVisible ? [{ id: "trap" as const, name: hexatrapPreview ? "Hexatrap · anteprima" : "Hexatrap", description: "Un caso al giorno: chi dice il vero e chi mente?", completed: hexatrapCompleted, available: hexatrapAvailable, unavailableLabel: "Caso in preparazione", onPlay: onHexatrap }] : [])
   ];
 
   return (
