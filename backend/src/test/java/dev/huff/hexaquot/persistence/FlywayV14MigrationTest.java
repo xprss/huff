@@ -25,7 +25,7 @@ class FlywayV14MigrationTest {
     void migratesAnEmptyDatabaseDirectlyToTheLatestVersion() throws Exception {
         withSchema(schema -> {
             flyway(schema, null).migrate();
-            assertEquals("25", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
+            assertEquals("26", scalar(schema, "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank DESC LIMIT 1"));
             assertTrue(tableExists(schema, "word_explanations"));
             assertTrue(tableExists(schema, "hexaword_games"));
             assertTrue(tableExists(schema, "hexahack_games"));
@@ -35,7 +35,11 @@ class FlywayV14MigrationTest {
             assertTrue(tableExists(schema, "hexastar_games"));
             assertTrue(tableExists(schema, "hexaeco_games"));
             assertTrue(tableExists(schema, "hexatrap_games"));
-            assertTrue(tableExists(schema, "hexatrap_events"));
+            assertTrue(tableExists(schema, "hexatrap_cases"));
+            assertTrue(tableExists(schema, "hexatrap_actions"));
+            assertTrue(tableExists(schema, "hexatrap_generation_attempts"));
+            assertFalse(tableExists(schema, "hexatrap_events"));
+            assertTrue(columnExists(schema, "admin_users", "can_manage_hexatrap_cases"));
             assertTrue(tableExists(schema, "daily_game_summaries"));
             assertTrue(columnExists(schema, "admin_users", "can_manage_hexaflow_puzzles"));
             assertTrue(columnExists(schema, "users", "avatar_version"));

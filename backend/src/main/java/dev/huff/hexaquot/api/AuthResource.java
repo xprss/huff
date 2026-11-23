@@ -26,6 +26,9 @@ public class AuthResource {
     @Inject
     AvatarService avatarService;
 
+    @Inject
+    dev.huff.hexaquot.game.HexatrapAccess hexatrapAccess;
+
     @GET
     public Response me(@CookieParam("huff_session") String sessionId) {
         ResolvedUser resolvedUser = userService.resolve(sessionId);
@@ -38,7 +41,9 @@ public class AuthResource {
         Response.ResponseBuilder response = Response.ok(new MeDto(
             true,
             UserDto.from(resolvedUser.user(), leaderboardService.medalCounts(resolvedUser.user().id())),
-            userService.authEnabled()
+            userService.authEnabled(),
+            hexatrapAccess.available(resolvedUser.user()),
+            hexatrapAccess.isPublic()
         ));
         if (resolvedUser.setCookieHeader() != null) {
             response.header("Set-Cookie", resolvedUser.setCookieHeader());
@@ -110,7 +115,7 @@ public class AuthResource {
         return response.build();
     }
 
-    public record MeDto(boolean loggedIn, UserDto user, boolean authEnabled) {
+    public record MeDto(boolean loggedIn, UserDto user, boolean authEnabled, boolean hexatrapAvailable, boolean hexatrapPublic) {
     }
 
     public record UserDto(
