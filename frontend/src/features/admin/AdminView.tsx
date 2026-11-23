@@ -19,6 +19,7 @@ import type {
 import { HexaflowPuzzleAdmin } from "./HexaflowPuzzleAdmin";
 import { AlertAdmin } from "./AlertAdmin";
 import { GameStatsAdmin } from "./GameStatsAdmin";
+import { HexatrapCaseAdmin } from "./HexatrapCaseAdmin";
 
 type ConfirmAction = { readonly kind: "save" } | { readonly kind: "delete"; readonly typedValue: string };
 
@@ -34,6 +35,7 @@ export function AdminView({
   canViewPlayers,
   canManagePlayers,
   canManageHexaflowPuzzles,
+  canManageHexatrapCases,
   onAuthRequired,
   onSuccess,
   onError
@@ -42,12 +44,13 @@ export function AdminView({
   canViewPlayers: boolean;
   canManagePlayers: boolean;
   canManageHexaflowPuzzles: boolean;
+  canManageHexatrapCases: boolean;
   onAuthRequired: (error: unknown) => boolean;
   onSuccess: (message: string) => void;
   onError: (message: string) => void;
 }) {
   const queryClient = useQueryClient();
-  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow" | "alerts" | "stats-ai">(canViewPlayers ? "players" : canManageHexaflowPuzzles ? "hexaflow" : "stats-ai");
+  const [adminSection, setAdminSection] = React.useState<"players" | "hexaflow" | "hexatrap" | "alerts" | "stats-ai">(canViewPlayers ? "players" : canManageHexaflowPuzzles ? "hexaflow" : canManageHexatrapCases ? "hexatrap" : "stats-ai");
   const [searchInput, setSearchInput] = React.useState("");
   const [search, setSearch] = React.useState("");
   const [playerSort, setPlayerSort] = React.useState<AdminPlayerSortDto>("alphabetical");
@@ -168,6 +171,7 @@ export function AdminView({
   const tabs: { id: AdminSection; label: string; count?: number }[] = [
     ...(canViewPlayers ? [{ id: "players" as const, label: "Giocatori", count: playersPage ? totalPlayers : undefined }] : []),
     ...(canManageHexaflowPuzzles ? [{ id: "hexaflow" as const, label: "Hexaflow" }] : []),
+    ...(canManageHexatrapCases ? [{ id: "hexatrap" as const, label: "Hexatrap" }] : []),
     { id: "stats-ai", label: "hexAI" },
     { id: "alerts", label: "Alert" }
   ];
@@ -189,6 +193,7 @@ export function AdminView({
 
   if (adminSection === "stats-ai") return <>{sections}<GameStatsAdmin adminId={adminId} onAuthRequired={onAuthRequired} onError={onError} /></>;
   if (adminSection === "alerts") return <>{sections}<AlertAdmin onSuccess={onSuccess} onError={onError} /></>;
+  if (adminSection === "hexatrap") return <>{sections}<HexatrapCaseAdmin onSuccess={onSuccess} onError={onError} /></>;
   if (adminSection === "hexaflow") return <>
     {sections}
     <HexaflowPuzzleAdmin onSuccess={onSuccess} onError={onError} />

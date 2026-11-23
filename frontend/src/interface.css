@@ -1588,33 +1588,6 @@ a:focus-visible,
   padding: 12px;
 }
 
-#root .trap-advisors {
-  gap: 8px;
-}
-
-#root .trap-advisors button {
-  gap: 6px;
-  padding: 12px 8px;
-}
-
-#root .trap-seals {
-  gap: 6px;
-}
-
-#root .trap-seals button {
-  gap: 4px;
-}
-
-#root .trap-notes {
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-#root .trap-event {
-  gap: 4px;
-  padding: 10px 0;
-}
-
 #root .eco-shell {
   padding: 12px 4px 18px;
 }

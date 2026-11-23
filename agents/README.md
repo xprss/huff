@@ -1,6 +1,6 @@
 # Agente statistiche HexaQuot
 
-Questo progetto ospita l'agente Mastra usato dal backend HexaQuot per rispondere a domande sulle statistiche dei giochi. L'agente accede a PostgreSQL tramite `@microsoft/postgres-mcp`; gli unici strumenti visibili al modello eseguono query statistiche predefinite in sola lettura.
+Questo progetto ospita gli agenti Mastra usati dal backend HexaQuot: statistiche dei giochi, spiegazioni delle parole e casi quotidiani di Hexatrap. L'agente accede a PostgreSQL tramite `@microsoft/postgres-mcp`; gli unici strumenti visibili al modello eseguono query statistiche predefinite in sola lettura.
 
 ## Configurazione locale
 
@@ -26,4 +26,11 @@ Gli strumenti includono statistiche aggregate, andamento delle registrazioni e d
 
 L'agente `wordExplanationAgent`, senza strumenti né accesso al database, scrive la spiegazione della parola del giorno di Hexaword e Hexastar tramite `POST /internal/words/explanation` (`{ "word": "abbaia" }` → `{ "word", "explanation" }`). Il backend lo invoca una sola volta per parola, alla prima partita conclusa, e memorizza il risultato.
 
-Le route `POST /internal/game-stats/stream` e `POST /internal/words/explanation` sono destinate esclusivamente al backend; non esporre la porta Mastra all'esterno.
+Gli agenti `hexatrapAuthorAgent` e `hexatrapAuditorAgent`, senza strumenti né accesso al database, scrivono e revisionano il caso quotidiano di Hexatrap:
+
+- `POST /internal/hexatrap/draft` riceve `{ brief: { date, difficulty, format, budget, questionCost, clueCosts, icons, avoid }, previousDraft, feedback }` e restituisce `{ draft, model }`. La bozza contiene ambientazione, personaggi, fatti con frasi atomiche, certezze, deposizioni, domande, reperti, fatti del verdetto e soluzione, con ogni elemento accompagnato dalla sua formula.
+- `POST /internal/hexatrap/audit` riceve il catalogo dei fatti, i personaggi e i soli testi degli elementi e restituisce `{ items: [{ id, formula }], model }`: il revisore traduce i testi senza conoscere le formule dell'autore.
+
+Il backend Java valida ogni bozza in modo esaustivo, confronta le traduzioni del revisore con le formule dell'autore e rimanda all'autore i problemi trovati; nessuna logica del caso è affidata al modello. Le regole complete sono in `docs/hexatrap.md`.
+
+Le route `/internal/*` sono destinate esclusivamente al backend; non esporre la porta Mastra all'esterno.

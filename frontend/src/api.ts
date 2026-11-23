@@ -1,7 +1,8 @@
 import type {
   ApiEndpointMap,
   HexatrapQuestionRequestDto,
-  HexatrapSubmissionRequestDto,
+  HexatrapClueRequestDto,
+  HexatrapVerdictRequestDto,
   ApiErrorDto,
   HttpMethod,
   GameMode,
@@ -82,8 +83,6 @@ export function clearAccessToken() {
 export type ApiClient = {
   readonly logout: EndpointHandler<"/api/logout", "POST">;
   readonly me: EndpointHandler<"/api/me", "GET">;
-  readonly markHexahackLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAHACK_LAUNCH/seen", "POST">;
-  readonly markHexaflowLaunchSeen: EndpointHandler<"/api/me/announcements/HEXAFLOW_LAUNCH/seen", "POST">;
   readonly pendingAlerts: EndpointHandler<"/api/me/alerts", "GET">;
   readonly markAlertSeen: EndpointHandler<"/api/me/alerts/:id/seen", "POST", [id: string]>;
   readonly adminAlerts: EndpointHandler<"/api/admin/alerts", "GET">;
@@ -116,8 +115,11 @@ export type ApiClient = {
   readonly hexaecoStats: EndpointHandler<"/api/hexaeco/stats", "GET">;
   readonly hexatrapToday: EndpointHandler<"/api/hexatrap/today", "GET">;
   readonly hexatrapQuestion: EndpointHandler<"/api/hexatrap/today/questions", "POST", [request: HexatrapQuestionRequestDto]>;
-  readonly hexatrapSubmit: EndpointHandler<"/api/hexatrap/today/submissions", "POST", [request: HexatrapSubmissionRequestDto]>;
-  readonly hexatrapEvents: EndpointHandler<"/api/hexatrap/today/events", "GET", [date: string, before?: number]>;
+  readonly hexatrapClue: EndpointHandler<"/api/hexatrap/today/clues", "POST", [request: HexatrapClueRequestDto]>;
+  readonly hexatrapVerdict: EndpointHandler<"/api/hexatrap/today/verdict", "POST", [request: HexatrapVerdictRequestDto]>;
+  readonly adminHexatrapCases: EndpointHandler<"/api/admin/hexatrap/cases", "GET">;
+  readonly adminHexatrapCase: EndpointHandler<"/api/admin/hexatrap/cases/:date", "GET", [date: string]>;
+  readonly adminGenerateHexatrapCase: EndpointHandler<"/api/admin/hexatrap/cases/:date/generate", "POST", [date: string]>;
   readonly hexatrapStats: EndpointHandler<"/api/hexatrap/stats", "GET">;
   readonly overallStats: EndpointHandler<"/api/overall/stats", "GET">;
   readonly updateProfile: EndpointHandler<"/api/me/profile", "PUT", [profile: ProfileUpdateDto]>;
@@ -248,8 +250,6 @@ async function streamAdminGameStats(body: AdminGameStatsChatRequestDto, onToken:
 export const api = {
   logout: () => request("/api/logout", { method: "POST" }),
   me: () => request("/api/me", { method: "GET" }),
-  markHexahackLaunchSeen: () => request("/api/me/announcements/HEXAHACK_LAUNCH/seen", { method: "POST" }),
-  markHexaflowLaunchSeen: () => request("/api/me/announcements/HEXAFLOW_LAUNCH/seen", { method: "POST" }),
   pendingAlerts: () => request("/api/me/alerts", { method: "GET" }),
   markAlertSeen: (id: string) => request(`/api/me/alerts/${encodeURIComponent(id)}/seen` as "/api/me/alerts/:id/seen", { method: "POST" }),
   adminAlerts: () => request("/api/admin/alerts", { method: "GET" }),
@@ -297,9 +297,11 @@ export const api = {
   hexaecoStats: () => request("/api/hexaeco/stats", { method: "GET" }),
   hexatrapToday: () => request("/api/hexatrap/today", { method: "GET" }),
   hexatrapQuestion: (body: HexatrapQuestionRequestDto) => request("/api/hexatrap/today/questions", { method: "POST", body }),
-  hexatrapSubmit: (body: HexatrapSubmissionRequestDto) => request("/api/hexatrap/today/submissions", { method: "POST", body }),
-  hexatrapEvents: (date: string, before?: number) => request(
-    `/api/hexatrap/today/events?puzzleDate=${encodeURIComponent(date)}${before == null ? "" : `&before=${before}`}` as "/api/hexatrap/today/events", { method: "GET" }),
+  hexatrapClue: (body: HexatrapClueRequestDto) => request("/api/hexatrap/today/clues", { method: "POST", body }),
+  hexatrapVerdict: (body: HexatrapVerdictRequestDto) => request("/api/hexatrap/today/verdict", { method: "POST", body }),
+  adminHexatrapCases: () => request("/api/admin/hexatrap/cases", { method: "GET" }),
+  adminHexatrapCase: (date: string) => request(`/api/admin/hexatrap/cases/${encodeURIComponent(date)}` as "/api/admin/hexatrap/cases/:date", { method: "GET" }),
+  adminGenerateHexatrapCase: (date: string) => request(`/api/admin/hexatrap/cases/${encodeURIComponent(date)}/generate` as "/api/admin/hexatrap/cases/:date/generate", { method: "POST" }),
   hexatrapStats: () => request("/api/hexatrap/stats", { method: "GET" }),
   overallStats: () => request("/api/overall/stats", { method: "GET" }),
   updateProfile: (profile: ProfileUpdateDto) =>

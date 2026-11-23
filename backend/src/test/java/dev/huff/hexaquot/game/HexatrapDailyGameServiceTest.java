@@ -1,213 +1,262 @@
 package dev.huff.hexaquot.game;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.huff.hexaquot.auth.AdminPrivileges;
 import dev.huff.hexaquot.auth.AppUser;
 import dev.huff.hexaquot.game.HexatrapDtos.*;
+import dev.huff.hexaquot.game.HexatrapDtos.StatsDto;
+import dev.huff.hexaquot.game.HexatrapDtos.GameDto;
+import dev.huff.hexaquot.game.hexatrap.HexatrapRules;
 import dev.huff.hexaquot.leaderboard.LeaderboardRepository;
 import dev.huff.hexaquot.leaderboard.LeaderboardService;
+import dev.huff.hexaquot.persistence.HexatrapActionEntity;
 import dev.huff.hexaquot.persistence.HexatrapGameEntity;
-import dev.huff.hexaquot.persistence.HexatrapEventEntity;
 import dev.huff.hexaquot.persistence.UserEntity;
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.TestTransaction;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.narayana.jta.QuarkusTransaction;
 import jakarta.inject.Inject;
-import jakarta.persistence.EntityManager;
 import jakarta.ws.rs.WebApplicationException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @QuarkusTest
 class HexatrapDailyGameServiceTest {
     @Inject HexatrapDailyGameService service;
-    @Inject HexatrapDailyGameProvider provider;
+    @Inject HexatrapCaseStore store;
     @Inject DailyGameService clock;
     @Inject OverallStatsService overall;
     @Inject LeaderboardService leaderboard;
     @Inject ObjectMapper mapper;
-    @Inject EntityManager entityManager;
+
+    private String today;
+    private int difficulty;
+
+    @BeforeEach
+    void installTodaysCase() {
+        today = clock.todayDate();
+        HexatrapTestCases.install(store, today);
+        difficulty = store.ready(today).orElseThrow().difficulty();
+    }
 
     @Test @TestTransaction
-    void questionsRetriesNegativeScoresPaginationWinAndAllStats() throws Exception {
-        var user = user();
-        var today = service.today(user);
-        var date = today.puzzleDate();
-        var puzzle = provider.puzzleFor(date);
-        assertNull(today.game());
-        assertEquals(0, service.statsForUserId(user.id()).started());
-        var firstRequest = question("first", date, puzzle.loyalAdvisor(), 0);
-        var first = service.question(user, firstRequest);
+    void investigatesWithinTheBudgetAndSolvesTheCase() throws Exception {
+        AppUser user = user();
+        TodayDto start = service.today(user);
+        assertTrue(start.available());
+        assertNull(start.game());
+        assertEquals(2, start.rulesVersion());
+        assertEquals("La lanterna spenta di Capo Nero", start.caseFile().title());
+        assertEquals(60, start.caseFile().budget());
+        assertEquals(Set.of("chi", "diario"), start.caseFile().facts().stream().filter(FactDto::verdict).map(FactDto::id).collect(java.util.stream.Collectors.toSet()));
+        StatementDto claim = start.caseFile().statements().stream().filter(s -> s.id().equals("s_livia_ettore")).findFirst().orElseThrow();
+        assertEquals("Ettore risponderebbe «sì» a: «È stata Livia a spegnere la lanterna?»", claim.record());
+        assertEquals("Non è stata Livia a spegnere la lanterna", claim.readings().ifBLies());
+
+        String publicJson = mapper.writeValueAsString(start);
+        for (String hidden : List.of("formula", "solution", "epilogue", "Cenere di carta", "cenere di carta", "affirm", "SAYS", "mozzo, terrorizzato"))
+            assertFalse(publicJson.contains(hidden), hidden);
+
+        QuestionRequest stufa = new QuestionRequest("q1", today, 2, "q_ettore_stufa");
+        ActionDto first = service.question(user, stufa);
+        assertEquals(HexatrapRules.QUESTION_COST, first.game().minutesUsed());
+        assertTrue(first.game().asked().get(0).answer());
+        assertEquals("Il diario è finito nella stufa", first.game().asked().get(0).readings().ifBLies());
         assertNull(first.game().reveal());
-        String publicJson = mapper.writeValueAsString(first);
-        for (String hidden : List.of("configuration", "loyalAdvisor", "secretNumber", "falseNumber", "hypotheses")) assertFalse(publicJson.contains(hidden));
-        assertTrue(service.question(user, firstRequest).replayed());
-        assertEquals(first.game(), service.question(user, firstRequest).game());
-        for (int seal = 1; seal < 6; seal++) service.question(user, question("seal-"+seal, date, puzzle.loyalAdvisor(), seal));
-        assertTrue(service.today(user).game().numberUnlocked());
-        assertFalse(service.today(user).game().numberRequested());
-        for (int repeat = 0; repeat < 20; repeat++) service.question(user, question("repeat-"+repeat, date, puzzle.loyalAdvisor(), 0));
-        assertEquals(-1600, service.today(user).game().points());
-        assertEquals(26, service.today(user).game().questions());
-        // Replaying an old request returns its original response, without reverting the saved state.
-        assertEquals(first.game(), service.question(user, firstRequest).game());
-        assertEquals(26, service.today(user).game().questions());
-        var liarNumber = new QuestionRequest("liar-number", date, 1, QuestionType.NUMBER, 1-puzzle.loyalAdvisor(), null);
-        var lie = service.question(user, liarNumber);
-        assertEquals(puzzle.falseNumber(), lie.event().number());
-        assertNotEquals(puzzle.secretNumber(), lie.event().number());
-        assertEquals(lie.event().number(), service.question(user, new QuestionRequest("liar-again", date, 1, QuestionType.NUMBER, 1-puzzle.loyalAdvisor(), null)).event().number());
-        var wrong = new SubmissionRequest("wrong", date, 1, puzzle.falseNumber());
-        var incorrect = service.submit(user, wrong);
-        assertFalse(incorrect.event().correct());
-        assertEquals(1, incorrect.game().wrongSubmissions());
-        assertEquals(-2000, incorrect.game().points());
-        assertTrue(service.submit(user, wrong).replayed());
-        var number = service.question(user, new QuestionRequest("loyal-number", date, 1, QuestionType.NUMBER, puzzle.loyalAdvisor(), null));
-        assertEquals(puzzle.secretNumber(), number.event().number());
-        assertEquals(29, number.game().questions());
-        var winRequest = new SubmissionRequest("win", date, 1, puzzle.secretNumber());
-        var win = service.submit(user, winRequest);
-        assertEquals("WON", win.game().status());
-        assertEquals(-2100, win.game().points());
-        assertEquals(puzzle.secretNumber(), win.game().reveal().number());
-        assertEquals(puzzle.configuration(), win.game().reveal().configuration());
-        assertEquals(puzzle.loyalAdvisor(), win.game().reveal().loyalAdvisor());
-        assertTrue(win.game().reveal().explanation().contains("risposta #1"));
-        assertTrue(service.submit(user, winRequest).replayed());
-        assertEquals(win.game(), service.today(user).game()); // Resume on another device.
-        assertNull(service.today(user()).game());
-        Set<Long> sequences = new HashSet<>(); Long before = null;
-        do {
-            var page = service.events(user, date, before, 7);
-            for (var event : page.events()) assertTrue(sequences.add(event.sequence()));
-            before = page.nextBefore();
-        } while (before != null);
-        assertEquals(31, sequences.size());
-        assertEquals(31, HexatrapEventEntity.count("userId", user.id()));
-        var stats = service.statsForUserId(user.id());
-        assertEquals(1, stats.started()); assertEquals(1, stats.won()); assertEquals(1, stats.currentStreak());
-        assertEquals(-2100, stats.bestPoints()); assertEquals(-2100, stats.averagePoints()); assertEquals(29, stats.averageQuestions());
-        assertEquals(1, overall.statsForUserId(user.id()).won());
-        assertEquals(1, leaderboard.publicProfile(user.nickname()).hexatrapStats().won());
-        for (var board : List.of(LeaderboardRepository.Board.HEXATRAP, LeaderboardRepository.Board.OVERALL)) {
-            var entry = leaderboard.leaderboards(board).allTime().entries().stream().filter(e -> e.nickname().equals(user.nickname())).findFirst().orElseThrow();
-            assertEquals(1, entry.wins()); assertEquals(board == LeaderboardRepository.Board.HEXATRAP ? -2100L : null, entry.points());
-        }
+        assertTrue(service.question(user, stufa).replayed());
+        assertStatus(409, () -> service.question(user, new QuestionRequest("q1-again", today, 2, "q_ettore_stufa")));
+        assertStatus(409, () -> service.question(user, new QuestionRequest("q1", today, 2, "q_ettore_undici")));
+
+        ActionDto clue = service.clue(user, new ClueRequest("c1", today, 2, "c_cenere"));
+        assertEquals(HexatrapRules.QUESTION_COST + 12, clue.game().minutesUsed());
+        assertTrue(clue.game().revealed().get(0).text().contains("cenere di carta"));
+        assertEquals("Il diario è finito nella stufa", clue.game().revealed().get(0).record());
+
+        ActionDto undici = service.question(user, new QuestionRequest("q2", today, 2, "q_ettore_undici"));
+        assertFalse(undici.game().asked().get(1).answer());
+        assertEquals(3, undici.game().sequence());
+
+        VerdictRequest verdict = new VerdictRequest("v", today, 2, "B", Map.of("chi", "mozzo", "diario", "stufa"));
+        ActionDto solved = service.verdict(user, verdict);
+        GameDto game = solved.game();
+        assertEquals("WON", game.status());
+        assertEquals("SOLVED", game.outcome());
+        int minutesLeft = 60 - (2 * HexatrapRules.QUESTION_COST + 12);
+        assertEquals(HexatrapRules.points(difficulty, minutesLeft), game.points());
+        RevealDto reveal = game.reveal();
+        assertEquals("B", reveal.liar());
+        assertTrue(reveal.liarCorrect() && reveal.factsCorrect());
+        assertTrue(reveal.proofFound());
+        assertTrue(reveal.proof().stream().anyMatch(e -> e.id().equals("q_ettore_undici")), reveal.proof().toString());
+        assertEquals(10, reveal.optimalMinutes());
+        assertEquals(List.of("q_ettore_stufa", "q_ettore_undici"), reveal.optimalPath().stream().map(EvidenceDto::id).toList());
+        assertTrue(reveal.epilogue().startsWith("Il mozzo"));
+        assertTrue(reveal.share().contains("Caso risolto"));
+        assertFalse(reveal.share().contains("mozzo"));
+        assertTrue(service.verdict(user, verdict).replayed());
+        assertStatus(409, () -> service.verdict(user, new VerdictRequest("v2", today, 2, "A", Map.of("chi", "mozzo", "diario", "stufa"))));
+        assertStatus(409, () -> service.clue(user, new ClueRequest("late", today, 2, "c_maree")));
+        assertEquals(game, service.today(user).game());
+
+        StatsDto stats = service.statsForUserId(user.id());
+        assertEquals(1, stats.started());
+        assertEquals(1, stats.won());
+        assertEquals(1, stats.currentStreak());
+        assertEquals(game.points(), stats.bestPoints());
+        assertEquals(22.0, stats.averageMinutes());
+        assertTrue(overall.statsForUserId(user.id()).won() >= 1);
     }
 
     @Test @TestTransaction
-    void shortcutsMalformedActionsAndChangedRequestContentsAreRejectedWithoutCharges() {
-        var user = user(); var date = service.today(user).puzzleDate();
-        assertStatus(409, () -> service.submit(user, new SubmissionRequest("early", date, 1, 1)));
-        assertStatus(409, () -> service.question(user, new QuestionRequest("early-number", date, 1, QuestionType.NUMBER, 0, null)));
-        assertStatus(400, () -> service.question(user, question("invalid", date, 2, 0)));
-        assertStatus(400, () -> service.question(user, question("invalid", date, 0, 6)));
-        assertStatus(400, () -> service.question(user, question("invalid", "2026-99-01", 0, 0)));
-        assertStatus(409, () -> service.question(user, new QuestionRequest("version", date, 2, QuestionType.SEAL, 0, 0)));
-        assertStatus(409, () -> service.question(user, question("stale", LocalDate.parse(date).minusDays(1).toString(), 0, 0)));
-        assertNull(service.today(user).game());
-        var first = service.question(user, question("used", date, 0, 0));
-        assertStatus(409, () -> service.question(user, question("used", date, 1, 0)));
-        assertStatus(409, () -> service.submit(user, new SubmissionRequest("used", date, 1, 7)));
-        for (int seal=1; seal<6; seal++) service.question(user, question("seal"+seal,date,0,seal));
-        assertTrue(service.today(user).game().numberUnlocked());
-        assertStatus(409, () -> service.submit(user, new SubmissionRequest("still-early", date, 1, provider.puzzleFor(date).secretNumber())));
-        service.question(user, new QuestionRequest("number",date,1,QuestionType.NUMBER,0,null));
-        assertStatus(400, () -> service.submit(user, new SubmissionRequest("invalid-number",date,1,0)));
-        assertStatus(400, () -> service.submit(user, new SubmissionRequest("invalid-number",date,1,9865)));
-        assertEquals(0, service.today(user).game().wrongSubmissions());
-        assertEquals(7, service.today(user).game().questions());
-        assertEquals(1, first.game().questions());
+    void judgesPartialAndWrongVerdicts() {
+        AppUser partial = user();
+        GameDto half = service.verdict(partial, new VerdictRequest("p", today, 2, "B", Map.of("chi", "mozzo", "diario", "cassa"))).game();
+        assertEquals("LOST", half.status());
+        assertEquals("PARTIAL", half.outcome());
+        assertEquals(0, half.points());
+        assertTrue(half.reveal().liarCorrect());
+        assertFalse(half.reveal().factsCorrect());
+        // No investigation: the statements alone could not prove who lies.
+        assertFalse(half.reveal().proofFound());
+        assertTrue(half.reveal().share().contains("ricostruzione sbagliata"));
+        assertEquals(1, service.statsForUserId(partial.id()).partial());
+
+        AppUser wrong = user();
+        GameDto lost = service.verdict(wrong, new VerdictRequest("w", today, 2, "A", Map.of("chi", "ettore", "diario", "pozzo"))).game();
+        assertEquals("WRONG", lost.outcome());
+        assertEquals(0, service.statsForUserId(wrong.id()).currentStreak());
+        assertEquals(1, service.statsForUserId(wrong.id()).lost());
     }
 
     @Test @TestTransaction
-    void midnightAllowsOnlyRecoveryAndPersistedPuzzleSurvivesProviderChanges() {
-        var user = user(); var today = service.today(user).puzzleDate();
+    void refusesActionsBeyondTheBudgetButAlwaysAcceptsTheVerdict() {
+        AppUser user = user();
+        for (String clue : List.of("c_impronte", "c_cenere", "c_maree", "c_vicino")) service.clue(user, new ClueRequest(clue, today, 2, clue));
+        service.question(user, new QuestionRequest("a", today, 2, "q_livia_dieci"));
+        service.question(user, new QuestionRequest("b", today, 2, "q_livia_cassa"));
+        assertEquals(58, service.today(user).game().minutesUsed());
+        assertStatus(409, () -> service.question(user, new QuestionRequest("c", today, 2, "q_ettore_stufa")));
+        assertEquals(58, service.today(user).game().minutesUsed());
+        assertEquals("WON", service.verdict(user, new VerdictRequest("v", today, 2, "B", Map.of("chi", "mozzo", "diario", "stufa"))).game().status());
+    }
+
+    @Test @TestTransaction
+    void rejectsInvalidAndStaleRequests() {
+        AppUser user = user();
+        assertStatus(400, () -> service.question(user, new QuestionRequest("x1", today, 2, "q_missing")));
+        assertStatus(400, () -> service.clue(user, new ClueRequest("x2", today, 2, null)));
+        assertStatus(400, () -> service.verdict(user, new VerdictRequest("x3", today, 2, "C", Map.of("chi", "mozzo", "diario", "stufa"))));
+        assertStatus(400, () -> service.verdict(user, new VerdictRequest("x4", today, 2, "B", Map.of("chi", "mozzo"))));
+        assertStatus(400, () -> service.verdict(user, new VerdictRequest("x5", today, 2, "B", Map.of("chi", "mozzo", "diario", "tetto"))));
+        assertStatus(400, () -> service.question(user, new QuestionRequest("", today, 2, "q_ettore_stufa")));
+        assertStatus(400, () -> service.question(user, new QuestionRequest("x6", "2026-02-30", 2, "q_ettore_stufa")));
         String yesterday = LocalDate.parse(today).minusDays(1).toString();
-        var past = new HexatrapDailyGameService();
-        past.clock = new DailyGameService() { @Override public String todayDate() { return yesterday; } };
-        past.provider=provider; past.mapper=mapper; past.entityManager=entityManager;
-        var request = question("yesterday",yesterday,0,0);
-        var original = past.question(user, request);
-        assertEquals(original.game(), service.question(user, request).game());
-        assertStatus(409, () -> service.question(user, question("new-yesterday",yesterday,0,1)));
+        assertStatus(409, () -> service.question(user, new QuestionRequest("x7", yesterday, 2, "q_ettore_stufa")));
+        assertStatus(409, () -> service.question(user, new QuestionRequest("x8", today, 1, "q_ettore_stufa")));
         assertNull(service.today(user).game());
-        service.question(user, question("today",today,0,0));
-        var p = provider.puzzleFor(today);
-        var resumed = new HexatrapDailyGameService();
-        resumed.clock = clock; resumed.mapper=mapper; resumed.entityManager=entityManager;
-        resumed.provider = new HexatrapDailyGameProvider() {
-            @Override public Puzzle puzzleFor(String date) { throw new AssertionError("Saved games must use the stored puzzle"); }
-        };
-        var next = resumed.question(user,question("stored-config",today,p.loyalAdvisor(),1));
-        assertEquals(HexatrapRules.lit(p.configuration(),1),next.event().answer());
     }
 
     @Test
-    void concurrentRequestsFromTwoDevicesSerializeAndSameIdIsChargedOnce() throws Exception {
-        var user = QuarkusTransaction.requiringNew().call(this::user);
+    void previewIsReservedToAdminsUntilPublished() {
+        HexatrapAccess access = new HexatrapAccess();
+        AppUser player = new AppUser("p", null, "P", "@p", null, null, null, false, null);
+        AppUser admin = new AppUser("a", null, "A", "@a", null, null, null, false, new AdminPrivileges(false, false, false, false, false, false));
+        access.enabled = false;
+        assertFalse(access.available(player));
+        assertTrue(access.available(admin));
+        assertFalse(access.isPublic());
+        access.enabled = true;
+        assertTrue(access.available(player));
+    }
+
+    @Test @TestTransaction
+    void leaderboardSortsByWinsThenPointsAndStreaksFollowTheDays() {
+        AppUser a = user(), b = user(), c = user();
+        won(a, today, 400);
+        won(a, LocalDate.parse(today).minusDays(1).toString(), 400);
+        won(b, today, 700);
+        won(c, today, 900);
+        var entries = leaderboard.leaderboards(LeaderboardRepository.Board.HEXATRAP).allTime().entries().stream()
+            .filter(e -> Set.of(a.nickname(), b.nickname(), c.nickname()).contains(e.nickname())).toList();
+        assertEquals(List.of(a.nickname(), c.nickname(), b.nickname()), entries.stream().map(e -> e.nickname()).toList());
+        assertEquals(2, service.statsForUserId(a.id()).currentStreak());
+        assertEquals(400, service.statsForUserId(a.id()).bestPoints());
+    }
+
+    @Test
+    void concurrentDevicesAreSerializedAndARetriedRequestIsChargedOnce() throws Exception {
+        AppUser user = QuarkusTransaction.requiringNew().call(this::user);
         var executor = Executors.newFixedThreadPool(4);
         try {
-            String date = service.today(user).puzzleDate();
             var gate = new CountDownLatch(1);
-            var reader = executor.submit(() -> {
-                gate.await();
-                for (int n=0;n<8;n++) {
-                    var snapshot=service.today(user).game();
-                    if (snapshot != null) {
-                        assertEquals(snapshot.questions(),snapshot.history().events().get(0).sequence());
-                        assertEquals(HexatrapRules.points(snapshot.questions(),0),snapshot.points());
-                    }
-                }
-                return true;
-            });
             List<Future<ActionDto>> calls = new ArrayList<>();
-            for (int i=0;i<8;i++) {
-                final int n=i;
-                calls.add(executor.submit(() -> { gate.await(); return service.question(user,question(n<4?"shared":"distinct-"+n,date,0,n<4?0:n%6)); }));
+            List<String> questions = List.of("q_ettore_undici", "q_livia_dieci", "q_livia_cassa", "q_livia_cassa_diretta");
+            for (int i = 0; i < 8; i++) {
+                final int n = i;
+                calls.add(executor.submit(() -> {
+                    gate.await();
+                    return service.question(user, n < 4
+                        ? new QuestionRequest("shared", today, 2, "q_ettore_stufa")
+                        : new QuestionRequest("distinct-" + n, today, 2, questions.get(n - 4)));
+                }));
             }
             gate.countDown();
-            for (var call : calls) assertNotNull(call.get(30,TimeUnit.SECONDS));
-            assertTrue(reader.get(30,TimeUnit.SECONDS));
-            assertEquals(5,service.today(user).game().questions());
-            assertEquals(5,HexatrapEventEntity.count("userId",user.id()));
-            assertEquals(1,HexatrapGameEntity.count("userId",user.id()));
+            int replayed = 0;
+            for (var call : calls) if (call.get(30, TimeUnit.SECONDS).replayed()) replayed++;
+            assertEquals(3, replayed);
+            var game = service.today(user).game();
+            assertEquals(5, game.asked().size());
+            assertEquals(5 * HexatrapRules.QUESTION_COST, game.minutesUsed());
+            assertEquals(List.of(1, 2, 3, 4, 5), game.asked().stream().map(AskedDto::sequence).toList());
+            assertEquals(5L, QuarkusTransaction.requiringNew().call(() -> HexatrapActionEntity.count("userId", user.id())));
         } finally {
             executor.shutdownNow();
             QuarkusTransaction.requiringNew().run(() -> UserEntity.deleteById(user.id()));
         }
     }
 
-    @Test @TestTransaction
-    void leaderboardSortsByWinsThenTotalPointsBeforeExistingTies() {
-        var a=user(); var b=user(); var c=user();
-        String today=service.today(a).puzzleDate();
-        won(a,today,-500); won(a,LocalDate.parse(today).minusDays(1).toString(),-500);
-        won(b,today,400); won(c,today,600);
-        var entries=leaderboard.leaderboards(LeaderboardRepository.Board.HEXATRAP).allTime().entries().stream()
-            .filter(e -> Set.of(a.nickname(),b.nickname(),c.nickname()).contains(e.nickname())).toList();
-        assertEquals(List.of(a.nickname(),c.nickname(),b.nickname()),entries.stream().map(e -> e.nickname()).toList());
-        assertEquals(2,service.statsForUserId(a.id()).currentStreak());
-        assertEquals(-500,service.statsForUserId(a.id()).bestPoints());
-        HexatrapGameEntity.<HexatrapGameEntity>list("userId",a.id()).forEach(g ->
-            g.puzzleDate=LocalDate.parse(g.puzzleDate).minusDays(5).toString());
-        assertEquals(0,service.statsForUserId(a.id()).currentStreak());
-        assertEquals(2,service.statsForUserId(a.id()).maxStreak());
+    private void won(AppUser user, String date, long points) {
+        if (store.ready(date).isEmpty()) HexatrapTestCases.install(store, date);
+        HexatrapGameEntity game = new HexatrapGameEntity();
+        game.id = UUID.randomUUID().toString();
+        game.userId = user.id();
+        game.puzzleDate = date;
+        game.rulesVersion = 2;
+        game.status = "WON";
+        game.outcome = "SOLVED";
+        game.points = points;
+        game.minutesUsed = 20;
+        game.verdictJson = "{}";
+        game.createdAt = game.updatedAt = game.completedAt = Instant.now().toString();
+        game.persist();
     }
-    private void won(AppUser user,String date,long points) {
-        var g=new HexatrapGameEntity();g.id=UUID.randomUUID().toString();g.userId=user.id();g.puzzleDate=date;g.rulesVersion=1;
-        var p=provider.puzzleFor(date);g.puzzleJson=serialize(p);g.hypothesesJson=serialize(List.of(p.configuration()*2+p.loyalAdvisor()));
-        g.status="WON";g.points=points;g.questions=(1000-points)/100;g.createdAt=g.updatedAt=g.completedAt=Instant.now().toString();g.persist();
+
+    private void assertStatus(int status, Runnable action) {
+        assertEquals(status, assertThrows(WebApplicationException.class, action::run).getResponse().getStatus());
     }
-    private String serialize(Object value) { try {return mapper.writeValueAsString(value);}catch(Exception e){throw new RuntimeException(e);} }
-    private QuestionRequest question(String id,String date,int advisor,int seal) { return new QuestionRequest(id,date,1,QuestionType.SEAL,advisor,seal); }
-    private void assertStatus(int status,Runnable action) { assertEquals(status,assertThrows(WebApplicationException.class,action::run).getResponse().getStatus()); }
+
     private AppUser user() {
-        var u=new UserEntity();u.id="hexatrap-test-"+UUID.randomUUID();u.nickname="@trap-"+UUID.randomUUID().toString().substring(0,8);
-        u.displayName="Trap";u.createdAt=Instant.now().toString();u.starAvailable=false;u.persist();return u.toAppUser(false);
+        UserEntity user = new UserEntity();
+        user.id = "hexatrap-test-" + UUID.randomUUID();
+        user.nickname = "@trap-" + UUID.randomUUID().toString().substring(0, 8);
+        user.displayName = "Trap";
+        user.createdAt = Instant.now().toString();
+        user.starAvailable = false;
+        user.persist();
+        return user.toAppUser(false);
     }
 }

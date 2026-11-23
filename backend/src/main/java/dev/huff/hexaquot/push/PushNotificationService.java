@@ -6,10 +6,8 @@ import dev.huff.hexaquot.persistence.PushSubscriptionEntity;
 import dev.huff.hexaquot.persistence.PushCampaignDeliveryEntity;
 import dev.huff.hexaquot.persistence.ScheduledAlertEntity;
 import io.quarkus.scheduler.Scheduled;
-import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.enterprise.event.Observes;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.BadRequestException;
 import nl.martijndwars.webpush.Encoding;
@@ -46,12 +44,6 @@ public class PushNotificationService {
     @ConfigProperty(name = "app.push.vapid.subject")
     String vapidSubject;
 
-    @ConfigProperty(name = "app.push.hexahack-launch.enabled", defaultValue = "false")
-    boolean hexahackLaunchEnabled;
-
-    @ConfigProperty(name = "app.push.hexasky-launch.enabled", defaultValue = "false")
-    boolean hexaskyLaunchEnabled;
-
     @Inject
     DailyGameService dailyGameService;
 
@@ -59,14 +51,6 @@ public class PushNotificationService {
     ObjectMapper objectMapper;
 
     volatile PushService pushService;
-
-    /** The switch exists only in staging's environment file. No delivery is created when it is off. */
-    @Transactional
-    void onStart(@Observes StartupEvent event) {
-        if (!hexaskyLaunchEnabled) return;
-        createHexaskyLaunchDeliveries();
-        dispatchHexaskyLaunch();
-    }
 
     public PushSettingsDto settings() {
         boolean supported = configured();
@@ -124,73 +108,6 @@ public class PushNotificationService {
             return;
         }
         remindWeeklyAwards(dailyGameService.todayDate());
-    }
-
-    @Scheduled(every = "10m", delayed = "5s")
-    void dispatchLaunchCampaignSchedule() {
-        dispatchHexahackLaunch();
-    }
-
-    @Transactional
-    public void dispatchHexahackLaunch() {
-        if (!hexahackLaunchEnabled || !configured()) return;
-        List<PushCampaignDeliveryEntity> deliveries = PushCampaignDeliveryEntity.<PushCampaignDeliveryEntity>list(
-            "campaign = ?1 and sentAt is null order by createdAt", AnnouncementService.HEXAHACK_LAUNCH
-        );
-        for (PushCampaignDeliveryEntity delivery : deliveries) {
-            PushSubscriptionEntity subscription = PushSubscriptionEntity.findById(delivery.subscriptionId);
-            if (subscription == null) {
-                delivery.delete();
-                continue;
-            }
-            delivery.attempts = (delivery.attempts == null ? 0 : delivery.attempts) + 1;
-            delivery.lastAttemptAt = Instant.now().toString();
-            NotificationPayload payload = new NotificationPayload(
-                "hexahack-launch",
-                "È arrivato Hexahack",
-                "Un nuovo nodo è online. Analizza il codice, proteggi lo Stealth e viola la porta.",
-                "/#/hexahack",
-                "/icons/huff-icon.svg",
-                "hexahack-launch"
-            );
-            if (sendNotification(subscription, payload, CAMPAIGN_PUSH_TTL_SECONDS)) {
-                delivery.sentAt = Instant.now().toString();
-            }
-        }
-    }
-
-    @Transactional
-    public void createHexaskyLaunchDeliveries() {
-        if (!hexaskyLaunchEnabled) return;
-        for (PushSubscriptionEntity subscription : PushSubscriptionEntity.<PushSubscriptionEntity>listAll()) {
-            if (PushCampaignDeliveryEntity.count("subscriptionId = ?1 and campaign = ?2", subscription.id, "HEXASKY_LAUNCH") > 0) continue;
-            PushCampaignDeliveryEntity delivery = new PushCampaignDeliveryEntity();
-            delivery.id = UUID.randomUUID().toString();
-            delivery.subscriptionId = subscription.id;
-            delivery.campaign = "HEXASKY_LAUNCH";
-            delivery.createdAt = Instant.now().toString();
-            delivery.attempts = 0;
-            delivery.persist();
-        }
-    }
-
-    @Transactional
-    public void dispatchHexaskyLaunch() {
-        if (!hexaskyLaunchEnabled || !configured()) return;
-        List<PushCampaignDeliveryEntity> deliveries = PushCampaignDeliveryEntity.<PushCampaignDeliveryEntity>list(
-            "campaign = ?1 and sentAt is null order by createdAt", "HEXASKY_LAUNCH"
-        );
-        for (PushCampaignDeliveryEntity delivery : deliveries) {
-            PushSubscriptionEntity subscription = PushSubscriptionEntity.findById(delivery.subscriptionId);
-            if (subscription == null) { delivery.delete(); continue; }
-            delivery.attempts = (delivery.attempts == null ? 0 : delivery.attempts) + 1;
-            delivery.lastAttemptAt = Instant.now().toString();
-            NotificationPayload payload = new NotificationPayload(
-                "hexasky-launch", "È arrivato Hexasky", "Risolvi il nuovo grattacielo quotidiano.",
-                "/#/hexasky", "/icons/huff-icon.svg", "hexasky-launch"
-            );
-            if (sendNotification(subscription, payload, CAMPAIGN_PUSH_TTL_SECONDS)) delivery.sentAt = Instant.now().toString();
-        }
     }
 
     @Transactional

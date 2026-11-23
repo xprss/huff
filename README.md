@@ -47,6 +47,19 @@ Both engines use the same golden examples in
 solvability; the planned five-person playtest is still needed to validate the
 3–5 minute target and unaided tutorial comprehension before launch.
 
+## Hexatrap
+
+Hexatrap is a daily knights-and-knaves investigation: one character always
+tells the truth, the other always lies, and the player interrogates them and
+examines clues against a 60-minute budget before a single verdict on the liar
+and the key facts. Every night `hexatrapAuthorAgent` (Mastra,
+`openai/gpt-6-luna`) writes the next day's case; the backend validates it
+exhaustively, has `hexatrapAuditorAgent` back-translate every sentence to check
+it says exactly what its formula says, and sends specific feedback until a case
+passes. Players never interact with the AI. Until `HEXATRAP_ENABLED=true` only
+admins can play the cases (preview). Rules, the case language, validation,
+generation, API and configuration are in [docs/hexatrap.md](docs/hexatrap.md).
+
 ## Word explanations
 
 When a Hexaword or Hexastar game ends, the page shows a short explanation of
@@ -170,9 +183,7 @@ GAME_STATS_DAILY_SUMMARY_CRON=0 0 0 * * ?
 
 The crons run in `GAME_TIMEZONE`. `PUSH_NEW_GAME_CRON` sends one notification per subscribed browser for each new daily puzzle. `PUSH_DAILY_REMINDER_CRON` reminds subscribed browsers whose user has not submitted any guess for the current puzzle date. `PUSH_WEEKLY_AWARDS_REMINDER_CRON` sends every Monday at 20:10 a reminder that the previous week has ended; tapping it opens the user's profile to view the updated medals. `GAME_STATS_DAILY_SUMMARY_CRON` generates an AI summary of the previous day's games and new registrations at midnight. Admins can read the latest 30 summaries or generate/refresh the previous day's report on demand in the Riepilogo giornaliero section of hexAI.
 
-The Hexahack launch push campaign is disabled by default. Set `PUSH_HEXAHACK_LAUNCH_ENABLED=true` to send pending campaign deliveries through the existing scheduler.
-
-The Hexasquare launch campaign is also opt-in. Set `PUSH_HEXASQUARE_LAUNCH_ENABLED=true` to dispatch its queued Web Push deliveries; the notification opens `/#/hexasquare`.
+No notification is hardcoded into a release: besides the recurring crons above, push and in-app notifications are sent only from the admin alerts panel (scheduled alerts).
 
 The word list is stored in `backend/src/main/resources/words/it-words.json`; every entry must be 6 letters long.
 

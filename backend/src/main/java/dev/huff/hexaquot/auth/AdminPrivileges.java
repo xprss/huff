@@ -5,6 +5,7 @@ public record AdminPrivileges(
     boolean canViewPlayerDetails,
     boolean canManagePlayers,
     boolean canManageAdmins,
-    boolean canManageHexaflowPuzzles
+    boolean canManageHexaflowPuzzles,
+    boolean canManageHexatrapCases
 ) {
 }

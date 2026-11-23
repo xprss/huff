@@ -1,0 +1,250 @@
+{
+  "title": "La lanterna spenta di Capo Nero",
+  "intro": "Nella notte di tempesta la lanterna del faro di Capo Nero si è spenta e una nave ha rischiato gli scogli. Sul posto restano il guardiano Ettore e la cartografa Livia. Uno dei due dice sempre la verità, l'altra persona mente su tutto. Scopri chi mente, chi ha spento la lanterna e dove è finito il diario di bordo.",
+  "epilogue": "Il mozzo, terrorizzato dalla tempesta, aveva spento la lanterna alle dieci per rubare l'olio e bruciato il diario nella stufa per cancellare le prove. Livia lo copriva per affetto, mentendo su tutto; Ettore aveva detto il vero fin dall'inizio.",
+  "format": "sabotaggio",
+  "characters": [
+    {
+      "id": "A",
+      "name": "Ettore",
+      "role": "guardiano del faro",
+      "icon": "lamp"
+    },
+    {
+      "id": "B",
+      "name": "Livia",
+      "role": "cartografa di passaggio",
+      "icon": "map"
+    }
+  ],
+  "facts": [
+    {
+      "id": "chi",
+      "label": "Chi ha spento la lanterna?",
+      "options": [
+        {
+          "id": "ettore",
+          "label": "Ettore",
+          "affirm": "è stato Ettore a spegnere la lanterna",
+          "deny": "non è stato Ettore a spegnere la lanterna"
+        },
+        {
+          "id": "livia",
+          "label": "Livia",
+          "affirm": "è stata Livia a spegnere la lanterna",
+          "deny": "non è stata Livia a spegnere la lanterna"
+        },
+        {
+          "id": "mozzo",
+          "label": "Il mozzo",
+          "affirm": "è stato il mozzo a spegnere la lanterna",
+          "deny": "non è stato il mozzo a spegnere la lanterna"
+        }
+      ]
+    },
+    {
+      "id": "ora",
+      "label": "A che ora si è spenta la lanterna?",
+      "options": [
+        {
+          "id": "nove",
+          "label": "Alle nove",
+          "affirm": "la lanterna si è spenta alle nove",
+          "deny": "la lanterna non si è spenta alle nove"
+        },
+        {
+          "id": "dieci",
+          "label": "Alle dieci",
+          "affirm": "la lanterna si è spenta alle dieci",
+          "deny": "la lanterna non si è spenta alle dieci"
+        },
+        {
+          "id": "undici",
+          "label": "Alle undici",
+          "affirm": "la lanterna si è spenta alle undici",
+          "deny": "la lanterna non si è spenta alle undici"
+        }
+      ]
+    },
+    {
+      "id": "diario",
+      "label": "Dov'è finito il diario di bordo?",
+      "options": [
+        {
+          "id": "pozzo",
+          "label": "Nel pozzo",
+          "affirm": "il diario è finito nel pozzo",
+          "deny": "il diario non è finito nel pozzo"
+        },
+        {
+          "id": "stufa",
+          "label": "Nella stufa",
+          "affirm": "il diario è finito nella stufa",
+          "deny": "il diario non è finito nella stufa"
+        },
+        {
+          "id": "cassa",
+          "label": "Nella cassa",
+          "affirm": "il diario è finito nella cassa",
+          "deny": "il diario non è finito nella cassa"
+        }
+      ]
+    },
+    {
+      "id": "porta",
+      "label": "La porta della torre era chiusa?",
+      "options": [
+        {
+          "id": "chiusa",
+          "label": "Chiusa",
+          "affirm": "la porta della torre era chiusa",
+          "deny": "la porta della torre non era chiusa"
+        },
+        {
+          "id": "aperta",
+          "label": "Aperta",
+          "affirm": "la porta della torre era aperta",
+          "deny": "la porta della torre non era aperta"
+        }
+      ]
+    },
+    {
+      "id": "cane",
+      "label": "Il cane del faro ha abbaiato?",
+      "options": [
+        {
+          "id": "abbaiato",
+          "label": "Ha abbaiato",
+          "affirm": "il cane ha abbaiato",
+          "deny": "il cane non ha abbaiato"
+        },
+        {
+          "id": "silenzio",
+          "label": "È rimasto zitto",
+          "affirm": "il cane è rimasto zitto",
+          "deny": "il cane non è rimasto zitto"
+        }
+      ]
+    }
+  ],
+  "certainties": [
+    {
+      "id": "k_chiave",
+      "text": "Solo Ettore ha la chiave della torre: se la porta era chiusa, è stato lui.",
+      "formula": "porta=chiusa -> chi=ettore"
+    },
+    {
+      "id": "k_cane",
+      "text": "Il cane abbaia solo agli estranei: se ha abbaiato, è stata Livia.",
+      "formula": "cane=abbaiato -> chi=livia"
+    }
+  ],
+  "statements": [
+    {
+      "id": "s_ettore_nove",
+      "speaker": "A",
+      "text": "Alle nove la lanterna era ancora accesa: l'ho controllata io.",
+      "formula": "ora!=nove"
+    },
+    {
+      "id": "s_ettore_mozzo",
+      "speaker": "A",
+      "text": "È stato il mozzo, ne sono certo: l'ho visto salire le scale.",
+      "formula": "chi=mozzo"
+    },
+    {
+      "id": "s_livia_cane",
+      "speaker": "B",
+      "text": "Il cane ha abbaiato, oppure la porta era chiusa.",
+      "formula": "cane=abbaiato OR porta=chiusa"
+    },
+    {
+      "id": "s_livia_ettore",
+      "speaker": "B",
+      "text": "Se chiedeste a Ettore se sono stata io, vi risponderebbe di sì.",
+      "formula": "SAYS(A, chi=livia)"
+    }
+  ],
+  "questions": [
+    {
+      "id": "q_ettore_stufa",
+      "to": "A",
+      "text": "Ettore, il diario è finito nella stufa?",
+      "formula": "diario=stufa"
+    },
+    {
+      "id": "q_ettore_undici",
+      "to": "A",
+      "text": "Ettore, la lanterna si è spenta alle undici?",
+      "formula": "ora=undici"
+    },
+    {
+      "id": "q_ettore_sincero",
+      "to": "A",
+      "text": "Ettore, sei tu quello che dice sempre la verità?",
+      "formula": "TRUTHFUL(A)"
+    },
+    {
+      "id": "q_livia_cassa_diretta",
+      "to": "B",
+      "text": "Livia, il diario è finito nella cassa?",
+      "formula": "diario=cassa"
+    },
+    {
+      "id": "q_livia_dieci",
+      "to": "B",
+      "text": "Livia, la lanterna si è spenta alle dieci?",
+      "formula": "ora=dieci"
+    },
+    {
+      "id": "q_livia_cassa",
+      "to": "B",
+      "text": "Livia, se chiedessi a Ettore se il diario è nella cassa, direbbe di sì?",
+      "formula": "SAYS(A, diario=cassa)"
+    }
+  ],
+  "clues": [
+    {
+      "id": "c_impronte",
+      "title": "Impronte sul davanzale",
+      "text": "Sul davanzale ci sono impronte piccole, da ragazzo: non è stato Ettore.",
+      "cost": 12,
+      "formula": "chi!=ettore"
+    },
+    {
+      "id": "c_cenere",
+      "title": "Cenere tiepida",
+      "text": "Nella stufa c'è cenere di carta ancora tiepida, con un angolo di copertina.",
+      "cost": 12,
+      "formula": "diario=stufa"
+    },
+    {
+      "id": "c_maree",
+      "title": "Registro delle maree",
+      "text": "Alle undici la marea copriva il molo: la lanterna non può essersi spenta così tardi.",
+      "cost": 16,
+      "formula": "ora!=undici"
+    },
+    {
+      "id": "c_vicino",
+      "title": "Il chiavistello",
+      "text": "Il chiavistello della torre è arrugginito e bloccato in posizione aperta da settimane.",
+      "cost": 8,
+      "formula": "porta=aperta"
+    }
+  ],
+  "verdictFacts": [
+    "chi",
+    "diario"
+  ],
+  "solution": {
+    "liar": "B",
+    "facts": {
+      "chi": "mozzo",
+      "ora": "dieci",
+      "diario": "stufa",
+      "porta": "aperta",
+      "cane": "silenzio"
+    }
+  }
+}
